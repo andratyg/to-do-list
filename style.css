@@ -122,31 +122,26 @@ input:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px 
     padding: 20px 30px; display: flex; justify-content: space-between; align-items: center;
     margin-bottom: 30px;
     
-    /* TAMBAHKAN DUA BARIS INI DI SINI: */
+    /* FIX: Agar tombol akun bisa dipencet (di atas konten lain) */
     position: relative; 
     z-index: 50;
 }
-/* FITUR BARU: Gradient Text untuk Nama */
-.text-gradient {
-    /* 1. Warna cadangan (Jaga-jaga kalau gradient gagal/variabel error) */
-    color: var(--primary, blue); 
 
-    /* 2. Definisi Gradient */
+.header-left h1 { font-size: 1.5rem; font-weight: 700; color: var(--text-main); margin-bottom: 2px; }
+.header-left p { font-size: 0.85rem; color: var(--text-sub); }
+
+/* FITUR BARU: Gradient Text untuk Nama (Versi Aman) */
+.text-gradient {
+    color: var(--primary); /* Fallback */
     background: linear-gradient(to right, var(--primary), var(--purple));
-    
-    /* 3. Wajib: Standar & Vendor Prefix */
     -webkit-background-clip: text;
     background-clip: text;
-    
-    /* 4. Membuat teks transparan agar background gradient terlihat */
     -webkit-text-fill-color: transparent;
-    color: transparent;
-    
+    color: transparent; /* Standar */
     font-weight: 800;
-    
-    /* Opsional: Agar potongan gradient rapi di beberapa browser */
-    display: inline-block; 
+    display: inline-block;
 }
+
 /* FITUR BARU: Label Kata Kata Hari Ini */
 .quote-label {
     display: block;
