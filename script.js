@@ -467,7 +467,7 @@ function loadPomodoroTasks() {
     });
 }
 
-// --- JADWAL (UPDATED: Status & Tombol Baru) ---
+// --- JADWAL (UPDATED: Status 5 Sore & Tombol Baru) ---
 function changeDay(dir) { currentDayIdx += dir; if(currentDayIdx>6) currentDayIdx=0; if(currentDayIdx<0) currentDayIdx=6; renderSchedule(); }
 function changeWeekType() { 
     currentWeekType = document.getElementById('weekTypeSelector').value; 
@@ -544,13 +544,13 @@ function renderSchedule() {
     tbody.parentElement.style.display='table'; 
     document.getElementById('holidayMessage').style.display='none';
     
-    // --- LOGIKA STATUS BARU (SESUAI REQUEST) ---
+    // --- LOGIKA STATUS (JAM 5 SORE) ---
     let statusText = "Belum Mulai";
     let dotColor = "var(--text-sub)";
 
     if (isToday) {
         if (currentHour >= 17) {
-            // SUDAH LEWAT JAM 5 SORE
+            // JIKA SUDAH LEWAT JAM 17:00 (5 SORE)
             statusText = "Pembelajaran Hari Ini Telah Selesai. Sampai Jumpa Besok! 🌙";
             dotColor = "var(--purple)"; 
         } else {
@@ -571,7 +571,7 @@ function renderSchedule() {
                 }
             });
             if (!ongoing && currentHour < 17) {
-                if (curMins < (7*60 + 45)) { // Asumsi masuk jam 07.45
+                if (curMins < (7*60 + 45)) { 
                      statusText = "Menunggu jam masuk...";
                      dotColor = "var(--orange)";
                 } else {
@@ -588,7 +588,7 @@ function renderSchedule() {
     document.getElementById('currentStatus').innerText = statusText;
     document.querySelector('.status-dot').style.background = dotColor;
 
-    // RENDER TABEL (TOMBOL DIPERBAIKI)
+    // RENDER TABEL (TOMBOL BARU)
     data.forEach((item, idx) => {
         let isActive = false;
         // Highlight hanya jika belum lewat jam 5
@@ -602,7 +602,7 @@ function renderSchedule() {
             }
         }
         
-        // --- TOMBOL DIPERCANTIK (Menggunakan class CSS baru) ---
+        // --- TOMBOL DIPERCANTIK ---
         const noteElem = `<button class="btn-note" onclick="alert('Fitur catatan per mapel akan hadir di update berikutnya!')">
                             <i class="fas fa-sticky-note"></i> Catatan
                           </button>`;
@@ -1004,6 +1004,55 @@ window.importData = function(input) {
     };
     reader.readAsText(file);
     input.value = '';
+}
+
+// --- FITUR TAMBAH JADWAL BARU (DARI MODAL) ---
+window.openAddScheduleModal = function() {
+    const currentDayName = days[currentDayIdx];
+    document.getElementById('addScheduleDay').value = currentDayName;
+    
+    let currentType = document.getElementById('weekTypeSelector').value;
+    if(currentType === 'auto') currentType = 'umum'; 
+    document.getElementById('addScheduleWeekType').value = currentType;
+
+    document.getElementById('addScheduleMapel').value = '';
+    document.getElementById('addScheduleGuru').value = '';
+    document.getElementById('addScheduleTime').value = '';
+    
+    document.getElementById('addScheduleModal').style.display = 'flex';
+}
+
+window.saveNewSchedule = function() {
+    const weekType = document.getElementById('addScheduleWeekType').value;
+    const day = document.getElementById('addScheduleDay').value;
+    const mapel = document.getElementById('addScheduleMapel').value;
+    const guru = document.getElementById('addScheduleGuru').value;
+    const time = document.getElementById('addScheduleTime').value;
+    const type = document.getElementById('addScheduleType').value;
+
+    if(!mapel || !time) {
+        showToast("Nama Mapel dan Waktu wajib diisi!", "error");
+        return;
+    }
+
+    const newItem = { mapel, guru, time, type };
+
+    if (!jadwalData[weekType]) jadwalData[weekType] = {};
+    if (!jadwalData[weekType][day]) jadwalData[weekType][day] = [];
+
+    jadwalData[weekType][day].push(newItem);
+    
+    // Sortir jadwal agar urut waktu
+    jadwalData[weekType][day].sort((a, b) => {
+        const timeA = a.time.split('-')[0].trim().replace('.',':');
+        const timeB = b.time.split('-')[0].trim().replace('.',':');
+        return timeA.localeCompare(timeB);
+    });
+
+    saveDB('jadwalData', jadwalData);
+    renderSchedule();
+    document.getElementById('addScheduleModal').style.display = 'none';
+    showToast("Jadwal berhasil ditambahkan!", "success");
 }
 
 window.closeNoteModal = function() { document.getElementById('noteModal').style.display = 'none'; }
