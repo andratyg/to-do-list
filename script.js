@@ -26,6 +26,10 @@ let soundPreference = 'bell';
 let currentScheduleFilterGuru = 'all'; 
 let currentScheduleFilterCategory = 'all'; 
 
+// --- VARIABEL YG SEBELUMNYA HILANG ---
+let taskFilter = 'all';
+let editingTaskId = null;
+
 // --- DATA JADWAL DEFAULT (Pancingan Awal) ---
 const days = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
 const defaultJadwalData = {
@@ -236,7 +240,9 @@ window.editUsername = function() {
     if(user) {
         document.getElementById('newUsernameInput').value = user.displayName || "";
         document.getElementById('usernameModal').style.display = 'flex';
-        toggleSettings(); 
+        // Tutup dropdown setelah klik
+        const dropdown = document.getElementById('settingsDropdown');
+        if(dropdown) dropdown.classList.remove('active');
     }
 }
 
@@ -315,7 +321,11 @@ function saveSetting(key, val) {
 }
 
 function saveAllToCloud(uid) {
-    window.dbSet(window.dbRef(window.db, `users/${uid}`), cachedData);
+    // Jika uid tidak dikirim, ambil otomatis dari auth
+    const targetUid = uid || (window.auth.currentUser ? window.auth.currentUser.uid : null);
+    if(targetUid) {
+        window.dbSet(window.dbRef(window.db, `users/${targetUid}`), cachedData);
+    }
 }
 
 function getDB(key) {
@@ -893,3 +903,36 @@ function exportData() {
     const b=new Blob([JSON.stringify(d)],{type:"application/json"}); 
     const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=`${currentUser}_backup.json`; a.click(); 
 }
+
+// --- UTILS UI & RESTORE DATA ---
+window.toggleSettings = function() { 
+    const dropdown = document.getElementById('settingsDropdown');
+    if (dropdown) dropdown.classList.toggle('active');
+}
+
+window.importData = function(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const data = JSON.parse(e.target.result);
+            if (confirm("Apakah Anda yakin ingin menimpa data saat ini dengan data backup?")) {
+                cachedData = data;
+                saveAllToCloud(); // Simpan ke Firebase
+                showToast("Data berhasil direstore!", "success");
+                setTimeout(() => location.reload(), 1000);
+            }
+        } catch (err) {
+            console.error(err);
+            showToast("File backup rusak atau tidak valid!", "error");
+        }
+    };
+    reader.readAsText(file);
+    input.value = '';
+}
+
+window.closeNoteModal = function() { document.getElementById('noteModal').style.display = 'none'; }
+window.saveNoteFromModal = function() { showToast("Catatan disimpan (Placeholder)", "success"); closeNoteModal(); }
+window.deleteNote = function() { if(confirm("Hapus catatan?")) { document.getElementById('noteModalInput').value = ""; closeNoteModal(); } }
