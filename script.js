@@ -26,11 +26,11 @@ let soundPreference = 'bell';
 let currentScheduleFilterGuru = 'all'; 
 let currentScheduleFilterCategory = 'all'; 
 
-// --- VARIABEL YG SEBELUMNYA HILANG ---
+// --- VARIABEL PENTING ---
 let taskFilter = 'all';
 let editingTaskId = null;
 
-// --- DATA JADWAL DEFAULT (Pancingan Awal) ---
+// --- DATA JADWAL DEFAULT ---
 const days = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
 const defaultJadwalData = {
     umum: {
@@ -93,10 +93,9 @@ let jadwalData = defaultJadwalData;
 let currentDayIdx = new Date().getDay(); 
 let currentWeekType = 'umum'; 
 
-// --- KATA MOTIVASI ---
 const motivationalQuotes = [
     "Fokus 25 menit, hasilnya 100%. Kamu bisa! 💪",
-    "Disiplin adalah menjembatani antara tujuan dan pencapaian.",
+    "Disiplin adalah jembatan antara tujuan dan pencapaian.",
     "Bekerja cerdas, bukan hanya bekerja keras.",
     "Jangan tunggu motivasi. Ciptakan momentummu sendiri.",
     "Masa depanmu diciptakan oleh apa yang kamu lakukan hari ini."
@@ -105,35 +104,31 @@ const motivationalQuotes = [
 // ==================== B. AUTHENTICATION LOGIC ====================
 
 document.addEventListener("DOMContentLoaded", () => {
-    // Cek status login saat web dibuka
     initAuthListener(); 
 });
 
-// 1. CEK STATUS LOGIN (AUTO DETECT)
 function initAuthListener() {
     setTimeout(() => {
         if (!window.authListener) return;
 
         window.authListener(window.auth, (user) => {
             if (user) {
-                // USER SEDANG LOGIN
+                // USER LOGIN
                 const displayName = user.displayName ? user.displayName : user.email.split('@')[0];
-                currentUser = displayName; // Pakai nama untuk display
-                const uid = user.uid; // Simpan UID untuk akses database
+                currentUser = displayName;
+                const uid = user.uid; 
                 
                 document.getElementById('loginOverlay').style.display = 'none';
                 document.getElementById('mainContent').style.display = 'block';
                 
-                // Tampilkan Nama
                 document.getElementById('displayUsername').innerText = displayName; 
-                updateGreeting(); // Panggil fungsi greeting yang baru
+                updateGreeting(); 
                 document.getElementById('loginStatusText').innerText = "Online";
                 
-                // Mulai Listener data pakai UID asli
                 startFirebaseListener(uid); 
                 initApp();
             } else {
-                // USER SEDANG LOGOUT
+                // USER LOGOUT
                 currentUser = null;
                 document.getElementById('loginOverlay').style.display = 'flex';
                 document.getElementById('mainContent').style.display = 'none';
@@ -142,13 +137,10 @@ function initAuthListener() {
     }, 1000);
 }
 
-// 2. FUNGSI GANTI HALAMAN (LOGIN <-> REGISTER)
 window.switchAuthMode = function(mode) {
     const loginView = document.getElementById('loginView');
     const registerView = document.getElementById('registerView');
     const errorMsg = document.getElementById('authErrorMsg');
-    
-    // Reset pesan error saat ganti view
     if(errorMsg) errorMsg.innerText = ""; 
 
     if (mode === 'register') {
@@ -160,7 +152,6 @@ window.switchAuthMode = function(mode) {
     }
 }
 
-// 3. LOGIN EMAIL BIASA
 window.handleLogin = function() {
     const email = document.getElementById('loginEmail').value;
     const pass = document.getElementById('loginPass').value;
@@ -174,10 +165,8 @@ window.handleLogin = function() {
         .catch((error) => { errorMsg.innerText = "Gagal: Email/Password salah."; });
 }
 
-// 4. LOGIN GOOGLE
 window.handleGoogleLogin = function() {
     const errorMsg = document.getElementById('authErrorMsg');
-    
     errorMsg.innerText = "Menghubungkan ke Google...";
     errorMsg.style.color = "var(--text-sub)";
     
@@ -190,7 +179,6 @@ window.handleGoogleLogin = function() {
         }).catch((error) => {
             console.error(error);
             errorMsg.style.color = "var(--red)";
-            
             if (error.code === 'auth/popup-closed-by-user') {
                 errorMsg.innerText = "Login dibatalkan.";
             } else if (error.code === 'auth/network-request-failed') {
@@ -201,7 +189,6 @@ window.handleGoogleLogin = function() {
         });
 }
 
-// 5. REGISTER EMAIL BARU
 window.handleRegister = function() {
     const username = document.getElementById('regUsername').value;
     const email = document.getElementById('regEmail').value;
@@ -225,7 +212,6 @@ window.handleRegister = function() {
         });
 }
 
-// 6. LOGOUT
 window.logoutUser = function() {
     if(confirm("Yakin ingin keluar?")) {
         window.authSignOut(window.auth).then(() => {
@@ -234,13 +220,11 @@ window.logoutUser = function() {
     }
 }
 
-// 7. GANTI USERNAME
 window.editUsername = function() {
     const user = window.auth.currentUser;
     if(user) {
         document.getElementById('newUsernameInput').value = user.displayName || "";
         document.getElementById('usernameModal').style.display = 'flex';
-        // Tutup dropdown setelah klik
         const dropdown = document.getElementById('settingsDropdown');
         if(dropdown) dropdown.classList.remove('active');
     }
@@ -253,7 +237,7 @@ window.saveUsername = function() {
     const user = window.auth.currentUser;
     window.authUpdateProfile(user, { displayName: newName }).then(() => {
         document.getElementById('displayUsername').innerText = newName;
-        updateGreeting(); // Update header
+        updateGreeting();
         document.getElementById('usernameModal').style.display = 'none';
         showToast("Nama berhasil diganti!", "success");
     }).catch(err => {
@@ -268,24 +252,19 @@ function startFirebaseListener(uid) {
         console.error("Firebase belum siap.");
         return;
     }
-
     const userPath = 'users/' + uid;
     
     window.dbOnValue(window.dbRef(window.db, userPath), (snapshot) => {
         const data = snapshot.val();
-
         if (data) {
             cachedData.tasks = data.tasks || [];
             cachedData.transactions = data.transactions || [];
-            
             if (data.jadwal && data.jadwal.umum) {
                 cachedData.jadwal = data.jadwal;
             } else {
-                console.log("Jadwal Cloud Kosong/Rusak. Memperbaiki otomatis...");
                 cachedData.jadwal = defaultJadwalData;
                 saveDB('jadwalData', defaultJadwalData); 
             }
-            
             if(data.settings) {
                 if(data.settings.theme) applyTheme(data.settings.theme);
                 if(data.settings.weekType) currentWeekType = data.settings.weekType;
@@ -296,7 +275,6 @@ function startFirebaseListener(uid) {
             cachedData.jadwal = defaultJadwalData;
             saveAllToCloud(uid); 
         }
-
         jadwalData = cachedData.jadwal;
         renderAll();
     });
@@ -321,7 +299,6 @@ function saveSetting(key, val) {
 }
 
 function saveAllToCloud(uid) {
-    // Jika uid tidak dikirim, ambil otomatis dari auth
     const targetUid = uid || (window.auth.currentUser ? window.auth.currentUser.uid : null);
     if(targetUid) {
         window.dbSet(window.dbRef(window.db, `users/${targetUid}`), cachedData);
@@ -352,7 +329,6 @@ function initApp() {
             else if (e.key === 'd' || e.key === 'D') { e.preventDefault(); toggleDarkMode(); }
         }
     });
-
     setInterval(checkReminders, 60000);
 }
 
@@ -366,18 +342,16 @@ function renderAll() {
     loadPomodoroTasks();
 }
 
-// --- UTILS UTAMA UNTUK UI ---
+// --- UTILS UI ---
 function updateGreeting() { 
     const h = new Date().getHours(); 
     let greet = 'Halo';
     let emoji = '👋';
-
     if (h < 11) { greet = 'Selamat Pagi'; emoji = '☀️'; }
     else if (h < 15) { greet = 'Selamat Siang'; emoji = '🌤️'; }
     else if (h < 18) { greet = 'Selamat Sore'; emoji = '🌇'; }
     else { greet = 'Selamat Malam'; emoji = '🌙'; }
 
-    // Menggunakan innerHTML agar class text-gradient bekerja
     const userDisplay = currentUser || 'User';
     document.getElementById('greeting').innerHTML = `${greet}, <span class="text-gradient">${escapeHtml(userDisplay)}</span>! ${emoji}`; 
 }
@@ -493,7 +467,7 @@ function loadPomodoroTasks() {
     });
 }
 
-// --- JADWAL ---
+// --- JADWAL (UPDATED & PERCANTIK) ---
 function changeDay(dir) { currentDayIdx += dir; if(currentDayIdx>6) currentDayIdx=0; if(currentDayIdx<0) currentDayIdx=6; renderSchedule(); }
 function changeWeekType() { 
     currentWeekType = document.getElementById('weekTypeSelector').value; 
@@ -570,17 +544,16 @@ function renderSchedule() {
     tbody.parentElement.style.display='table'; 
     document.getElementById('holidayMessage').style.display='none';
     
-    // --- LOGIKA STATUS BARU ---
+    // --- LOGIKA STATUS BARU (SESUAI REQUEST) ---
     let statusText = "Belum Mulai";
-    let dotColor = "var(--text-sub)"; // Abu-abu (default)
+    let dotColor = "var(--text-sub)";
 
     if (isToday) {
         if (currentHour >= 17) {
             // JIKA SUDAH LEWAT JAM 17:00 (5 SORE)
-            statusText = "Pembelajaran sudah selesai dan mulai lagi pada besok harinya";
-            dotColor = "var(--red)"; // Merah (Selesai)
+            statusText = "Pembelajaran Hari Ini Telah Selesai. Sampai Jumpa Besok! 🌙";
+            dotColor = "var(--purple)"; 
         } else {
-            // Pengecekan Sedang Berlangsung
             let ongoing = false;
             data.forEach(item => {
                 const parts = item.time.split("-");
@@ -592,13 +565,12 @@ function renderSchedule() {
                     
                     if(curMins >= sM && curMins < eM) { 
                         statusText = `Sedang Berlangsung: ${item.mapel}`; 
-                        dotColor = "var(--green)"; // Hijau (Aktif)
+                        dotColor = "var(--green)";
                         ongoing = true;
                     }
                 }
             });
             if (!ongoing && currentHour < 17) {
-                // Jika belum jam 5 tapi tidak ada mapel aktif
                 if (curMins < (7*60 + 45)) { // Asumsi masuk jam 07.45
                      statusText = "Menunggu jam masuk...";
                      dotColor = "var(--orange)";
@@ -613,14 +585,13 @@ function renderSchedule() {
         dotColor = "var(--text-sub)";
     }
 
-    // Update Teks Status & Warna Dot
     document.getElementById('currentStatus').innerText = statusText;
     document.querySelector('.status-dot').style.background = dotColor;
 
-    // RENDER TABEL DENGAN TOMBOL BARU
+    // RENDER TABEL DENGAN TOMBOL YANG DIPERCANTIK
     data.forEach((item, idx) => {
         let isActive = false;
-        // Highlight baris jika sedang berlangsung (hanya jika hari ini & belum jam 5 sore)
+        // Highlight hanya jika belum lewat jam 5
         if (isToday && currentHour < 17) {
             const parts = item.time.split("-");
             if(parts.length >= 2) {
@@ -631,7 +602,7 @@ function renderSchedule() {
             }
         }
         
-        // Elemen Tombol yang dipercantik
+        // --- TOMBOL DIPERCANTIK (Menggunakan class CSS baru) ---
         const noteElem = `<button class="btn-note" onclick="alert('Fitur catatan per mapel akan hadir di update berikutnya!')">
                             <i class="fas fa-sticky-note"></i> Catatan
                           </button>`;
@@ -974,6 +945,14 @@ window.toggleSettings = function() {
     if (dropdown) dropdown.classList.toggle('active');
 }
 
+window.selectWallet = function(walletId, el) {
+    document.getElementById('selectedWallet').value = walletId;
+    document.querySelectorAll('.wallet-card').forEach(card => {
+        card.classList.remove('active');
+    });
+    el.classList.add('active');
+}
+
 window.importData = function(input) {
     const file = input.files[0];
     if (!file) return;
@@ -984,7 +963,7 @@ window.importData = function(input) {
             const data = JSON.parse(e.target.result);
             if (confirm("Apakah Anda yakin ingin menimpa data saat ini dengan data backup?")) {
                 cachedData = data;
-                saveAllToCloud(); // Simpan ke Firebase
+                saveAllToCloud(); 
                 showToast("Data berhasil direstore!", "success");
                 setTimeout(() => location.reload(), 1000);
             }
@@ -1000,16 +979,3 @@ window.importData = function(input) {
 window.closeNoteModal = function() { document.getElementById('noteModal').style.display = 'none'; }
 window.saveNoteFromModal = function() { showToast("Catatan disimpan (Placeholder)", "success"); closeNoteModal(); }
 window.deleteNote = function() { if(confirm("Hapus catatan?")) { document.getElementById('noteModalInput').value = ""; closeNoteModal(); } }
-// Tambahkan fungsi ini di bagian paling bawah script.js agar dompet bisa dipencet
-window.selectWallet = function(walletId, el) {
-    // 1. Simpan pilihan ke input tersembunyi
-    document.getElementById('selectedWallet').value = walletId;
-    
-    // 2. Hapus status 'active' dari semua kartu
-    document.querySelectorAll('.wallet-card').forEach(card => {
-        card.classList.remove('active');
-    });
-    
-    // 3. Tambahkan status 'active' ke kartu yang diklik
-    el.classList.add('active');
-}
