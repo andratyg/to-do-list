@@ -467,7 +467,7 @@ function loadPomodoroTasks() {
     });
 }
 
-// --- JADWAL (UPDATED & PERCANTIK) ---
+// --- JADWAL (UPDATED: Status & Tombol Baru) ---
 function changeDay(dir) { currentDayIdx += dir; if(currentDayIdx>6) currentDayIdx=0; if(currentDayIdx<0) currentDayIdx=6; renderSchedule(); }
 function changeWeekType() { 
     currentWeekType = document.getElementById('weekTypeSelector').value; 
@@ -550,7 +550,7 @@ function renderSchedule() {
 
     if (isToday) {
         if (currentHour >= 17) {
-            // JIKA SUDAH LEWAT JAM 17:00 (5 SORE)
+            // SUDAH LEWAT JAM 5 SORE
             statusText = "Pembelajaran Hari Ini Telah Selesai. Sampai Jumpa Besok! 🌙";
             dotColor = "var(--purple)"; 
         } else {
@@ -588,7 +588,7 @@ function renderSchedule() {
     document.getElementById('currentStatus').innerText = statusText;
     document.querySelector('.status-dot').style.background = dotColor;
 
-    // RENDER TABEL DENGAN TOMBOL YANG DIPERCANTIK
+    // RENDER TABEL (TOMBOL DIPERBAIKI)
     data.forEach((item, idx) => {
         let isActive = false;
         // Highlight hanya jika belum lewat jam 5
@@ -863,17 +863,47 @@ function editTarget() {
     } 
 }
 
+// --- LOGIKA TARGET (DESIMAL FIX) ---
 function loadTarget() {
-    const uid = window.auth.currentUser.uid;
+    const uid = window.auth.currentUser ? window.auth.currentUser.uid : null;
+    if(!uid) return;
+
     const target = parseInt(localStorage.getItem(`${uid}_target`) || 0);
     const txns = cachedData.transactions;
-    let saving = 0; 
-    txns.forEach(t => { if(t.category === 'Tabungan' && t.type === 'in') saving += t.amount; });
     
+    let saving = 0; 
+    // Hitung hanya uang MASUK dengan kategori TABUNGAN
+    txns.forEach(t => { 
+        if(t.category === 'Tabungan' && t.type === 'in') {
+            saving += t.amount; 
+        }
+        // Opsional: Jika ingin uang KELUAR dari tabungan mengurangi target
+        if(t.category === 'Tabungan' && t.type === 'out') {
+            saving -= t.amount;
+        }
+    });
+    
+    // Pastikan tidak minus
+    if (saving < 0) saving = 0;
+
     document.getElementById('targetAmount').innerText = "Rp " + target.toLocaleString();
-    const pct = target > 0 ? Math.min(100, Math.round((saving/target)*100)) : 0;
+    
+    // Logika Persentase dengan Desimal (agar tidak stuck di 0%)
+    let pct = 0;
+    if (target > 0) {
+        pct = (saving / target) * 100;
+    }
+    
+    // Batasi max 100%
+    if (pct > 100) pct = 100;
+
+    // Tampilkan 1 angka di belakang koma jika kecil (misal 0.5%)
+    // Jika bulat, hilangkan koma (misal 50.0% jadi 50%)
+    let pctDisplay = pct.toFixed(1); 
+    if (pctDisplay.endsWith('.0')) pctDisplay = Math.round(pct);
+
     document.getElementById('targetProgressBar').style.width = `${pct}%`;
-    document.getElementById('targetPercentage').innerText = `${pct}% (${saving.toLocaleString()})`;
+    document.getElementById('targetPercentage').innerText = `${pctDisplay}% (${saving.toLocaleString()})`;
 }
 
 function renderExpenseChart(txns) {
