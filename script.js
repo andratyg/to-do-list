@@ -936,3 +936,16 @@ window.importData = function(input) {
 window.closeNoteModal = function() { document.getElementById('noteModal').style.display = 'none'; }
 window.saveNoteFromModal = function() { showToast("Catatan disimpan (Placeholder)", "success"); closeNoteModal(); }
 window.deleteNote = function() { if(confirm("Hapus catatan?")) { document.getElementById('noteModalInput').value = ""; closeNoteModal(); } }
+// Tambahkan fungsi ini di bagian paling bawah script.js agar dompet bisa dipencet
+window.selectWallet = function(walletId, el) {
+    // 1. Simpan pilihan ke input tersembunyi
+    document.getElementById('selectedWallet').value = walletId;
+    
+    // 2. Hapus status 'active' dari semua kartu
+    document.querySelectorAll('.wallet-card').forEach(card => {
+        card.classList.remove('active');
+    });
+    
+    // 3. Tambahkan status 'active' ke kartu yang diklik
+    el.classList.add('active');
+}
