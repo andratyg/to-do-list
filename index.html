@@ -6,13 +6,13 @@
     <title>Student Workspace Pro</title>
     
     <meta http-equiv="Content-Security-Policy" content="
-        default-src 'self';
-        script-src 'self' 'unsafe-inline' https://www.gstatic.com https://apis.google.com;
+        default-src 'self' https://*.firebaseio.com https://*.firebaseapp.com;
+        script-src 'self' 'unsafe-inline' https://www.gstatic.com https://apis.google.com https://*.firebasejs.com https://*.firebaseapp.com;
         style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com;
         font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com;
         img-src 'self' data: https://www.gstatic.com https://lh3.googleusercontent.com;
-        connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://full-code-e7288-default-rtdb.asia-southeast1.firebasedatabase.app https://www.gstatic.com;
-        frame-src https://full-code-e7288.firebaseapp.com https://accounts.google.com;
+        connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://*.firebaseio.com https://*.firebasedatabase.app https://www.gstatic.com;
+        frame-src https://*.firebaseapp.com https://accounts.google.com;
     ">
 
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -24,14 +24,12 @@
     <div id="loginOverlay" class="login-wrapper">
         <div class="background-shapes"></div>
         <div class="login-card fade-in-up">
-            
             <div id="loginView">
                 <div class="login-header">
                     <div class="icon-pulse">👋</div>
                     <h1>Selamat Datang</h1>
                     <p>Masuk untuk melanjutkan</p>
                 </div>
-
                 <div class="login-form">
                     <div class="input-group" style="margin-bottom: 10px;">
                         <i class="fas fa-envelope"></i>
@@ -41,25 +39,16 @@
                         <i class="fas fa-lock"></i>
                         <input type="password" id="loginPass" placeholder="Password">
                     </div>
-                    
                     <button onclick="handleLogin()" class="btn-primary glow btn-block" style="margin-top: 10px;">
                         Masuk <i class="fas fa-sign-in-alt"></i>
                     </button>
-
-                    <div class="divider">
-                        <span>ATAU</span>
-                    </div>
-
+                    <div class="divider"><span>ATAU</span></div>
                     <button onclick="handleGoogleLogin()" class="btn-google">
                         <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G">
                         Masuk dengan Google
                     </button>
-                    
                     <p id="authErrorMsg"></p>
-
-                    <p class="auth-switch">
-                        Belum punya akun? <a onclick="switchAuthMode('register')">Daftar Sekarang</a>
-                    </p>
+                    <p class="auth-switch">Belum punya akun? <a onclick="switchAuthMode('register')">Daftar Sekarang</a></p>
                 </div>
             </div>
 
@@ -69,7 +58,6 @@
                     <h1>Buat Akun</h1>
                     <p>Bergabunglah bersama kami</p>
                 </div>
-
                 <div class="login-form">
                     <div class="input-group" style="margin-bottom: 10px;">
                         <i class="fas fa-user"></i>
@@ -83,17 +71,10 @@
                         <i class="fas fa-lock"></i>
                         <input type="password" id="regPass" placeholder="Password (Min. 6 Karakter)">
                     </div>
-
-                    <button onclick="handleRegister()" class="btn-primary glow btn-block" style="margin-top: 20px;">
-                        Daftar Akun
-                    </button>
-
-                    <p class="auth-switch">
-                        Sudah punya akun? <a onclick="switchAuthMode('login')">Login di sini</a>
-                    </p>
+                    <button onclick="handleRegister()" class="btn-primary glow btn-block" style="margin-top: 20px;">Daftar Akun</button>
+                    <p class="auth-switch">Sudah punya akun? <a onclick="switchAuthMode('login')">Login di sini</a></p>
                 </div>
             </div>
-
         </div>
     </div>
 
@@ -103,7 +84,6 @@
             <div class="header-left">
                 <h1 id="greeting">Halo, User! 👋</h1>
                 <p id="headerDate" style="margin-bottom: 10px;">Memuat tanggal...</p>
-                
                 <span class="quote-label">KATA KATA HARI INI:</span>
                 <p id="motivationQuote" class="quote-text"></p> 
             </div>
@@ -118,14 +98,12 @@
                 <button class="icon-btn" onclick="toggleDarkMode()" title="Ganti Tema">
                     <i class="fas fa-moon" id="themeIcon"></i>
                 </button>
-
                 <div class="profile-menu">
                     <span id="backupReminder" class="backup-badge"></span> 
                     <button class="profile-btn" onclick="toggleSettings()">
                         <div class="avatar-ring"><i class="fas fa-user"></i></div>
                         <span class="profile-name">Akun</span>
                     </button>
-                    
                     <div class="dropdown-menu" id="settingsDropdown">
                         <div class="dropdown-header">
                             <span id="displayUsername">User</span>
@@ -158,10 +136,6 @@
                             <h2>Jadwal Belajar</h2>
                         </div>
                         <div class="controls">
-                            <button class="icon-btn" onclick="openAddScheduleModal()" title="Tambah Mapel Baru" style="margin-right: 10px;">
-                                <i class="fas fa-plus"></i>
-                            </button>
-
                             <select id="weekTypeSelector" onchange="changeWeekType()">
                                 <option value="auto">Auto (Minggu Bergantian)</option>
                                 <option value="umum">Minggu Umum (Paksa)</option>
@@ -209,6 +183,13 @@
                             <p>Waktunya istirahat atau kembangkan skillmu.</p>
                         </div>
                     </div>
+
+                    <div style="margin-top: 15px; text-align: center;">
+                        <button onclick="openAddScheduleModal()" class="btn-primary" style="width: 100%; border-radius: 12px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                            <i class="fas fa-plus-circle"></i> Tambah Jadwal Baru
+                        </button>
+                    </div>
+
                 </div>
 
                 <div class="card urgent-card" style="margin-top: 20px;">
@@ -409,10 +390,7 @@
 
     <div id="soundModal" class="modal-backdrop" style="display: none;">
         <div class="modal-content fade-in-up" style="max-width: 350px;">
-            <div class="modal-head">
-                <h3>🔊 Suara Notifikasi</h3>
-                <button class="close-icon" onclick="document.getElementById('soundModal').style.display='none'">×</button>
-            </div>
+            <div class="modal-head"><h3>🔊 Suara Notifikasi</h3><button class="close-icon" onclick="document.getElementById('soundModal').style.display='none'">×</button></div>
             <div class="modal-body">
                 <div class="form-group">
                     <label>Pilih Suara Pomodoro Selesai</label>
@@ -424,82 +402,46 @@
                     </select>
                 </div>
             </div>
-            <div class="modal-foot">
-                 <button onclick="saveSoundSettings()" class="btn-primary">Simpan</button>
-            </div>
+            <div class="modal-foot"><button onclick="saveSoundSettings()" class="btn-primary">Simpan</button></div>
         </div>
     </div>
 
     <div id="usernameModal" class="modal-backdrop" style="display: none;">
         <div class="modal-content fade-in-up" style="max-width: 350px;">
-            <div class="modal-head">
-                <h3>👤 Ganti Nama</h3>
-                <button class="close-icon" onclick="document.getElementById('usernameModal').style.display='none'">×</button>
-            </div>
+            <div class="modal-head"><h3>👤 Ganti Nama</h3><button class="close-icon" onclick="document.getElementById('usernameModal').style.display='none'">×</button></div>
             <div class="modal-body">
-                <div class="form-group">
-                    <label>Nama Baru</label>
-                    <input type="text" id="newUsernameInput" placeholder="Nama panggilan...">
-                </div>
+                <div class="form-group"><label>Nama Baru</label><input type="text" id="newUsernameInput" placeholder="Nama panggilan..."></div>
             </div>
-            <div class="modal-foot">
-                 <button onclick="saveUsername()" class="btn-primary">Simpan</button>
-            </div>
+            <div class="modal-foot"><button onclick="saveUsername()" class="btn-primary">Simpan</button></div>
         </div>
     </div>
 
     <div id="clearDataModal" class="modal-backdrop" style="display: none;">
         <div class="modal-content fade-in-up" style="max-width: 400px;">
-            <div class="modal-head">
-                <h3 class="text-danger">⚠️ Hapus Semua Data</h3>
-                <button class="close-icon" onclick="document.getElementById('clearDataModal').style.display='none'">×</button>
-            </div>
+            <div class="modal-head"><h3 class="text-danger">⚠️ Hapus Semua Data</h3><button class="close-icon" onclick="document.getElementById('clearDataModal').style.display='none'">×</button></div>
             <div class="modal-body">
                 <p style="color:var(--red); margin-bottom: 15px;">Tindakan ini permanen. Semua Tugas, Jadwal, Keuangan, dan Pengaturan Anda akan hilang dari browser ini.</p>
-                <div class="form-group">
-                    <label>Ketik kata **HAPUS** untuk melanjutkan:</label>
-                    <input type="text" id="clearDataConfirmationInput" placeholder="Ketik HAPUS">
-                </div>
+                <div class="form-group"><label>Ketik kata **HAPUS** untuk melanjutkan:</label><input type="text" id="clearDataConfirmationInput" placeholder="Ketik HAPUS"></div>
             </div>
-            <div class="modal-foot">
-                <button onclick="confirmClearUserData()" class="btn-primary" style="background:var(--red);">Konfirmasi Hapus</button>
-            </div>
+            <div class="modal-foot"><button onclick="confirmClearUserData()" class="btn-primary" style="background:var(--red);">Konfirmasi Hapus</button></div>
         </div>
     </div>
 
     <div id="noteModal" class="modal-backdrop" style="display: none;">
         <div class="modal-content fade-in-up">
-            <div class="modal-head">
-                <h3 id="noteModalTitle">📝 Catatan</h3>
-                <button class="close-icon" onclick="closeNoteModal()">×</button>
-            </div>
-            <div class="modal-body">
-                <textarea id="noteModalInput" placeholder="Tulis catatan di sini..."></textarea>
-            </div>
-            <div class="modal-foot">
-                <button onclick="deleteNote()" class="btn-text-danger">Hapus</button>
-                <button onclick="saveNoteFromModal()" class="btn-primary">Simpan</button>
-            </div>
+            <div class="modal-head"><h3 id="noteModalTitle">📝 Catatan</h3><button class="close-icon" onclick="closeNoteModal()">×</button></div>
+            <div class="modal-body"><textarea id="noteModalInput" placeholder="Tulis catatan di sini..."></textarea></div>
+            <div class="modal-foot"><button onclick="deleteNote()" class="btn-text-danger">Hapus</button><button onclick="saveNoteFromModal()" class="btn-primary">Simpan</button></div>
         </div>
     </div>
 
     <div id="scheduleEditModal" class="modal-backdrop" style="display: none;">
         <div class="modal-content fade-in-up">
-            <div class="modal-head">
-                <h3>✏️ Edit Jadwal</h3>
-                <button class="close-icon" onclick="closeScheduleEditModal()">×</button>
-            </div>
+            <div class="modal-head"><h3>✏️ Edit Jadwal</h3><button class="close-icon" onclick="closeScheduleEditModal()">×</button></div>
             <div class="modal-body">
-                <div class="form-group">
-                    <label>Mata Pelajaran</label>
-                    <input type="text" id="editMapelName">
-                </div>
-                <div class="form-group">
-                    <label>Waktu</label>
-                    <input type="text" id="editMapelTime" placeholder="08.00 - 09.20">
-                </div>
-                <div class="form-group">
-                    <label>Kategori</label>
+                <div class="form-group"><label>Mata Pelajaran</label><input type="text" id="editMapelName"></div>
+                <div class="form-group"><label>Waktu</label><input type="text" id="editMapelTime" placeholder="08.00 - 09.20"></div>
+                <div class="form-group"><label>Kategori</label>
                     <select id="editMapelType">
                         <option value="umum">Umum (Hijau)</option>
                         <option value="produktif">Produktif (Oranye)</option>
@@ -507,62 +449,22 @@
                     </select>
                 </div>
             </div>
-            <div class="modal-foot">
-                <button onclick="saveScheduleChanges()" class="btn-primary btn-block">Simpan Perubahan</button>
-            </div>
+            <div class="modal-foot"><button onclick="saveScheduleChanges()" class="btn-primary btn-block">Simpan Perubahan</button></div>
         </div>
     </div>
 
     <div id="addScheduleModal" class="modal-backdrop" style="display: none;">
         <div class="modal-content fade-in-up">
-            <div class="modal-head">
-                <h3>➕ Tambah Jadwal</h3>
-                <button class="close-icon" onclick="document.getElementById('addScheduleModal').style.display='none'">×</button>
-            </div>
+            <div class="modal-head"><h3>➕ Tambah Jadwal</h3><button class="close-icon" onclick="document.getElementById('addScheduleModal').style.display='none'">×</button></div>
             <div class="modal-body">
-                <div class="form-group">
-                    <label>Pilih Minggu</label>
-                    <select id="addScheduleWeekType">
-                        <option value="umum">Minggu Umum</option>
-                        <option value="produktif">Minggu Produktif</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Pilih Hari</label>
-                    <select id="addScheduleDay">
-                        <option value="Senin">Senin</option>
-                        <option value="Selasa">Selasa</option>
-                        <option value="Rabu">Rabu</option>
-                        <option value="Kamis">Kamis</option>
-                        <option value="Jumat">Jumat</option>
-                        <option value="Sabtu">Sabtu</option>
-                        <option value="Minggu">Minggu</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Mata Pelajaran</label>
-                    <input type="text" id="addScheduleMapel" placeholder="Contoh: Matematika">
-                </div>
-                <div class="form-group">
-                    <label>Nama Guru</label>
-                    <input type="text" id="addScheduleGuru" placeholder="Contoh: Bpk. Budi">
-                </div>
-                <div class="form-group">
-                    <label>Waktu</label>
-                    <input type="text" id="addScheduleTime" placeholder="Contoh: 08.00 - 09.20">
-                </div>
-                <div class="form-group">
-                    <label>Kategori (Warna)</label>
-                    <select id="addScheduleType">
-                        <option value="umum">Umum (Hijau)</option>
-                        <option value="produktif">Produktif (Oranye)</option>
-                        <option value="kokurikuler">Kokurikuler (Biru)</option>
-                    </select>
-                </div>
+                <div class="form-group"><label>Pilih Minggu</label><select id="addScheduleWeekType"><option value="umum">Minggu Umum</option><option value="produktif">Minggu Produktif</option></select></div>
+                <div class="form-group"><label>Pilih Hari</label><select id="addScheduleDay"><option value="Senin">Senin</option><option value="Selasa">Selasa</option><option value="Rabu">Rabu</option><option value="Kamis">Kamis</option><option value="Jumat">Jumat</option><option value="Sabtu">Sabtu</option><option value="Minggu">Minggu</option></select></div>
+                <div class="form-group"><label>Mata Pelajaran</label><input type="text" id="addScheduleMapel" placeholder="Contoh: Matematika"></div>
+                <div class="form-group"><label>Nama Guru</label><input type="text" id="addScheduleGuru" placeholder="Contoh: Bpk. Budi"></div>
+                <div class="form-group"><label>Waktu</label><input type="text" id="addScheduleTime" placeholder="Contoh: 08.00 - 09.20"></div>
+                <div class="form-group"><label>Kategori (Warna)</label><select id="addScheduleType"><option value="umum">Umum (Hijau)</option><option value="produktif">Produktif (Oranye)</option><option value="kokurikuler">Kokurikuler (Biru)</option></select></div>
             </div>
-            <div class="modal-foot">
-                <button onclick="saveNewSchedule()" class="btn-primary btn-block">Tambah Jadwal</button>
-            </div>
+            <div class="modal-foot"><button onclick="saveNewSchedule()" class="btn-primary btn-block">Tambah Jadwal</button></div>
         </div>
     </div>
 
@@ -587,13 +489,11 @@
         const auth = getAuth(app);
         const googleProvider = new GoogleAuthProvider();
 
-        // Expose ke Global Window
         window.db = db; 
         window.dbRef = ref; 
         window.dbSet = set; 
         window.dbOnValue = onValue; 
         window.dbRemove = remove;
-        
         window.auth = auth;
         window.googleProvider = googleProvider;
         window.authSignIn = signInWithEmailAndPassword;
@@ -603,10 +503,8 @@
         window.authUpdateProfile = updateProfile;
         window.authSignInGoogle = signInWithPopup;
 
-        console.log("Sistem Login & Database Siap!");
+        console.log("Sistem Login Lengkap Siap!");
     </script>
-    
     <script src="script.js" defer></script>
-
 </body>
 </html>
