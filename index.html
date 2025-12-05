@@ -4,6 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Workspace Pro</title>
+    
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self';
+        script-src 'self' 'unsafe-inline' https://www.gstatic.com https://apis.google.com;
+        style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com;
+        font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com;
+        img-src 'self' data: https://www.gstatic.com https://lh3.googleusercontent.com;
+        connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://full-code-e7288-default-rtdb.asia-southeast1.firebasedatabase.app https://www.gstatic.com;
+        frame-src https://full-code-e7288.firebaseapp.com https://accounts.google.com;
+    ">
+
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
@@ -147,6 +158,10 @@
                             <h2>Jadwal Belajar</h2>
                         </div>
                         <div class="controls">
+                            <button class="icon-btn" onclick="openAddScheduleModal()" title="Tambah Mapel Baru" style="margin-right: 10px;">
+                                <i class="fas fa-plus"></i>
+                            </button>
+
                             <select id="weekTypeSelector" onchange="changeWeekType()">
                                 <option value="auto">Auto (Minggu Bergantian)</option>
                                 <option value="umum">Minggu Umum (Paksa)</option>
@@ -498,11 +513,65 @@
         </div>
     </div>
 
+    <div id="addScheduleModal" class="modal-backdrop" style="display: none;">
+        <div class="modal-content fade-in-up">
+            <div class="modal-head">
+                <h3>➕ Tambah Jadwal</h3>
+                <button class="close-icon" onclick="document.getElementById('addScheduleModal').style.display='none'">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Pilih Minggu</label>
+                    <select id="addScheduleWeekType">
+                        <option value="umum">Minggu Umum</option>
+                        <option value="produktif">Minggu Produktif</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Pilih Hari</label>
+                    <select id="addScheduleDay">
+                        <option value="Senin">Senin</option>
+                        <option value="Selasa">Selasa</option>
+                        <option value="Rabu">Rabu</option>
+                        <option value="Kamis">Kamis</option>
+                        <option value="Jumat">Jumat</option>
+                        <option value="Sabtu">Sabtu</option>
+                        <option value="Minggu">Minggu</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Mata Pelajaran</label>
+                    <input type="text" id="addScheduleMapel" placeholder="Contoh: Matematika">
+                </div>
+                <div class="form-group">
+                    <label>Nama Guru</label>
+                    <input type="text" id="addScheduleGuru" placeholder="Contoh: Bpk. Budi">
+                </div>
+                <div class="form-group">
+                    <label>Waktu</label>
+                    <input type="text" id="addScheduleTime" placeholder="Contoh: 08.00 - 09.20">
+                </div>
+                <div class="form-group">
+                    <label>Kategori (Warna)</label>
+                    <select id="addScheduleType">
+                        <option value="umum">Umum (Hijau)</option>
+                        <option value="produktif">Produktif (Oranye)</option>
+                        <option value="kokurikuler">Kokurikuler (Biru)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-foot">
+                <button onclick="saveNewSchedule()" class="btn-primary btn-block">Tambah Jadwal</button>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
+        // Konfigurasi Firebase Anda
         const firebaseConfig = {
             apiKey: "AIzaSyBNfmxs3iOYOlWdscHj6SX0DP5xxmTCfyU",
             authDomain: "full-code-e7288.firebaseapp.com",
@@ -518,6 +587,7 @@
         const auth = getAuth(app);
         const googleProvider = new GoogleAuthProvider();
 
+        // Expose ke Global Window
         window.db = db; 
         window.dbRef = ref; 
         window.dbSet = set; 
@@ -533,7 +603,7 @@
         window.authUpdateProfile = updateProfile;
         window.authSignInGoogle = signInWithPopup;
 
-        console.log("Sistem Login Lengkap Siap!");
+        console.log("Sistem Login & Database Siap!");
     </script>
     
     <script src="script.js" defer></script>
