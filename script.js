@@ -536,12 +536,17 @@ function renderSchedule() {
     if(!jadwalData) return;
     let data = jadwalData[currentWeekDisplay][dayName];
     const tbody = document.getElementById('scheduleBody');
+    
+    // LOGIKA WAKTU
     const now = new Date();
-    const curMins = now.getHours() * 60 + now.getMinutes();
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+    const curMins = currentHour * 60 + currentMinute;
     const isToday = currentDayIdx === now.getDay();
     
     tbody.innerHTML = '';
     
+    // Filter
     const filterCategory = document.getElementById('scheduleFilterCategory').value;
     const filterGuru = document.getElementById('scheduleFilterGuru').value;
 
@@ -552,38 +557,97 @@ function renderSchedule() {
         });
     }
 
+    // Cek Libur / Kosong
     if(!data || data.length === 0) { 
         tbody.parentElement.style.display='none'; 
         document.getElementById('holidayMessage').style.display='block'; 
-        document.getElementById('currentStatus').innerText = "Libur"; 
+        document.getElementById('currentStatus').innerText = "Tidak ada jadwal"; 
+        // Reset warna dot
+        document.querySelector('.status-dot').style.background = 'var(--text-sub)';
         return; 
     }
     
     tbody.parentElement.style.display='table'; 
     document.getElementById('holidayMessage').style.display='none';
-    let status = "Belum Mulai";
+    
+    // --- LOGIKA STATUS BARU ---
+    let statusText = "Belum Mulai";
+    let dotColor = "var(--text-sub)"; // Abu-abu (default)
 
+    if (isToday) {
+        if (currentHour >= 17) {
+            // JIKA SUDAH LEWAT JAM 17:00 (5 SORE)
+            statusText = "Pembelajaran sudah selesai dan mulai lagi pada besok harinya";
+            dotColor = "var(--red)"; // Merah (Selesai)
+        } else {
+            // Pengecekan Sedang Berlangsung
+            let ongoing = false;
+            data.forEach(item => {
+                const parts = item.time.split("-");
+                if(parts.length >= 2) {
+                    const start = parts[0].trim().replace(/\./g, ':').split(':').map(Number);
+                    const end = parts[1].trim().split(" ")[0].replace(/\./g, ':').split(':').map(Number);
+                    const sM = start[0]*60+start[1]; 
+                    const eM = end[0]*60+end[1];
+                    
+                    if(curMins >= sM && curMins < eM) { 
+                        statusText = `Sedang Berlangsung: ${item.mapel}`; 
+                        dotColor = "var(--green)"; // Hijau (Aktif)
+                        ongoing = true;
+                    }
+                }
+            });
+            if (!ongoing && currentHour < 17) {
+                // Jika belum jam 5 tapi tidak ada mapel aktif
+                if (curMins < (7*60 + 45)) { // Asumsi masuk jam 07.45
+                     statusText = "Menunggu jam masuk...";
+                     dotColor = "var(--orange)";
+                } else {
+                     statusText = "Istirahat / Pergantian Jam";
+                     dotColor = "var(--blue)";
+                }
+            }
+        }
+    } else {
+        statusText = `Jadwal hari ${dayName}`;
+        dotColor = "var(--text-sub)";
+    }
+
+    // Update Teks Status & Warna Dot
+    document.getElementById('currentStatus').innerText = statusText;
+    document.querySelector('.status-dot').style.background = dotColor;
+
+    // RENDER TABEL DENGAN TOMBOL BARU
     data.forEach((item, idx) => {
         let isActive = false;
-        const parts = item.time.split("-");
-        if(parts.length >= 2 && isToday) {
-            const start = parts[0].trim().replace(/\./g, ':').split(':').map(Number);
-            const end = parts[1].trim().split(" ")[0].replace(/\./g, ':').split(':').map(Number);
-            const sM = start[0]*60+start[1]; const eM = end[0]*60+end[1];
-            if(curMins >= sM && curMins < eM) { isActive = true; status = `Sedang: ${item.mapel}`; }
+        // Highlight baris jika sedang berlangsung (hanya jika hari ini & belum jam 5 sore)
+        if (isToday && currentHour < 17) {
+            const parts = item.time.split("-");
+            if(parts.length >= 2) {
+                const start = parts[0].trim().replace(/\./g, ':').split(':').map(Number);
+                const end = parts[1].trim().split(" ")[0].replace(/\./g, ':').split(':').map(Number);
+                const sM = start[0]*60+start[1]; const eM = end[0]*60+end[1];
+                if(curMins >= sM && curMins < eM) { isActive = true; }
+            }
         }
         
-        const noteElem = `<div class="note-placeholder" onclick="alert('Fitur catatan per mapel akan hadir di update berikutnya!')">+ Catatan</div>`;
+        // Elemen Tombol yang dipercantik
+        const noteElem = `<button class="btn-note" onclick="alert('Fitur catatan per mapel akan hadir di update berikutnya!')">
+                            <i class="fas fa-sticky-note"></i> Catatan
+                          </button>`;
+        
+        const editElem = `<button class="btn-edit-round" onclick="openScheduleEdit('${dayName}',${idx})" title="Edit Jadwal">
+                            <i class="fas fa-pencil-alt"></i>
+                          </button>`;
         
         tbody.innerHTML += `
         <tr class="${isActive?'active-row':''}">
             <td><b>${escapeHtml(item.mapel)}</b><br><small style="color:var(--text-sub)">${escapeHtml(item.guru || '')}</small></td>
             <td>${escapeHtml(item.time)}</td>
             <td>${noteElem}</td>
-            <td><button class="btn-edit-icon" onclick="openScheduleEdit('${dayName}',${idx})"><i class="fas fa-pencil-alt"></i></button></td>
+            <td>${editElem}</td>
         </tr>`;
     });
-    document.getElementById('currentStatus').innerText = isToday ? status : `Jadwal ${dayName}`;
 }
 
 let currentScheduleEdit = null;
