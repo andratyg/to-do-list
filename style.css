@@ -618,3 +618,48 @@ tr.active-row td:first-child { border-left: 4px solid var(--primary); }
     font-weight: 500;
     min-height: 20px; 
 }
+/* --- TAMBAHAN STYLE UNTUK JADWAL (BUTTONS) --- */
+
+/* Tombol Catatan (Kapsul) */
+.btn-note {
+    background: rgba(99, 102, 241, 0.1); /* Warna transparan ungu */
+    color: var(--primary);
+    padding: 6px 15px;
+    border-radius: 50px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border: 1px solid transparent;
+}
+
+.btn-note:hover {
+    background: var(--primary);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3);
+}
+
+/* Tombol Edit (Bulat) */
+.btn-edit-round {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    background: var(--bg-body);
+    color: var(--text-sub);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+}
+
+.btn-edit-round:hover {
+    background: var(--orange); /* Berubah oranye saat dihover */
+    color: white;
+    border-color: var(--orange);
+    transform: rotate(15deg) scale(1.1);
+}
