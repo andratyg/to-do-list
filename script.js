@@ -26,7 +26,11 @@ let soundPreference = 'bell';
 let currentScheduleFilterGuru = 'all'; 
 let currentScheduleFilterCategory = 'all'; 
 
-// --- DATA JADWAL DEFAULT (Pancingan Awal) ---
+// --- VARIABEL PENTING ---
+let taskFilter = 'all';
+let editingTaskId = null;
+
+// --- DATA JADWAL DEFAULT ---
 const days = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
 const defaultJadwalData = {
     umum: {
@@ -89,47 +93,102 @@ let jadwalData = defaultJadwalData;
 let currentDayIdx = new Date().getDay(); 
 let currentWeekType = 'umum'; 
 
-// --- KATA MOTIVASI ---
+// ==================== SYSTEM RNG QUOTES (FULL ACAK) ====================
 const motivationalQuotes = [
+    // --- MOTIVASI BELAJAR ---
     "Fokus 25 menit, hasilnya 100%. Kamu bisa! 💪",
-    "Disiplin adalah menjembatani antara tujuan dan pencapaian.",
-    "Bekerja cerdas, bukan hanya bekerja keras.",
-    "Jangan tunggu motivasi. Ciptakan momentummu sendiri.",
-    "Masa depanmu diciptakan oleh apa yang kamu lakukan hari ini."
+    "Masa depanmu diciptakan oleh apa yang kamu lakukan hari ini, bukan besok.",
+    "Jangan berhenti saat lelah, berhentilah saat selesai.",
+    "Rasa sakit karena disiplin lebih baik daripada rasa sakit karena penyesalan.",
+    "Satu jam belajar hari ini lebih berharga dari seribu jam penyesalan nanti.",
+    "Versi terbaik dirimu sedang menunggumu di masa depan. Jemput dia!",
+    "Kalau mimpimu tidak membuatmu takut, mungkin mimpimu kurang besar.",
+    "Belajar itu memang berat, tapi kebodohan itu jauh lebih berat.",
+    "Jadilah 1% lebih baik setiap harinya. Konsistensi > Intensitas.",
+    "Jangan tunggu motivasi, ciptakan momentummu sendiri.",
+    // --- PENGINGAT DISIPLIN ---
+    "Scroll sosmed tidak akan membayarmu di masa depan.",
+    "Tugas yang kamu tunda hari ini akan menjadi beban di esok hari.",
+    "Sukses adalah jumlah dari usaha kecil yang diulang hari demi hari.",
+    "Berhenti berharap, mulai kerjakan.",
+    "Waktu tidak akan menunggu. Lakukan sekarang atau tidak sama sekali.",
+    "Disiplin adalah melakukan apa yang harus dilakukan, bahkan saat kamu tidak ingin.",
+    "Fokus pada proses, bukan hanya pada hasil.",
+    "Jangan sibuk, tapi jadilah produktif.",
+    "Musuh terbesarmu adalah dirimu yang kemarin.",
+    "Keajaiban terjadi saat kamu keluar dari zona nyaman.",
+    // --- KATA-KATA SANTAI & REALISTIS ---
+    "Tarik napas. Kamu sudah melakukan yang terbaik sejauh ini. 🍃",
+    "Ingat minum air putih. Otak butuh cairan biar nggak nge-lag.",
+    "Istirahat itu bagian dari produktivitas. Jangan lupa tidur.",
+    "Gapapa pelan-pelan, yang penting jalan terus.",
+    "Hari ini sulit? Gapapa, besok kita coba lagi.",
+    "Kamu lebih kuat dari deadline-mu. 🔥",
+    "Jangan lupa apresiasi diri sendiri setelah tugas selesai.",
+    "Rejeki nggak akan ketuker, tapi kalau nggak usaha ya nggak dapet.",
+    "Hidup itu seperti koding; kalau error, coba cek lagi baris demi baris.",
+    "Semangat! Cicilan masa depan (dan harapan orang tua) menanti.",
+    // --- STOIC & MENTALITAS ---
+    "Kita tidak bisa mengendalikan angin, tapi kita bisa mengendalikan layar.",
+    "Fokus pada apa yang bisa kamu kendalikan.",
+    "Kesulitan seringkali mempersiapkan orang biasa untuk takdir yang luar biasa.",
+    "Jadilah seperti karang, tidak goyah meski dihantam ombak.",
+    "Kebahagiaan bergantung pada dirimu sendiri.",
+    // --- SHORT & PUNCHY ---
+    "Gas terus! 🚀",
+    "Just do it.",
+    "Make it happen.",
+    "Dream big, work hard.",
+    "Stay hungry, stay foolish.",
+    "Your only limit is you.",
+    "Wake up and grind.",
+    "Do it with passion or not at all.",
+    "Action speaks louder.",
+    "Finish what you started."
+];
+
+// KATA-KATA GAUL / PUJIAN UNTUK TASK SELESAI
+const funWords = [
+    "Menyala Abangkuh! 🔥",
+    "Gacor Parah! 🦅",
+    "Kelas Pejabat! 🎩",
+    "Savage! ⚔️",
+    "Ez Lemon Squeezy 🍋",
+    "Mantap Jiwa! 👻",
+    "GG Gaming! 🎮",
+    "Auto Kaya! 💸",
+    "Mulus Banget 🧈",
+    "Slayyy! 💅",
+    "Top Global 🌍",
+    "Gak Ada Obat! 💊"
 ];
 
 // ==================== B. AUTHENTICATION LOGIC ====================
 
 document.addEventListener("DOMContentLoaded", () => {
-    // Cek status login saat web dibuka
     initAuthListener(); 
 });
 
-// 1. CEK STATUS LOGIN (AUTO DETECT)
 function initAuthListener() {
     setTimeout(() => {
         if (!window.authListener) return;
 
         window.authListener(window.auth, (user) => {
             if (user) {
-                // USER SEDANG LOGIN
                 const displayName = user.displayName ? user.displayName : user.email.split('@')[0];
-                currentUser = displayName; // Pakai nama untuk display
-                const uid = user.uid; // Simpan UID untuk akses database
+                currentUser = displayName;
+                const uid = user.uid; 
                 
                 document.getElementById('loginOverlay').style.display = 'none';
                 document.getElementById('mainContent').style.display = 'block';
                 
-                // Tampilkan Nama
                 document.getElementById('displayUsername').innerText = displayName; 
-                updateGreeting(); // Panggil fungsi greeting yang baru
+                updateGreeting(); 
                 document.getElementById('loginStatusText').innerText = "Online";
                 
-                // Mulai Listener data pakai UID asli
                 startFirebaseListener(uid); 
                 initApp();
             } else {
-                // USER SEDANG LOGOUT
                 currentUser = null;
                 document.getElementById('loginOverlay').style.display = 'flex';
                 document.getElementById('mainContent').style.display = 'none';
@@ -138,13 +197,10 @@ function initAuthListener() {
     }, 1000);
 }
 
-// 2. FUNGSI GANTI HALAMAN (LOGIN <-> REGISTER)
 window.switchAuthMode = function(mode) {
     const loginView = document.getElementById('loginView');
     const registerView = document.getElementById('registerView');
     const errorMsg = document.getElementById('authErrorMsg');
-    
-    // Reset pesan error saat ganti view
     if(errorMsg) errorMsg.innerText = ""; 
 
     if (mode === 'register') {
@@ -156,7 +212,6 @@ window.switchAuthMode = function(mode) {
     }
 }
 
-// 3. LOGIN EMAIL BIASA
 window.handleLogin = function() {
     const email = document.getElementById('loginEmail').value;
     const pass = document.getElementById('loginPass').value;
@@ -170,10 +225,8 @@ window.handleLogin = function() {
         .catch((error) => { errorMsg.innerText = "Gagal: Email/Password salah."; });
 }
 
-// 4. LOGIN GOOGLE
 window.handleGoogleLogin = function() {
     const errorMsg = document.getElementById('authErrorMsg');
-    
     errorMsg.innerText = "Menghubungkan ke Google...";
     errorMsg.style.color = "var(--text-sub)";
     
@@ -186,7 +239,6 @@ window.handleGoogleLogin = function() {
         }).catch((error) => {
             console.error(error);
             errorMsg.style.color = "var(--red)";
-            
             if (error.code === 'auth/popup-closed-by-user') {
                 errorMsg.innerText = "Login dibatalkan.";
             } else if (error.code === 'auth/network-request-failed') {
@@ -197,7 +249,6 @@ window.handleGoogleLogin = function() {
         });
 }
 
-// 5. REGISTER EMAIL BARU
 window.handleRegister = function() {
     const username = document.getElementById('regUsername').value;
     const email = document.getElementById('regEmail').value;
@@ -221,7 +272,6 @@ window.handleRegister = function() {
         });
 }
 
-// 6. LOGOUT
 window.logoutUser = function() {
     if(confirm("Yakin ingin keluar?")) {
         window.authSignOut(window.auth).then(() => {
@@ -230,13 +280,13 @@ window.logoutUser = function() {
     }
 }
 
-// 7. GANTI USERNAME
 window.editUsername = function() {
     const user = window.auth.currentUser;
     if(user) {
         document.getElementById('newUsernameInput').value = user.displayName || "";
         document.getElementById('usernameModal').style.display = 'flex';
-        toggleSettings(); 
+        const dropdown = document.getElementById('settingsDropdown');
+        if(dropdown) dropdown.classList.remove('active');
     }
 }
 
@@ -247,7 +297,7 @@ window.saveUsername = function() {
     const user = window.auth.currentUser;
     window.authUpdateProfile(user, { displayName: newName }).then(() => {
         document.getElementById('displayUsername').innerText = newName;
-        updateGreeting(); // Update header
+        updateGreeting();
         document.getElementById('usernameModal').style.display = 'none';
         showToast("Nama berhasil diganti!", "success");
     }).catch(err => {
@@ -262,24 +312,19 @@ function startFirebaseListener(uid) {
         console.error("Firebase belum siap.");
         return;
     }
-
     const userPath = 'users/' + uid;
     
     window.dbOnValue(window.dbRef(window.db, userPath), (snapshot) => {
         const data = snapshot.val();
-
         if (data) {
             cachedData.tasks = data.tasks || [];
             cachedData.transactions = data.transactions || [];
-            
             if (data.jadwal && data.jadwal.umum) {
                 cachedData.jadwal = data.jadwal;
             } else {
-                console.log("Jadwal Cloud Kosong/Rusak. Memperbaiki otomatis...");
                 cachedData.jadwal = defaultJadwalData;
                 saveDB('jadwalData', defaultJadwalData); 
             }
-            
             if(data.settings) {
                 if(data.settings.theme) applyTheme(data.settings.theme);
                 if(data.settings.weekType) currentWeekType = data.settings.weekType;
@@ -290,7 +335,6 @@ function startFirebaseListener(uid) {
             cachedData.jadwal = defaultJadwalData;
             saveAllToCloud(uid); 
         }
-
         jadwalData = cachedData.jadwal;
         renderAll();
     });
@@ -315,7 +359,10 @@ function saveSetting(key, val) {
 }
 
 function saveAllToCloud(uid) {
-    window.dbSet(window.dbRef(window.db, `users/${uid}`), cachedData);
+    const targetUid = uid || (window.auth.currentUser ? window.auth.currentUser.uid : null);
+    if(targetUid) {
+        window.dbSet(window.dbRef(window.db, `users/${targetUid}`), cachedData);
+    }
 }
 
 function getDB(key) {
@@ -342,7 +389,6 @@ function initApp() {
             else if (e.key === 'd' || e.key === 'D') { e.preventDefault(); toggleDarkMode(); }
         }
     });
-
     setInterval(checkReminders, 60000);
 }
 
@@ -356,18 +402,16 @@ function renderAll() {
     loadPomodoroTasks();
 }
 
-// --- UTILS UTAMA UNTUK UI ---
+// --- UTILS UI ---
 function updateGreeting() { 
     const h = new Date().getHours(); 
     let greet = 'Halo';
     let emoji = '👋';
-
     if (h < 11) { greet = 'Selamat Pagi'; emoji = '☀️'; }
     else if (h < 15) { greet = 'Selamat Siang'; emoji = '🌤️'; }
     else if (h < 18) { greet = 'Selamat Sore'; emoji = '🌇'; }
     else { greet = 'Selamat Malam'; emoji = '🌙'; }
 
-    // Menggunakan innerHTML agar class text-gradient bekerja
     const userDisplay = currentUser || 'User';
     document.getElementById('greeting').innerHTML = `${greet}, <span class="text-gradient">${escapeHtml(userDisplay)}</span>! ${emoji}`; 
 }
@@ -483,7 +527,7 @@ function loadPomodoroTasks() {
     });
 }
 
-// --- JADWAL ---
+// --- JADWAL (LIVE STATUS WIDGET) ---
 function changeDay(dir) { currentDayIdx += dir; if(currentDayIdx>6) currentDayIdx=0; if(currentDayIdx<0) currentDayIdx=6; renderSchedule(); }
 function changeWeekType() { 
     currentWeekType = document.getElementById('weekTypeSelector').value; 
@@ -526,12 +570,18 @@ function renderSchedule() {
     if(!jadwalData) return;
     let data = jadwalData[currentWeekDisplay][dayName];
     const tbody = document.getElementById('scheduleBody');
+    const statusContainer = document.querySelector('.schedule-status-bar');
+
+    // LOGIKA WAKTU
     const now = new Date();
-    const curMins = now.getHours() * 60 + now.getMinutes();
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+    const curMins = currentHour * 60 + currentMinute;
     const isToday = currentDayIdx === now.getDay();
     
     tbody.innerHTML = '';
     
+    // Filter
     const filterCategory = document.getElementById('scheduleFilterCategory').value;
     const filterGuru = document.getElementById('scheduleFilterGuru').value;
 
@@ -542,38 +592,122 @@ function renderSchedule() {
         });
     }
 
+    // --- RENDER LIVE STATUS WIDGET ---
+    // Kita ganti elemen .schedule-status-bar lama dengan widget baru
+    // Cari elemen lama
+    let statusWidget = document.getElementById('liveStatusWidget');
+    if (!statusWidget) {
+        // Jika belum ada (pertama kali render), buat structure baru
+        const container = document.querySelector('.schedule-status-bar');
+        if(container) {
+            container.outerHTML = `
+            <div id="liveStatusWidget" class="live-status-widget">
+                <div class="status-icon-box"><i class="fas fa-bolt" id="statusIcon"></i></div>
+                <div class="status-content">
+                    <h4 id="statusLabel">STATUS SAAT INI</h4>
+                    <p id="statusText">Memuat...</p>
+                </div>
+            </div>`;
+            statusWidget = document.getElementById('liveStatusWidget');
+        }
+    }
+
+    // Cek Libur / Kosong
     if(!data || data.length === 0) { 
         tbody.parentElement.style.display='none'; 
         document.getElementById('holidayMessage').style.display='block'; 
-        document.getElementById('currentStatus').innerText = "Libur"; 
+        
+        if(statusWidget) {
+            document.getElementById('statusText').innerText = "Tidak ada jadwal (Libur)";
+            document.getElementById('statusIcon').className = "fas fa-mug-hot";
+            statusWidget.className = "live-status-widget status-chill";
+        }
         return; 
     }
     
     tbody.parentElement.style.display='table'; 
     document.getElementById('holidayMessage').style.display='none';
-    let status = "Belum Mulai";
+    
+    // Logic Status
+    let statusText = "Belum Mulai";
+    let statusClass = "live-status-widget"; // Default (Ungu/Biru)
+    let iconClass = "fas fa-clock";
 
+    if (isToday) {
+        if (currentHour >= 17) {
+            statusText = "Selesai. Sampai Jumpa Besok!";
+            statusClass = "live-status-widget status-chill";
+            iconClass = "fas fa-moon";
+        } else {
+            let ongoing = false;
+            data.forEach(item => {
+                const parts = item.time.split("-");
+                if(parts.length >= 2) {
+                    const start = parts[0].trim().replace(/\./g, ':').split(':').map(Number);
+                    const end = parts[1].trim().split(" ")[0].replace(/\./g, ':').split(':').map(Number);
+                    const sM = start[0]*60+start[1]; 
+                    const eM = end[0]*60+end[1];
+                    
+                    if(curMins >= sM && curMins < eM) { 
+                        statusText = `Sedang Berlangsung: ${item.mapel}`; 
+                        statusClass = "live-status-widget status-busy"; // Oranye/Merah
+                        iconClass = "fas fa-book-reader";
+                        ongoing = true;
+                    }
+                }
+            });
+            if (!ongoing && currentHour < 17) {
+                if (curMins < (7*60 + 45)) { 
+                     statusText = "Menunggu jam masuk...";
+                     iconClass = "fas fa-hourglass-start";
+                } else {
+                     statusText = "Istirahat / Pergantian Jam";
+                     statusClass = "live-status-widget status-chill";
+                     iconClass = "fas fa-coffee";
+                }
+            }
+        }
+    } else {
+        statusText = `Lihat Jadwal Hari ${dayName}`;
+        statusClass = "live-status-widget status-chill";
+        iconClass = "fas fa-calendar-alt";
+    }
+
+    if(statusWidget) {
+        document.getElementById('statusText').innerText = statusText;
+        document.getElementById('statusIcon').className = iconClass;
+        statusWidget.className = statusClass;
+    }
+
+    // RENDER TABEL
     data.forEach((item, idx) => {
         let isActive = false;
-        const parts = item.time.split("-");
-        if(parts.length >= 2 && isToday) {
-            const start = parts[0].trim().replace(/\./g, ':').split(':').map(Number);
-            const end = parts[1].trim().split(" ")[0].replace(/\./g, ':').split(':').map(Number);
-            const sM = start[0]*60+start[1]; const eM = end[0]*60+end[1];
-            if(curMins >= sM && curMins < eM) { isActive = true; status = `Sedang: ${item.mapel}`; }
+        if (isToday && currentHour < 17) {
+            const parts = item.time.split("-");
+            if(parts.length >= 2) {
+                const start = parts[0].trim().replace(/\./g, ':').split(':').map(Number);
+                const end = parts[1].trim().split(" ")[0].replace(/\./g, ':').split(':').map(Number);
+                const sM = start[0]*60+start[1]; const eM = end[0]*60+end[1];
+                if(curMins >= sM && curMins < eM) { isActive = true; }
+            }
         }
         
-        const noteElem = `<div class="note-placeholder" onclick="alert('Fitur catatan per mapel akan hadir di update berikutnya!')">+ Catatan</div>`;
+        const noteElem = `<button class="btn-note" onclick="alert('Fitur catatan per mapel akan hadir di update berikutnya!')">
+                            <i class="fas fa-sticky-note"></i> Catatan
+                          </button>`;
+        
+        const editElem = `<button class="btn-edit-round" onclick="openScheduleEdit('${dayName}',${idx})" title="Edit Jadwal">
+                            <i class="fas fa-pencil-alt"></i>
+                          </button>`;
         
         tbody.innerHTML += `
         <tr class="${isActive?'active-row':''}">
             <td><b>${escapeHtml(item.mapel)}</b><br><small style="color:var(--text-sub)">${escapeHtml(item.guru || '')}</small></td>
             <td>${escapeHtml(item.time)}</td>
             <td>${noteElem}</td>
-            <td><button class="btn-edit-icon" onclick="openScheduleEdit('${dayName}',${idx})"><i class="fas fa-pencil-alt"></i></button></td>
+            <td>${editElem}</td>
         </tr>`;
     });
-    document.getElementById('currentStatus').innerText = isToday ? status : `Jadwal ${dayName}`;
 }
 
 let currentScheduleEdit = null;
@@ -688,14 +822,18 @@ function loadTasks() {
             }
         }
 
+        // GENERATE KATA-KATA RANDOM (STATIC PER RENDER UNTUK EFEK VISUAL)
+        const randomWord = funWords[Math.floor(Math.random() * funWords.length)];
+
         list.innerHTML += `
             <li class="task-item priority-${t.priority} ${t.completed ? 'completed' : ''}">
-                <div class="task-content">
+                <div class="task-content" style="display:flex;align-items:center;width:100%;">
                     <div class="check-btn" onclick="toggleTask(${t.id})"><i class="fas fa-check"></i></div>
                     <div class="task-text">
                         <span>${escapeHtml(t.text)}</span>
                         <small class="${badgeClass}">${dateDisplay} • ${t.priority}</small>
                     </div>
+                     <span class="fun-badge">${randomWord}</span>
                 </div>
                 <div class="task-actions">
                     <button class="action-btn" onclick="loadTaskToEdit(${t.id})"><i class="fas fa-pencil-alt"></i></button>
@@ -747,7 +885,7 @@ function clearCompletedTasks() {
     if(confirm("Hapus semua yang selesai?")) saveDB('tasks', tasks);
 }
 
-// --- KEUANGAN ---
+// --- KEUANGAN (FIX: FORMAT RUPIAH) ---
 function addTransaction(type) {
     const desc = escapeHtml(document.getElementById('moneyDesc').value);
     const amount = parseInt(document.getElementById('moneyAmount').value);
@@ -765,7 +903,7 @@ function addTransaction(type) {
     
     if(type === 'in') playSuccessSound('coin'); 
     document.getElementById('moneyDesc').value = ''; document.getElementById('moneyAmount').value = '';
-    showToast(`${type==='in'?"Masuk":"Keluar"} Rp ${amount} tercatat!`, type==='in'?'success':'error');
+    showToast(`${type==='in'?"Masuk":"Keluar"} Rp ${amount.toLocaleString('id-ID')} tercatat!`, type==='in'?'success':'error');
 }
 
 function loadTransactions() {
@@ -789,14 +927,14 @@ function loadTransactions() {
             list.innerHTML += `
                 <li class="txn-item">
                     <div class="txn-left"><b>${escapeHtml(t.desc)}</b><small>${t.wallet.toUpperCase()} • ${t.category}</small></div>
-                    <div class="txn-right"><b style="color:${color}">${sign} ${t.amount.toLocaleString()}</b>
+                    <div class="txn-right"><b style="color:${color}">${sign} Rp ${t.amount.toLocaleString('id-ID')}</b>
                     <button class="delete-txn-btn" onclick="delTxn(${t.id})"><i class="fas fa-trash"></i></button></div>
                 </li>`;
         }
     });
 
-    document.getElementById('totalBalance').innerText = "Rp " + bal.total.toLocaleString();
-    ['dana','ovo','gopay','cash'].forEach(k => document.getElementById(`saldo-${k}`).innerText = "Rp " + bal[k].toLocaleString());
+    document.getElementById('totalBalance').innerText = "Rp " + bal.total.toLocaleString('id-ID');
+    ['dana','ovo','gopay','cash'].forEach(k => document.getElementById(`saldo-${k}`).innerText = "Rp " + bal[k].toLocaleString('id-ID'));
     
     renderExpenseChart(txns);
 }
@@ -818,17 +956,39 @@ function editTarget() {
     } 
 }
 
+// --- LOGIKA TARGET (DESIMAL & FORMAT RUPIAH) ---
 function loadTarget() {
-    const uid = window.auth.currentUser.uid;
+    const uid = window.auth.currentUser ? window.auth.currentUser.uid : null;
+    if(!uid) return;
+
     const target = parseInt(localStorage.getItem(`${uid}_target`) || 0);
     const txns = cachedData.transactions;
-    let saving = 0; 
-    txns.forEach(t => { if(t.category === 'Tabungan' && t.type === 'in') saving += t.amount; });
     
-    document.getElementById('targetAmount').innerText = "Rp " + target.toLocaleString();
-    const pct = target > 0 ? Math.min(100, Math.round((saving/target)*100)) : 0;
+    let saving = 0; 
+    txns.forEach(t => { 
+        if(t.category === 'Tabungan' && t.type === 'in') {
+            saving += t.amount; 
+        }
+        if(t.category === 'Tabungan' && t.type === 'out') {
+            saving -= t.amount;
+        }
+    });
+    
+    if (saving < 0) saving = 0;
+
+    document.getElementById('targetAmount').innerText = "Rp " + target.toLocaleString('id-ID');
+    
+    let pct = 0;
+    if (target > 0) {
+        pct = (saving / target) * 100;
+    }
+    if (pct > 100) pct = 100;
+
+    let pctDisplay = pct.toFixed(1); 
+    if (pctDisplay.endsWith('.0')) pctDisplay = Math.round(pct);
+
     document.getElementById('targetProgressBar').style.width = `${pct}%`;
-    document.getElementById('targetPercentage').innerText = `${pct}% (${saving.toLocaleString()})`;
+    document.getElementById('targetPercentage').innerText = `${pctDisplay}% (Rp ${saving.toLocaleString('id-ID')})`;
 }
 
 function renderExpenseChart(txns) {
@@ -846,7 +1006,7 @@ function renderExpenseChart(txns) {
         html += `
         <div class="expense-item">
             <div class="expense-label"><span class="dot" style="background:${colors[c]||'#ccc'}"></span>${c}</div>
-            <div class="expense-value">${cats[c].toLocaleString()} <small>(${pct}%)</small></div>
+            <div class="expense-value">Rp ${cats[c].toLocaleString('id-ID')} <small>(${pct}%)</small></div>
             <div class="expense-bar-bg"><div class="expense-bar-fill" style="width:${pct}%;background:${colors[c]||'#ccc'}"></div></div>
         </div>`;
     });
@@ -886,10 +1046,130 @@ function checkReminders() {
     if(data) data.forEach(i => { const p=i.time.split("-"); if(p.length>=2) { const s=p[0].trim().replace(/\./g,':').split(':').map(Number); if(m===(s[0]*60+s[1])-5) showToast(`🔔 5 Menit lagi: ${i.mapel}`, 'info'); } }); 
 }
 function escapeHtml(text) { if (!text) return text; return String(text).replace(/[&<>"']/g, function(m) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m]; }); }
-function loadRandomQuote() { if(document.getElementById('motivationQuote')) document.getElementById('motivationQuote').innerText = `"${motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)]}"`; }
+
+// Fungsi RNG (Acak) yang Memilih Salah Satu
+function loadRandomQuote() {
+    if(document.getElementById('motivationQuote')) {
+        // Math.random() akan memilih angka acak dari 0 sampai panjang array
+        const randomIndex = Math.floor(Math.random() * motivationalQuotes.length);
+        document.getElementById('motivationQuote').innerText = `"${motivationalQuotes[randomIndex]}"`;
+    }
+}
+
 function openClearDataModal() { if(confirm("Yakin hapus data lokal dan logout?")) { localStorage.clear(); location.reload(); } }
 function exportData() { 
     const d=cachedData; 
     const b=new Blob([JSON.stringify(d)],{type:"application/json"}); 
     const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=`${currentUser}_backup.json`; a.click(); 
 }
+
+// --- UTILS UI & RESTORE DATA ---
+window.toggleSettings = function() { 
+    const dropdown = document.getElementById('settingsDropdown');
+    if (dropdown) dropdown.classList.toggle('active');
+}
+
+window.selectWallet = function(walletId, el) {
+    document.getElementById('selectedWallet').value = walletId;
+    document.querySelectorAll('.wallet-card').forEach(card => {
+        card.classList.remove('active');
+    });
+    el.classList.add('active');
+}
+
+window.importData = function(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const data = JSON.parse(e.target.result);
+            if (confirm("Apakah Anda yakin ingin menimpa data saat ini dengan data backup?")) {
+                cachedData = data;
+                saveAllToCloud(); 
+                showToast("Data berhasil direstore!", "success");
+                setTimeout(() => location.reload(), 1000);
+            }
+        } catch (err) {
+            console.error(err);
+            showToast("File backup rusak atau tidak valid!", "error");
+        }
+    };
+    reader.readAsText(file);
+    input.value = '';
+}
+
+// --- FITUR TAMBAH JADWAL (DARI MODAL) ---
+window.openAddScheduleModal = function() {
+    const currentDayName = days[currentDayIdx];
+    document.getElementById('addScheduleDay').value = currentDayName;
+    
+    let currentType = document.getElementById('weekTypeSelector').value;
+    if(currentType === 'auto') currentType = 'umum'; 
+    document.getElementById('addScheduleWeekType').value = currentType;
+
+    document.getElementById('addScheduleMapel').value = '';
+    document.getElementById('addScheduleGuru').value = '';
+    document.getElementById('addScheduleTime').value = '';
+    
+    document.getElementById('addScheduleModal').style.display = 'flex';
+}
+
+window.saveNewSchedule = function() {
+    const weekType = document.getElementById('addScheduleWeekType').value;
+    const day = document.getElementById('addScheduleDay').value;
+    const mapel = document.getElementById('addScheduleMapel').value;
+    const guru = document.getElementById('addScheduleGuru').value;
+    const time = document.getElementById('addScheduleTime').value;
+    const type = document.getElementById('addScheduleType').value;
+
+    if(!mapel || !time) {
+        showToast("Nama Mapel dan Waktu wajib diisi!", "error");
+        return;
+    }
+
+    const newItem = { mapel, guru, time, type };
+
+    if (!jadwalData[weekType]) jadwalData[weekType] = {};
+    if (!jadwalData[weekType][day]) jadwalData[weekType][day] = [];
+
+    jadwalData[weekType][day].push(newItem);
+    
+    // Sortir jadwal agar urut waktu
+    jadwalData[weekType][day].sort((a, b) => {
+        const timeA = a.time.split('-')[0].trim().replace('.',':');
+        const timeB = b.time.split('-')[0].trim().replace('.',':');
+        return timeA.localeCompare(timeB);
+    });
+
+    saveDB('jadwalData', jadwalData);
+    renderSchedule();
+    document.getElementById('addScheduleModal').style.display = 'none';
+    showToast("Jadwal berhasil ditambahkan!", "success");
+}
+
+// --- FITUR HAPUS JADWAL (DARI MODAL EDIT) ---
+window.deleteSchedule = function() {
+    if (!currentScheduleEdit) return;
+    
+    if(confirm("Yakin ingin menghapus jadwal mata pelajaran ini?")) {
+        const { day, idx } = currentScheduleEdit;
+        let displayType = currentWeekType;
+        if (currentWeekType === 'auto') {
+             displayType = (getWeekNumber(new Date()) % 2 !== 0) ? 'umum' : 'produktif';
+        }
+
+        if(jadwalData[displayType] && jadwalData[displayType][day]) {
+            jadwalData[displayType][day].splice(idx, 1);
+            saveDB('jadwalData', jadwalData);
+            renderSchedule();
+            closeScheduleEditModal();
+            showToast("Jadwal berhasil dihapus!", "success");
+        }
+    }
+}
+
+window.closeNoteModal = function() { document.getElementById('noteModal').style.display = 'none'; }
+window.saveNoteFromModal = function() { showToast("Catatan disimpan (Placeholder)", "success"); closeNoteModal(); }
+window.deleteNote = function() { if(confirm("Hapus catatan?")) { document.getElementById('noteModalInput').value = ""; closeNoteModal(); } }
