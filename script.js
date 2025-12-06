@@ -1058,3 +1058,33 @@ window.saveNewSchedule = function() {
 window.closeNoteModal = function() { document.getElementById('noteModal').style.display = 'none'; }
 window.saveNoteFromModal = function() { showToast("Catatan disimpan (Placeholder)", "success"); closeNoteModal(); }
 window.deleteNote = function() { if(confirm("Hapus catatan?")) { document.getElementById('noteModalInput').value = ""; closeNoteModal(); } }
+
+// --- FITUR HAPUS JADWAL (BARU) ---
+window.deleteSchedule = function() {
+    // Cek apakah ada jadwal yang sedang diedit
+    if (!currentScheduleEdit) return;
+    
+    if(confirm("Yakin ingin menghapus jadwal mata pelajaran ini?")) {
+        const { day, idx } = currentScheduleEdit;
+        
+        // Tentukan kita sedang di minggu apa (Umum/Produktif)
+        let displayType = currentWeekType;
+        if (currentWeekType === 'auto') {
+             displayType = (getWeekNumber(new Date()) % 2 !== 0) ? 'umum' : 'produktif';
+        }
+
+        // Proses Hapus
+        if(jadwalData[displayType] && jadwalData[displayType][day]) {
+            // Hapus 1 item pada index tersebut
+            jadwalData[displayType][day].splice(idx, 1);
+            
+            // Simpan perubahan ke Firebase
+            saveDB('jadwalData', jadwalData);
+            
+            // Refresh tampilan & tutup modal
+            renderSchedule();
+            closeScheduleEditModal();
+            showToast("Jadwal berhasil dihapus!", "success");
+        }
+    }
+}
