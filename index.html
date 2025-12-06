@@ -464,7 +464,7 @@
         </div>
     </div>
 
-    <div id="scheduleEditModal" class="modal-backdrop" style="display: none;">
+  <div id="scheduleEditModal" class="modal-backdrop" style="display: none;">
         <div class="modal-content fade-in-up">
             <div class="modal-head">
                 <h3>✏️ Edit Jadwal</h3>
@@ -488,8 +488,9 @@
                     </select>
                 </div>
             </div>
-            <div class="modal-foot">
-                <button onclick="saveScheduleChanges()" class="btn-primary btn-block">Simpan Perubahan</button>
+            <div class="modal-foot" style="justify-content: space-between;">
+                <button onclick="deleteSchedule()" class="btn-text-danger"><i class="fas fa-trash"></i> Hapus</button>
+                <button onclick="saveScheduleChanges()" class="btn-primary">Simpan Perubahan</button>
             </div>
         </div>
     </div>
