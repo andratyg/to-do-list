@@ -542,7 +542,7 @@ function renderSchedule() {
     tbody.parentElement.style.display='table'; 
     document.getElementById('holidayMessage').style.display='none';
     
-    // --- LOGIKA STATUS BARU ---
+    // --- LOGIKA STATUS BARU (FIX: KATA-KATA ESTETIK) ---
     let statusText = "Belum Mulai";
     let dotColor = "var(--text-sub)";
 
@@ -790,7 +790,7 @@ function clearCompletedTasks() {
     if(confirm("Hapus semua yang selesai?")) saveDB('tasks', tasks);
 }
 
-// --- KEUANGAN ---
+// --- KEUANGAN (FIX: FORMAT RUPIAH) ---
 function addTransaction(type) {
     const desc = escapeHtml(document.getElementById('moneyDesc').value);
     const amount = parseInt(document.getElementById('moneyAmount').value);
@@ -808,7 +808,7 @@ function addTransaction(type) {
     
     if(type === 'in') playSuccessSound('coin'); 
     document.getElementById('moneyDesc').value = ''; document.getElementById('moneyAmount').value = '';
-    showToast(`${type==='in'?"Masuk":"Keluar"} Rp ${amount} tercatat!`, type==='in'?'success':'error');
+    showToast(`${type==='in'?"Masuk":"Keluar"} Rp ${amount.toLocaleString('id-ID')} tercatat!`, type==='in'?'success':'error');
 }
 
 function loadTransactions() {
@@ -832,7 +832,7 @@ function loadTransactions() {
             list.innerHTML += `
                 <li class="txn-item">
                     <div class="txn-left"><b>${escapeHtml(t.desc)}</b><small>${t.wallet.toUpperCase()} • ${t.category}</small></div>
-                    <div class="txn-right"><b style="color:${color}">${sign} ${t.amount.toLocaleString('id-ID')}</b>
+                    <div class="txn-right"><b style="color:${color}">${sign} Rp ${t.amount.toLocaleString('id-ID')}</b>
                     <button class="delete-txn-btn" onclick="delTxn(${t.id})"><i class="fas fa-trash"></i></button></div>
                 </li>`;
         }
@@ -861,7 +861,7 @@ function editTarget() {
     } 
 }
 
-// --- LOGIKA TARGET (DESIMAL & FORMAT IDR) ---
+// --- LOGIKA TARGET (DESIMAL & FORMAT RUPIAH) ---
 function loadTarget() {
     const uid = window.auth.currentUser ? window.auth.currentUser.uid : null;
     if(!uid) return;
@@ -911,7 +911,7 @@ function renderExpenseChart(txns) {
         html += `
         <div class="expense-item">
             <div class="expense-label"><span class="dot" style="background:${colors[c]||'#ccc'}"></span>${c}</div>
-            <div class="expense-value">${cats[c].toLocaleString('id-ID')} <small>(${pct}%)</small></div>
+            <div class="expense-value">Rp ${cats[c].toLocaleString('id-ID')} <small>(${pct}%)</small></div>
             <div class="expense-bar-bg"><div class="expense-bar-fill" style="width:${pct}%;background:${colors[c]||'#ccc'}"></div></div>
         </div>`;
     });
