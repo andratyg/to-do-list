@@ -7,7 +7,7 @@
     
     <meta http-equiv="Content-Security-Policy" content="
         default-src 'self' https://*.firebaseio.com https://*.firebaseapp.com;
-        script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://apis.google.com https://*.firebasejs.com https://*.firebaseapp.com;
+        script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://apis.google.com https://*.firebasejs.com https://*.firebaseapp.com https://*.firebasedatabase.app;
         style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com;
         font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com;
         img-src 'self' data: https://www.gstatic.com https://lh3.googleusercontent.com;
@@ -126,7 +126,9 @@
         </header>
 
         <div class="dashboard-grid fade-in-up">
+            
             <div class="left-column">
+                
                 <div class="card schedule-section">
                     <div class="card-header">
                         <div class="title-with-icon">
@@ -208,15 +210,18 @@
                         </div>
                         <span class="mode-label" id="timerMode">FOKUS</span>
                     </div>
+
                     <div class="timer-display">
                         <h1 id="timerDisplay">25:00</h1>
                         <p id="timerMessage">Waktunya Bekerja Keras</p>
                     </div>
+                    
                     <div class="form-group" style="margin-bottom: 20px;">
                          <select id="pomodoroTaskSelector" class="sub-input">
                             <option value="">-- Pilih Tugas untuk Fokus --</option>
                          </select>
                     </div>
+
                     <div class="timer-controls">
                         <button class="btn-primary" id="startPauseBtn" onclick="startTimer()">Mulai</button>
                         <button class="btn-text-danger" onclick="resetTimer()"><i class="fas fa-redo"></i> Reset</button>
@@ -225,6 +230,7 @@
             </div>
 
             <div class="sidebar-column">
+                
                 <div class="card todo-card">
                     <div class="card-header">
                         <div class="title-with-icon">
@@ -239,13 +245,21 @@
                             </svg>
                         </div>
                     </div>
+
                     <div class="filter-tabs">
                         <button class="tab active" onclick="filterTasks('all', this)">Semua</button>
                         <button class="tab" onclick="filterTasks('pending', this)">Belum</button>
                         <button class="tab" onclick="filterTasks('completed', this)">Selesai</button>
-                        <button class="tab btn-clear" onclick="clearCompletedTasks()" title="Hapus semua yang selesai"><i class="fas fa-trash-alt"></i></button>
+                        <button class="tab btn-clear" onclick="clearCompletedTasks()" title="Hapus semua yang selesai">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
                     </div>
-                    <div class="search-input"><i class="fas fa-search"></i><input type="text" id="searchTaskInput" placeholder="Cari tugas..." onkeyup="loadTasks()"></div>
+
+                    <div class="search-input">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="searchTaskInput" placeholder="Cari tugas..." onkeyup="loadTasks()">
+                    </div>
+
                     <div class="add-task-form">
                         <input type="text" id="taskInput" class="main-input" placeholder="Tugas baru...">
                         <div class="form-row">
@@ -258,6 +272,7 @@
                         </div>
                         <button id="addTaskBtn" class="btn-block btn-primary" onclick="handleTaskButton()">Tambah Tugas</button>
                     </div>
+
                     <ul id="taskList" class="task-list"></ul>
                 </div>
 
@@ -267,25 +282,74 @@
                             <div class="icon-box green"><i class="fas fa-wallet"></i></div>
                             <h2>Keuangan</h2>
                         </div>
-                        <div class="balance-display"><small>Total Aset</small><h3 id="totalBalance">Rp 0</h3></div>
+                        <div class="balance-display">
+                            <small>Total Aset</small>
+                            <h3 id="totalBalance">Rp 0</h3>
+                        </div>
                     </div>
+
                     <div class="target-widget" onclick="editTarget()">
-                        <div class="target-header"><span id="targetName">🎯 Set Target</span><span id="targetAmount">Rp 0</span></div>
+                        <div class="target-header">
+                            <span id="targetName">🎯 Set Target</span>
+                            <span id="targetAmount">Rp 0</span>
+                        </div>
                         <div class="progress-bar-bg"><div id="targetProgressBar" class="progress-bar-fill"></div></div>
                         <small id="targetPercentage">0% tercapai</small>
                     </div>
+
                     <div class="chart-section">
                         <h4>Distribusi Pengeluaran</h4>
                         <div id="expenseChartContainer" class="expense-chart-container"></div>
                     </div>
+                    
                     <div class="wallet-label">Pilih Sumber Dana:</div>
                     <div class="wallet-grid">
-                        <div class="wallet-card dana" onclick="selectWallet('dana', this)"><div class="card-top"><span>DANA</span><i class="fas fa-check-circle check-icon"></i></div><div class="card-bottom"><b id="saldo-dana">Rp 0</b></div><i class="bg-icon fas fa-wallet"></i></div>
-                        <div class="wallet-card ovo" onclick="selectWallet('ovo', this)"><div class="card-top"><span>OVO</span><i class="fas fa-check-circle check-icon"></i></div><div class="card-bottom"><b id="saldo-ovo">Rp 0</b></div><i class="bg-icon fas fa-mobile-alt"></i></div>
-                        <div class="wallet-card gopay" onclick="selectWallet('gopay', this)"><div class="card-top"><span>GOPAY</span><i class="fas fa-check-circle check-icon"></i></div><div class="card-bottom"><b id="saldo-gopay">Rp 0</b></div><i class="bg-icon fas fa-motorcycle"></i></div>
-                        <div class="wallet-card cash active" onclick="selectWallet('cash', this)"><div class="card-top"><span>TUNAI</span><i class="fas fa-check-circle check-icon"></i></div><div class="card-bottom"><b id="saldo-cash">Rp 0</b></div><i class="bg-icon fas fa-money-bill-wave"></i></div>
+                        <div class="wallet-card dana" onclick="selectWallet('dana', this)">
+                            <div class="card-top">
+                                <span>DANA</span>
+                                <i class="fas fa-check-circle check-icon"></i>
+                            </div>
+                            <div class="card-bottom">
+                                <b id="saldo-dana">Rp 0</b>
+                            </div>
+                            <i class="bg-icon fas fa-wallet"></i>
+                        </div>
+
+                        <div class="wallet-card ovo" onclick="selectWallet('ovo', this)">
+                            <div class="card-top">
+                                <span>OVO</span>
+                                <i class="fas fa-check-circle check-icon"></i>
+                            </div>
+                            <div class="card-bottom">
+                                <b id="saldo-ovo">Rp 0</b>
+                            </div>
+                            <i class="bg-icon fas fa-mobile-alt"></i>
+                        </div>
+
+                        <div class="wallet-card gopay" onclick="selectWallet('gopay', this)">
+                            <div class="card-top">
+                                <span>GOPAY</span>
+                                <i class="fas fa-check-circle check-icon"></i>
+                            </div>
+                            <div class="card-bottom">
+                                <b id="saldo-gopay">Rp 0</b>
+                            </div>
+                            <i class="bg-icon fas fa-motorcycle"></i>
+                        </div>
+
+                        <div class="wallet-card cash active" onclick="selectWallet('cash', this)">
+                            <div class="card-top">
+                                <span>TUNAI</span>
+                                <i class="fas fa-check-circle check-icon"></i>
+                            </div>
+                            <div class="card-bottom">
+                                <b id="saldo-cash">Rp 0</b>
+                            </div>
+                            <i class="bg-icon fas fa-money-bill-wave"></i>
+                        </div>
                     </div>
                     <input type="hidden" id="selectedWallet" value="cash">
+
                     <div class="transaction-box">
                         <input type="text" id="moneyDesc" placeholder="Keterangan (Cth: Jajan)">
                         <div class="form-row">
@@ -303,15 +367,21 @@
                             <button class="btn-out" onclick="addTransaction('out')"><i class="fas fa-arrow-up"></i> Keluar</button>
                         </div>
                     </div>
+
                     <div class="history-section">
                         <div class="history-header">
                             <h4>Riwayat</h4>
-                            <select id="historyFilter" onchange="loadTransactions()"><option value="all">Semua</option><option value="in">Masuk</option><option value="out">Keluar</option></select>
+                            <select id="historyFilter" onchange="loadTransactions()">
+                                <option value="all">Semua</option>
+                                <option value="in">Masuk</option>
+                                <option value="out">Keluar</option>
+                            </select>
                             <button class="btn-mini" onclick="exportFinanceReport()" title="Download"><i class="fas fa-download"></i></button>
                         </div>
                         <ul id="transactionList" class="history-list"></ul>
                     </div>
                 </div>
+
             </div>
         </div>
     </div>
@@ -320,7 +390,10 @@
 
     <div id="soundModal" class="modal-backdrop" style="display: none;">
         <div class="modal-content fade-in-up" style="max-width: 350px;">
-            <div class="modal-head"><h3>🔊 Suara Notifikasi</h3><button class="close-icon" onclick="document.getElementById('soundModal').style.display='none'">×</button></div>
+            <div class="modal-head">
+                <h3>🔊 Suara Notifikasi</h3>
+                <button class="close-icon" onclick="document.getElementById('soundModal').style.display='none'">×</button>
+            </div>
             <div class="modal-body">
                 <div class="form-group">
                     <label>Pilih Suara Pomodoro Selesai</label>
@@ -332,46 +405,82 @@
                     </select>
                 </div>
             </div>
-            <div class="modal-foot"><button onclick="saveSoundSettings()" class="btn-primary">Simpan</button></div>
+            <div class="modal-foot">
+                 <button onclick="saveSoundSettings()" class="btn-primary">Simpan</button>
+            </div>
         </div>
     </div>
 
     <div id="usernameModal" class="modal-backdrop" style="display: none;">
         <div class="modal-content fade-in-up" style="max-width: 350px;">
-            <div class="modal-head"><h3>👤 Ganti Nama</h3><button class="close-icon" onclick="document.getElementById('usernameModal').style.display='none'">×</button></div>
-            <div class="modal-body">
-                <div class="form-group"><label>Nama Baru</label><input type="text" id="newUsernameInput" placeholder="Nama panggilan..."></div>
+            <div class="modal-head">
+                <h3>👤 Ganti Nama</h3>
+                <button class="close-icon" onclick="document.getElementById('usernameModal').style.display='none'">×</button>
             </div>
-            <div class="modal-foot"><button onclick="saveUsername()" class="btn-primary">Simpan</button></div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Nama Baru</label>
+                    <input type="text" id="newUsernameInput" placeholder="Nama panggilan...">
+                </div>
+            </div>
+            <div class="modal-foot">
+                 <button onclick="saveUsername()" class="btn-primary">Simpan</button>
+            </div>
         </div>
     </div>
 
     <div id="clearDataModal" class="modal-backdrop" style="display: none;">
         <div class="modal-content fade-in-up" style="max-width: 400px;">
-            <div class="modal-head"><h3 class="text-danger">⚠️ Hapus Semua Data</h3><button class="close-icon" onclick="document.getElementById('clearDataModal').style.display='none'">×</button></div>
+            <div class="modal-head">
+                <h3 class="text-danger">⚠️ Hapus Semua Data</h3>
+                <button class="close-icon" onclick="document.getElementById('clearDataModal').style.display='none'">×</button>
+            </div>
             <div class="modal-body">
                 <p style="color:var(--red); margin-bottom: 15px;">Tindakan ini permanen. Semua Tugas, Jadwal, Keuangan, dan Pengaturan Anda akan hilang dari browser ini.</p>
-                <div class="form-group"><label>Ketik kata **HAPUS** untuk melanjutkan:</label><input type="text" id="clearDataConfirmationInput" placeholder="Ketik HAPUS"></div>
+                <div class="form-group">
+                    <label>Ketik kata **HAPUS** untuk melanjutkan:</label>
+                    <input type="text" id="clearDataConfirmationInput" placeholder="Ketik HAPUS">
+                </div>
             </div>
-            <div class="modal-foot"><button onclick="confirmClearUserData()" class="btn-primary" style="background:var(--red);">Konfirmasi Hapus</button></div>
+            <div class="modal-foot">
+                <button onclick="confirmClearUserData()" class="btn-primary" style="background:var(--red);">Konfirmasi Hapus</button>
+            </div>
         </div>
     </div>
 
     <div id="noteModal" class="modal-backdrop" style="display: none;">
         <div class="modal-content fade-in-up">
-            <div class="modal-head"><h3 id="noteModalTitle">📝 Catatan</h3><button class="close-icon" onclick="closeNoteModal()">×</button></div>
-            <div class="modal-body"><textarea id="noteModalInput" placeholder="Tulis catatan di sini..."></textarea></div>
-            <div class="modal-foot"><button onclick="deleteNote()" class="btn-text-danger">Hapus</button><button onclick="saveNoteFromModal()" class="btn-primary">Simpan</button></div>
+            <div class="modal-head">
+                <h3 id="noteModalTitle">📝 Catatan</h3>
+                <button class="close-icon" onclick="closeNoteModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <textarea id="noteModalInput" placeholder="Tulis catatan di sini..."></textarea>
+            </div>
+            <div class="modal-foot">
+                <button onclick="deleteNote()" class="btn-text-danger">Hapus</button>
+                <button onclick="saveNoteFromModal()" class="btn-primary">Simpan</button>
+            </div>
         </div>
     </div>
 
     <div id="scheduleEditModal" class="modal-backdrop" style="display: none;">
         <div class="modal-content fade-in-up">
-            <div class="modal-head"><h3>✏️ Edit Jadwal</h3><button class="close-icon" onclick="closeScheduleEditModal()">×</button></div>
+            <div class="modal-head">
+                <h3>✏️ Edit Jadwal</h3>
+                <button class="close-icon" onclick="closeScheduleEditModal()">×</button>
+            </div>
             <div class="modal-body">
-                <div class="form-group"><label>Mata Pelajaran</label><input type="text" id="editMapelName"></div>
-                <div class="form-group"><label>Waktu</label><input type="text" id="editMapelTime" placeholder="08.00 - 09.20"></div>
-                <div class="form-group"><label>Kategori</label>
+                <div class="form-group">
+                    <label>Mata Pelajaran</label>
+                    <input type="text" id="editMapelName">
+                </div>
+                <div class="form-group">
+                    <label>Waktu</label>
+                    <input type="text" id="editMapelTime" placeholder="08.00 - 09.20">
+                </div>
+                <div class="form-group">
+                    <label>Kategori</label>
                     <select id="editMapelType">
                         <option value="umum">Umum (Hijau)</option>
                         <option value="produktif">Produktif (Oranye)</option>
@@ -379,22 +488,62 @@
                     </select>
                 </div>
             </div>
-            <div class="modal-foot"><button onclick="saveScheduleChanges()" class="btn-primary btn-block">Simpan Perubahan</button></div>
+            <div class="modal-foot">
+                <button onclick="saveScheduleChanges()" class="btn-primary btn-block">Simpan Perubahan</button>
+            </div>
         </div>
     </div>
 
     <div id="addScheduleModal" class="modal-backdrop" style="display: none;">
         <div class="modal-content fade-in-up">
-            <div class="modal-head"><h3>➕ Tambah Jadwal</h3><button class="close-icon" onclick="document.getElementById('addScheduleModal').style.display='none'">×</button></div>
-            <div class="modal-body">
-                <div class="form-group"><label>Pilih Minggu</label><select id="addScheduleWeekType"><option value="umum">Minggu Umum</option><option value="produktif">Minggu Produktif</option></select></div>
-                <div class="form-group"><label>Pilih Hari</label><select id="addScheduleDay"><option value="Senin">Senin</option><option value="Selasa">Selasa</option><option value="Rabu">Rabu</option><option value="Kamis">Kamis</option><option value="Jumat">Jumat</option><option value="Sabtu">Sabtu</option><option value="Minggu">Minggu</option></select></div>
-                <div class="form-group"><label>Mata Pelajaran</label><input type="text" id="addScheduleMapel" placeholder="Contoh: Matematika"></div>
-                <div class="form-group"><label>Nama Guru</label><input type="text" id="addScheduleGuru" placeholder="Contoh: Bpk. Budi"></div>
-                <div class="form-group"><label>Waktu</label><input type="text" id="addScheduleTime" placeholder="Contoh: 08.00 - 09.20"></div>
-                <div class="form-group"><label>Kategori (Warna)</label><select id="addScheduleType"><option value="umum">Umum (Hijau)</option><option value="produktif">Produktif (Oranye)</option><option value="kokurikuler">Kokurikuler (Biru)</option></select></div>
+            <div class="modal-head">
+                <h3>➕ Tambah Jadwal</h3>
+                <button class="close-icon" onclick="document.getElementById('addScheduleModal').style.display='none'">×</button>
             </div>
-            <div class="modal-foot"><button onclick="saveNewSchedule()" class="btn-primary btn-block">Tambah Jadwal</button></div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Pilih Minggu</label>
+                    <select id="addScheduleWeekType">
+                        <option value="umum">Minggu Umum</option>
+                        <option value="produktif">Minggu Produktif</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Pilih Hari</label>
+                    <select id="addScheduleDay">
+                        <option value="Senin">Senin</option>
+                        <option value="Selasa">Selasa</option>
+                        <option value="Rabu">Rabu</option>
+                        <option value="Kamis">Kamis</option>
+                        <option value="Jumat">Jumat</option>
+                        <option value="Sabtu">Sabtu</option>
+                        <option value="Minggu">Minggu</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Mata Pelajaran</label>
+                    <input type="text" id="addScheduleMapel" placeholder="Contoh: Matematika">
+                </div>
+                <div class="form-group">
+                    <label>Nama Guru</label>
+                    <input type="text" id="addScheduleGuru" placeholder="Contoh: Bpk. Budi">
+                </div>
+                <div class="form-group">
+                    <label>Waktu</label>
+                    <input type="text" id="addScheduleTime" placeholder="Contoh: 08.00 - 09.20">
+                </div>
+                <div class="form-group">
+                    <label>Kategori (Warna)</label>
+                    <select id="addScheduleType">
+                        <option value="umum">Umum (Hijau)</option>
+                        <option value="produktif">Produktif (Oranye)</option>
+                        <option value="kokurikuler">Kokurikuler (Biru)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-foot">
+                <button onclick="saveNewSchedule()" class="btn-primary btn-block">Tambah Jadwal</button>
+            </div>
         </div>
     </div>
 
@@ -403,7 +552,7 @@
         import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-        // Konfigurasi Firebase Anda (PASTIKAN TIDAK DIUBAH)
+        // Konfigurasi Firebase Anda
         const firebaseConfig = {
             apiKey: "AIzaSyBNfmxs3iOYOlWdscHj6SX0DP5xxmTCfyU",
             authDomain: "full-code-e7288.firebaseapp.com",
@@ -419,11 +568,13 @@
         const auth = getAuth(app);
         const googleProvider = new GoogleAuthProvider();
 
+        // Expose ke Global Window
         window.db = db; 
         window.dbRef = ref; 
         window.dbSet = set; 
         window.dbOnValue = onValue; 
         window.dbRemove = remove;
+        
         window.auth = auth;
         window.googleProvider = googleProvider;
         window.authSignIn = signInWithEmailAndPassword;
@@ -433,7 +584,7 @@
         window.authUpdateProfile = updateProfile;
         window.authSignInGoogle = signInWithPopup;
 
-        console.log("Sistem Login Lengkap Siap!");
+        console.log("Sistem Login & Database Siap!");
     </script>
     
     <script src="script.js" defer></script>
