@@ -113,7 +113,6 @@ function initAuthListener() {
 
         window.authListener(window.auth, (user) => {
             if (user) {
-                // USER LOGIN
                 const displayName = user.displayName ? user.displayName : user.email.split('@')[0];
                 currentUser = displayName;
                 const uid = user.uid; 
@@ -128,7 +127,6 @@ function initAuthListener() {
                 startFirebaseListener(uid); 
                 initApp();
             } else {
-                // USER LOGOUT
                 currentUser = null;
                 document.getElementById('loginOverlay').style.display = 'flex';
                 document.getElementById('mainContent').style.display = 'none';
@@ -544,13 +542,13 @@ function renderSchedule() {
     tbody.parentElement.style.display='table'; 
     document.getElementById('holidayMessage').style.display='none';
     
-    // --- LOGIKA STATUS (JAM 5 SORE) ---
+    // --- LOGIKA STATUS BARU ---
     let statusText = "Belum Mulai";
     let dotColor = "var(--text-sub)";
 
     if (isToday) {
         if (currentHour >= 17) {
-            // JIKA SUDAH LEWAT JAM 17:00 (5 SORE)
+            // SUDAH LEWAT JAM 5 SORE
             statusText = "Pembelajaran Hari Ini Telah Selesai. Sampai Jumpa Besok! 🌙";
             dotColor = "var(--purple)"; 
         } else {
@@ -834,14 +832,14 @@ function loadTransactions() {
             list.innerHTML += `
                 <li class="txn-item">
                     <div class="txn-left"><b>${escapeHtml(t.desc)}</b><small>${t.wallet.toUpperCase()} • ${t.category}</small></div>
-                    <div class="txn-right"><b style="color:${color}">${sign} ${t.amount.toLocaleString()}</b>
+                    <div class="txn-right"><b style="color:${color}">${sign} ${t.amount.toLocaleString('id-ID')}</b>
                     <button class="delete-txn-btn" onclick="delTxn(${t.id})"><i class="fas fa-trash"></i></button></div>
                 </li>`;
         }
     });
 
-    document.getElementById('totalBalance').innerText = "Rp " + bal.total.toLocaleString();
-    ['dana','ovo','gopay','cash'].forEach(k => document.getElementById(`saldo-${k}`).innerText = "Rp " + bal[k].toLocaleString());
+    document.getElementById('totalBalance').innerText = "Rp " + bal.total.toLocaleString('id-ID');
+    ['dana','ovo','gopay','cash'].forEach(k => document.getElementById(`saldo-${k}`).innerText = "Rp " + bal[k].toLocaleString('id-ID'));
     
     renderExpenseChart(txns);
 }
@@ -863,7 +861,7 @@ function editTarget() {
     } 
 }
 
-// --- LOGIKA TARGET (DESIMAL FIX) ---
+// --- LOGIKA TARGET (DESIMAL & FORMAT IDR) ---
 function loadTarget() {
     const uid = window.auth.currentUser ? window.auth.currentUser.uid : null;
     if(!uid) return;
@@ -872,38 +870,30 @@ function loadTarget() {
     const txns = cachedData.transactions;
     
     let saving = 0; 
-    // Hitung hanya uang MASUK dengan kategori TABUNGAN
     txns.forEach(t => { 
         if(t.category === 'Tabungan' && t.type === 'in') {
             saving += t.amount; 
         }
-        // Opsional: Jika ingin uang KELUAR dari tabungan mengurangi target
         if(t.category === 'Tabungan' && t.type === 'out') {
             saving -= t.amount;
         }
     });
     
-    // Pastikan tidak minus
     if (saving < 0) saving = 0;
 
-    document.getElementById('targetAmount').innerText = "Rp " + target.toLocaleString();
+    document.getElementById('targetAmount').innerText = "Rp " + target.toLocaleString('id-ID');
     
-    // Logika Persentase dengan Desimal (agar tidak stuck di 0%)
     let pct = 0;
     if (target > 0) {
         pct = (saving / target) * 100;
     }
-    
-    // Batasi max 100%
     if (pct > 100) pct = 100;
 
-    // Tampilkan 1 angka di belakang koma jika kecil (misal 0.5%)
-    // Jika bulat, hilangkan koma (misal 50.0% jadi 50%)
     let pctDisplay = pct.toFixed(1); 
     if (pctDisplay.endsWith('.0')) pctDisplay = Math.round(pct);
 
     document.getElementById('targetProgressBar').style.width = `${pct}%`;
-    document.getElementById('targetPercentage').innerText = `${pctDisplay}% (${saving.toLocaleString()})`;
+    document.getElementById('targetPercentage').innerText = `${pctDisplay}% (Rp ${saving.toLocaleString('id-ID')})`;
 }
 
 function renderExpenseChart(txns) {
@@ -921,7 +911,7 @@ function renderExpenseChart(txns) {
         html += `
         <div class="expense-item">
             <div class="expense-label"><span class="dot" style="background:${colors[c]||'#ccc'}"></span>${c}</div>
-            <div class="expense-value">${cats[c].toLocaleString()} <small>(${pct}%)</small></div>
+            <div class="expense-value">${cats[c].toLocaleString('id-ID')} <small>(${pct}%)</small></div>
             <div class="expense-bar-bg"><div class="expense-bar-fill" style="width:${pct}%;background:${colors[c]||'#ccc'}"></div></div>
         </div>`;
     });
@@ -1006,7 +996,7 @@ window.importData = function(input) {
     input.value = '';
 }
 
-// --- FITUR TAMBAH JADWAL BARU (DARI MODAL) ---
+// --- FITUR TAMBAH JADWAL (DARI MODAL) ---
 window.openAddScheduleModal = function() {
     const currentDayName = days[currentDayIdx];
     document.getElementById('addScheduleDay').value = currentDayName;
@@ -1055,36 +1045,27 @@ window.saveNewSchedule = function() {
     showToast("Jadwal berhasil ditambahkan!", "success");
 }
 
-window.closeNoteModal = function() { document.getElementById('noteModal').style.display = 'none'; }
-window.saveNoteFromModal = function() { showToast("Catatan disimpan (Placeholder)", "success"); closeNoteModal(); }
-window.deleteNote = function() { if(confirm("Hapus catatan?")) { document.getElementById('noteModalInput').value = ""; closeNoteModal(); } }
-
-// --- FITUR HAPUS JADWAL (BARU) ---
+// --- FITUR HAPUS JADWAL (DARI MODAL EDIT) ---
 window.deleteSchedule = function() {
-    // Cek apakah ada jadwal yang sedang diedit
     if (!currentScheduleEdit) return;
     
     if(confirm("Yakin ingin menghapus jadwal mata pelajaran ini?")) {
         const { day, idx } = currentScheduleEdit;
-        
-        // Tentukan kita sedang di minggu apa (Umum/Produktif)
         let displayType = currentWeekType;
         if (currentWeekType === 'auto') {
              displayType = (getWeekNumber(new Date()) % 2 !== 0) ? 'umum' : 'produktif';
         }
 
-        // Proses Hapus
         if(jadwalData[displayType] && jadwalData[displayType][day]) {
-            // Hapus 1 item pada index tersebut
             jadwalData[displayType][day].splice(idx, 1);
-            
-            // Simpan perubahan ke Firebase
             saveDB('jadwalData', jadwalData);
-            
-            // Refresh tampilan & tutup modal
             renderSchedule();
             closeScheduleEditModal();
             showToast("Jadwal berhasil dihapus!", "success");
         }
     }
 }
+
+window.closeNoteModal = function() { document.getElementById('noteModal').style.display = 'none'; }
+window.saveNoteFromModal = function() { showToast("Catatan disimpan (Placeholder)", "success"); closeNoteModal(); }
+window.deleteNote = function() { if(confirm("Hapus catatan?")) { document.getElementById('noteModalInput').value = ""; closeNoteModal(); } }
