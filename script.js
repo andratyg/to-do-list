@@ -93,12 +93,74 @@ let jadwalData = defaultJadwalData;
 let currentDayIdx = new Date().getDay(); 
 let currentWeekType = 'umum'; 
 
+// ==================== SYSTEM RNG QUOTES (FULL ACAK) ====================
 const motivationalQuotes = [
+    // --- MOTIVASI BELAJAR ---
     "Fokus 25 menit, hasilnya 100%. Kamu bisa! 💪",
-    "Disiplin adalah jembatan antara tujuan dan pencapaian.",
-    "Bekerja cerdas, bukan hanya bekerja keras.",
-    "Jangan tunggu motivasi. Ciptakan momentummu sendiri.",
-    "Masa depanmu diciptakan oleh apa yang kamu lakukan hari ini."
+    "Masa depanmu diciptakan oleh apa yang kamu lakukan hari ini, bukan besok.",
+    "Jangan berhenti saat lelah, berhentilah saat selesai.",
+    "Rasa sakit karena disiplin lebih baik daripada rasa sakit karena penyesalan.",
+    "Satu jam belajar hari ini lebih berharga dari seribu jam penyesalan nanti.",
+    "Versi terbaik dirimu sedang menunggumu di masa depan. Jemput dia!",
+    "Kalau mimpimu tidak membuatmu takut, mungkin mimpimu kurang besar.",
+    "Belajar itu memang berat, tapi kebodohan itu jauh lebih berat.",
+    "Jadilah 1% lebih baik setiap harinya. Konsistensi > Intensitas.",
+    "Jangan tunggu motivasi, ciptakan momentummu sendiri.",
+    // --- PENGINGAT DISIPLIN ---
+    "Scroll sosmed tidak akan membayarmu di masa depan.",
+    "Tugas yang kamu tunda hari ini akan menjadi beban di esok hari.",
+    "Sukses adalah jumlah dari usaha kecil yang diulang hari demi hari.",
+    "Berhenti berharap, mulai kerjakan.",
+    "Waktu tidak akan menunggu. Lakukan sekarang atau tidak sama sekali.",
+    "Disiplin adalah melakukan apa yang harus dilakukan, bahkan saat kamu tidak ingin.",
+    "Fokus pada proses, bukan hanya pada hasil.",
+    "Jangan sibuk, tapi jadilah produktif.",
+    "Musuh terbesarmu adalah dirimu yang kemarin.",
+    "Keajaiban terjadi saat kamu keluar dari zona nyaman.",
+    // --- KATA-KATA SANTAI & REALISTIS ---
+    "Tarik napas. Kamu sudah melakukan yang terbaik sejauh ini. 🍃",
+    "Ingat minum air putih. Otak butuh cairan biar nggak nge-lag.",
+    "Istirahat itu bagian dari produktivitas. Jangan lupa tidur.",
+    "Gapapa pelan-pelan, yang penting jalan terus.",
+    "Hari ini sulit? Gapapa, besok kita coba lagi.",
+    "Kamu lebih kuat dari deadline-mu. 🔥",
+    "Jangan lupa apresiasi diri sendiri setelah tugas selesai.",
+    "Rejeki nggak akan ketuker, tapi kalau nggak usaha ya nggak dapet.",
+    "Hidup itu seperti koding; kalau error, coba cek lagi baris demi baris.",
+    "Semangat! Cicilan masa depan (dan harapan orang tua) menanti.",
+    // --- STOIC & MENTALITAS ---
+    "Kita tidak bisa mengendalikan angin, tapi kita bisa mengendalikan layar.",
+    "Fokus pada apa yang bisa kamu kendalikan.",
+    "Kesulitan seringkali mempersiapkan orang biasa untuk takdir yang luar biasa.",
+    "Jadilah seperti karang, tidak goyah meski dihantam ombak.",
+    "Kebahagiaan bergantung pada dirimu sendiri.",
+    // --- SHORT & PUNCHY ---
+    "Gas terus! 🚀",
+    "Just do it.",
+    "Make it happen.",
+    "Dream big, work hard.",
+    "Stay hungry, stay foolish.",
+    "Your only limit is you.",
+    "Wake up and grind.",
+    "Do it with passion or not at all.",
+    "Action speaks louder.",
+    "Finish what you started."
+];
+
+// KATA-KATA GAUL / PUJIAN UNTUK TASK SELESAI
+const funWords = [
+    "Menyala Abangkuh! 🔥",
+    "Gacor Parah! 🦅",
+    "Kelas Pejabat! 🎩",
+    "Savage! ⚔️",
+    "Ez Lemon Squeezy 🍋",
+    "Mantap Jiwa! 👻",
+    "GG Gaming! 🎮",
+    "Auto Kaya! 💸",
+    "Mulus Banget 🧈",
+    "Slayyy! 💅",
+    "Top Global 🌍",
+    "Gak Ada Obat! 💊"
 ];
 
 // ==================== B. AUTHENTICATION LOGIC ====================
@@ -465,7 +527,7 @@ function loadPomodoroTasks() {
     });
 }
 
-// --- JADWAL (UPDATED: Status 5 Sore & Tombol Baru) ---
+// --- JADWAL (LIVE STATUS WIDGET) ---
 function changeDay(dir) { currentDayIdx += dir; if(currentDayIdx>6) currentDayIdx=0; if(currentDayIdx<0) currentDayIdx=6; renderSchedule(); }
 function changeWeekType() { 
     currentWeekType = document.getElementById('weekTypeSelector').value; 
@@ -508,7 +570,8 @@ function renderSchedule() {
     if(!jadwalData) return;
     let data = jadwalData[currentWeekDisplay][dayName];
     const tbody = document.getElementById('scheduleBody');
-    
+    const statusContainer = document.querySelector('.schedule-status-bar');
+
     // LOGIKA WAKTU
     const now = new Date();
     const currentHour = now.getHours();
@@ -529,28 +592,52 @@ function renderSchedule() {
         });
     }
 
+    // --- RENDER LIVE STATUS WIDGET ---
+    // Kita ganti elemen .schedule-status-bar lama dengan widget baru
+    // Cari elemen lama
+    let statusWidget = document.getElementById('liveStatusWidget');
+    if (!statusWidget) {
+        // Jika belum ada (pertama kali render), buat structure baru
+        const container = document.querySelector('.schedule-status-bar');
+        if(container) {
+            container.outerHTML = `
+            <div id="liveStatusWidget" class="live-status-widget">
+                <div class="status-icon-box"><i class="fas fa-bolt" id="statusIcon"></i></div>
+                <div class="status-content">
+                    <h4 id="statusLabel">STATUS SAAT INI</h4>
+                    <p id="statusText">Memuat...</p>
+                </div>
+            </div>`;
+            statusWidget = document.getElementById('liveStatusWidget');
+        }
+    }
+
     // Cek Libur / Kosong
     if(!data || data.length === 0) { 
         tbody.parentElement.style.display='none'; 
         document.getElementById('holidayMessage').style.display='block'; 
-        document.getElementById('currentStatus').innerText = "Tidak ada jadwal"; 
-        // Reset warna dot
-        document.querySelector('.status-dot').style.background = 'var(--text-sub)';
+        
+        if(statusWidget) {
+            document.getElementById('statusText').innerText = "Tidak ada jadwal (Libur)";
+            document.getElementById('statusIcon').className = "fas fa-mug-hot";
+            statusWidget.className = "live-status-widget status-chill";
+        }
         return; 
     }
     
     tbody.parentElement.style.display='table'; 
     document.getElementById('holidayMessage').style.display='none';
     
-    // --- LOGIKA STATUS BARU (FIX: KATA-KATA ESTETIK) ---
+    // Logic Status
     let statusText = "Belum Mulai";
-    let dotColor = "var(--text-sub)";
+    let statusClass = "live-status-widget"; // Default (Ungu/Biru)
+    let iconClass = "fas fa-clock";
 
     if (isToday) {
         if (currentHour >= 17) {
-            // SUDAH LEWAT JAM 5 SORE
-            statusText = "Pembelajaran Hari Ini Telah Selesai. Sampai Jumpa Besok! 🌙";
-            dotColor = "var(--purple)"; 
+            statusText = "Selesai. Sampai Jumpa Besok!";
+            statusClass = "live-status-widget status-chill";
+            iconClass = "fas fa-moon";
         } else {
             let ongoing = false;
             data.forEach(item => {
@@ -563,7 +650,8 @@ function renderSchedule() {
                     
                     if(curMins >= sM && curMins < eM) { 
                         statusText = `Sedang Berlangsung: ${item.mapel}`; 
-                        dotColor = "var(--green)";
+                        statusClass = "live-status-widget status-busy"; // Oranye/Merah
+                        iconClass = "fas fa-book-reader";
                         ongoing = true;
                     }
                 }
@@ -571,25 +659,29 @@ function renderSchedule() {
             if (!ongoing && currentHour < 17) {
                 if (curMins < (7*60 + 45)) { 
                      statusText = "Menunggu jam masuk...";
-                     dotColor = "var(--orange)";
+                     iconClass = "fas fa-hourglass-start";
                 } else {
                      statusText = "Istirahat / Pergantian Jam";
-                     dotColor = "var(--blue)";
+                     statusClass = "live-status-widget status-chill";
+                     iconClass = "fas fa-coffee";
                 }
             }
         }
     } else {
-        statusText = `Jadwal hari ${dayName}`;
-        dotColor = "var(--text-sub)";
+        statusText = `Lihat Jadwal Hari ${dayName}`;
+        statusClass = "live-status-widget status-chill";
+        iconClass = "fas fa-calendar-alt";
     }
 
-    document.getElementById('currentStatus').innerText = statusText;
-    document.querySelector('.status-dot').style.background = dotColor;
+    if(statusWidget) {
+        document.getElementById('statusText').innerText = statusText;
+        document.getElementById('statusIcon').className = iconClass;
+        statusWidget.className = statusClass;
+    }
 
-    // RENDER TABEL (TOMBOL BARU)
+    // RENDER TABEL
     data.forEach((item, idx) => {
         let isActive = false;
-        // Highlight hanya jika belum lewat jam 5
         if (isToday && currentHour < 17) {
             const parts = item.time.split("-");
             if(parts.length >= 2) {
@@ -600,7 +692,6 @@ function renderSchedule() {
             }
         }
         
-        // --- TOMBOL DIPERCANTIK ---
         const noteElem = `<button class="btn-note" onclick="alert('Fitur catatan per mapel akan hadir di update berikutnya!')">
                             <i class="fas fa-sticky-note"></i> Catatan
                           </button>`;
@@ -731,14 +822,18 @@ function loadTasks() {
             }
         }
 
+        // GENERATE KATA-KATA RANDOM (STATIC PER RENDER UNTUK EFEK VISUAL)
+        const randomWord = funWords[Math.floor(Math.random() * funWords.length)];
+
         list.innerHTML += `
             <li class="task-item priority-${t.priority} ${t.completed ? 'completed' : ''}">
-                <div class="task-content">
+                <div class="task-content" style="display:flex;align-items:center;width:100%;">
                     <div class="check-btn" onclick="toggleTask(${t.id})"><i class="fas fa-check"></i></div>
                     <div class="task-text">
                         <span>${escapeHtml(t.text)}</span>
                         <small class="${badgeClass}">${dateDisplay} • ${t.priority}</small>
                     </div>
+                     <span class="fun-badge">${randomWord}</span>
                 </div>
                 <div class="task-actions">
                     <button class="action-btn" onclick="loadTaskToEdit(${t.id})"><i class="fas fa-pencil-alt"></i></button>
@@ -951,7 +1046,16 @@ function checkReminders() {
     if(data) data.forEach(i => { const p=i.time.split("-"); if(p.length>=2) { const s=p[0].trim().replace(/\./g,':').split(':').map(Number); if(m===(s[0]*60+s[1])-5) showToast(`🔔 5 Menit lagi: ${i.mapel}`, 'info'); } }); 
 }
 function escapeHtml(text) { if (!text) return text; return String(text).replace(/[&<>"']/g, function(m) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m]; }); }
-function loadRandomQuote() { if(document.getElementById('motivationQuote')) document.getElementById('motivationQuote').innerText = `"${motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)]}"`; }
+
+// Fungsi RNG (Acak) yang Memilih Salah Satu
+function loadRandomQuote() {
+    if(document.getElementById('motivationQuote')) {
+        // Math.random() akan memilih angka acak dari 0 sampai panjang array
+        const randomIndex = Math.floor(Math.random() * motivationalQuotes.length);
+        document.getElementById('motivationQuote').innerText = `"${motivationalQuotes[randomIndex]}"`;
+    }
+}
+
 function openClearDataModal() { if(confirm("Yakin hapus data lokal dan logout?")) { localStorage.clear(); location.reload(); } }
 function exportData() { 
     const d=cachedData; 
