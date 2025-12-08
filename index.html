@@ -211,6 +211,10 @@
                         <span class="mode-label" id="timerMode">FOKUS</span>
                     </div>
 
+                    <div id="focusModeLockText" style="display:none; text-align:center; margin-bottom: 10px; font-weight: 600; color: #ffeb3b; background: rgba(0,0,0,0.3); padding: 8px; border-radius: 8px;">
+                        ⚠️ JANGAN GANTI TAB! Timer akan dijeda otomatis.
+                    </div>
+
                     <div class="timer-display">
                         <h1 id="timerDisplay">25:00</h1>
                         <p id="timerMessage">Waktunya Bekerja Keras</p>
@@ -387,7 +391,6 @@
     </div>
 
     <div id="toastBox"></div>
-
     <div id="soundModal" class="modal-backdrop" style="display: none;">
         <div class="modal-content fade-in-up" style="max-width: 350px;">
             <div class="modal-head">
@@ -410,7 +413,6 @@
             </div>
         </div>
     </div>
-
     <div id="usernameModal" class="modal-backdrop" style="display: none;">
         <div class="modal-content fade-in-up" style="max-width: 350px;">
             <div class="modal-head">
@@ -428,7 +430,6 @@
             </div>
         </div>
     </div>
-
     <div id="clearDataModal" class="modal-backdrop" style="display: none;">
         <div class="modal-content fade-in-up" style="max-width: 400px;">
             <div class="modal-head">
@@ -447,7 +448,6 @@
             </div>
         </div>
     </div>
-
     <div id="noteModal" class="modal-backdrop" style="display: none;">
         <div class="modal-content fade-in-up">
             <div class="modal-head">
@@ -463,7 +463,6 @@
             </div>
         </div>
     </div>
-
   <div id="scheduleEditModal" class="modal-backdrop" style="display: none;">
         <div class="modal-content fade-in-up">
             <div class="modal-head">
@@ -494,7 +493,6 @@
             </div>
         </div>
     </div>
-
     <div id="addScheduleModal" class="modal-backdrop" style="display: none;">
         <div class="modal-content fade-in-up">
             <div class="modal-head">
@@ -553,7 +551,6 @@
         import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-        // Konfigurasi Firebase Anda
         const firebaseConfig = {
             apiKey: "AIzaSyBNfmxs3iOYOlWdscHj6SX0DP5xxmTCfyU",
             authDomain: "full-code-e7288.firebaseapp.com",
@@ -569,7 +566,6 @@
         const auth = getAuth(app);
         const googleProvider = new GoogleAuthProvider();
 
-        // Expose ke Global Window
         window.db = db; 
         window.dbRef = ref; 
         window.dbSet = set; 
