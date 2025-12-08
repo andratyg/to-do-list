@@ -1,5 +1,6 @@
 // ==================== SYSTEM & CONFIG ====================
 let currentUser = null; // UID User
+let isDataLoaded = false; // [PERBAIKAN] Penanda agar tidak menimpa data saat loading
 
 // Wadah Data Lokal
 let cachedData = { 
@@ -1051,11 +1052,19 @@ function startFirebaseListener(uid) {
             saveAllToCloud(uid); 
         }
         jadwalData = cachedData.jadwal;
+        isDataLoaded = true; // [PERBAIKAN] Tandai bahwa data SUDAH dimuat
         renderAll();
     });
 }
 
 function saveDB(key, data) {
+    // [PERBAIKAN] Cek apakah data sudah siap sebelum menyimpan
+    if (!isDataLoaded) {
+        showToast("Tunggu sebentar, data sedang dimuat...", "error");
+        console.warn("Penyimpanan diblokir: Data Firebase belum selesai dimuat.");
+        return; 
+    }
+
     const uid = window.auth.currentUser.uid;
     if(key === 'tasks') cachedData.tasks = data;
     if(key === 'transactions') cachedData.transactions = data;
