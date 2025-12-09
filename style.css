@@ -135,6 +135,27 @@ input:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px 
 .header-center { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 1; }
 .header-right { z-index: 2; display: flex; align-items: center; gap: 15px; }
 
+/* XP Bar Styles */
+.xp-container { margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+.level-badge { background: var(--purple); color: white; padding: 2px 8px; border-radius: 6px; font-weight: 700; font-size: 0.75rem; }
+.xp-bar-bg { width: 120px; height: 8px; background: var(--bg-body); border-radius: 10px; overflow: hidden; border: 1px solid var(--border-color); }
+.xp-bar-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--purple)); width: 0%; transition: 1s ease; border-radius: 10px; }
+
+/* Streak Badge Styles */
+.streak-badge {
+    background: rgba(249, 115, 22, 0.1);
+    color: var(--orange);
+    padding: 8px 12px;
+    border-radius: 10px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid rgba(249, 115, 22, 0.2);
+}
+.streak-badge i { animation: burn 1.5s infinite; }
+@keyframes burn { 0% { opacity:0.8; transform:scale(1); } 50% { opacity:1; transform:scale(1.2); } 100% { opacity:0.8; transform:scale(1); } }
+
 @media (max-width: 768px) {
     .glass-panel { flex-direction: column; gap: 15px; text-align: center; padding: 20px; }
     .header-center { position: relative; left: auto; top: auto; transform: none; }
@@ -152,9 +173,6 @@ input:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px 
     font-weight: 800;
     display: inline-block;
 }
-
-.quote-label { display: block; font-size: 0.7rem; font-weight: 700; color: var(--text-sub); text-transform: uppercase; letter-spacing: 1px; margin-top: 8px; margin-bottom: 2px; }
-.quote-text { font-size: 0.9rem; font-style: italic; color: var(--orange); margin-top: 0; }
 
 .live-clock { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; padding: 8px 25px; border-radius: 50px; font-weight: 700; font-size: 1.4rem; box-shadow: var(--shadow-md); }
 
@@ -264,6 +282,8 @@ tr.active-row td:first-child { border-left: 4px solid var(--primary); }
 
 .btn-note { background: rgba(99, 102, 241, 0.1); color: var(--primary); padding: 6px 15px; border-radius: 50px; font-size: 0.8rem; font-weight: 600; transition: 0.3s; display: inline-flex; align-items: center; gap: 5px; }
 .btn-note:hover { background: var(--primary); color: white; transform: translateY(-2px); }
+.btn-note.has-content { background: var(--purple); color: white; box-shadow: 0 2px 5px rgba(139, 92, 246, 0.4); }
+
 .btn-edit-round { width: 35px; height: 35px; border-radius: 50%; background: var(--bg-body); color: var(--text-sub); display: flex; align-items: center; justify-content: center; transition: 0.3s; border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); }
 .btn-edit-round:hover { background: var(--orange); color: white; border-color: var(--orange); transform: rotate(15deg) scale(1.1); }
 
@@ -300,7 +320,11 @@ tr.active-row td:first-child { border-left: 4px solid var(--primary); }
     transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     position: relative;
     overflow: hidden;
+    cursor: grab; /* Indikator bisa digeser */
 }
+.task-item:active { cursor: grabbing; }
+.task-item.dragging { opacity: 0.5; border: 2px dashed var(--primary); transform: scale(0.95); }
+
 .task-item:hover { transform: translateY(-3px) translateX(3px); background: var(--card-bg); box-shadow: var(--shadow-sm); }
 .task-item.priority-High { border-color: var(--red); } 
 .task-item.priority-Medium { border-color: var(--orange); } 
@@ -509,3 +533,109 @@ tr.active-row td:first-child { border-left: 4px solid var(--primary); }
 .auth-switch a { color: var(--primary); font-weight: 600; cursor: pointer; text-decoration: none; }
 .auth-switch a:hover { text-decoration: underline; }
 #authErrorMsg { color: var(--red); font-size: 0.85rem; text-align: center; margin-top: 15px; font-weight: 500; min-height: 20px; }
+
+/* --- CSS BARU: KOTA KATA-KATA (REMASTERED) --- */
+.quote-banner {
+    /* Gradient Background yang lebih hidup */
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+    border-radius: 20px;
+    padding: 30px;
+    margin-bottom: 30px;
+    text-align: center;
+    position: relative;
+    box-shadow: 0 10px 25px rgba(118, 75, 162, 0.4); /* Colored shadow */
+    color: white;
+    overflow: hidden;
+    border: none;
+}
+
+/* Animasi background shapes berputar halus */
+.quote-banner::before {
+    content: '';
+    position: absolute;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 10%, transparent 10%);
+    background-size: 20px 20px;
+    animation: rotateBg 60s linear infinite;
+    z-index: 0;
+}
+
+@keyframes rotateBg {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.quote-content {
+    position: relative;
+    z-index: 2;
+    background: rgba(255, 255, 255, 0.15); /* Efek Kaca (Glassmorphism) */
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 20px 30px;
+    border-radius: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    display: inline-block;
+    max-width: 90%;
+    transform: translateY(0);
+    transition: transform 0.3s ease;
+}
+
+.quote-content:hover {
+    transform: translateY(-5px); /* Efek melayang saat dihover */
+}
+
+.quote-badge {
+    background: white;
+    color: #764ba2;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 5px 15px;
+    border-radius: 50px;
+    font-size: 0.75rem;
+    margin-bottom: 15px;
+    display: inline-block;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.new-quote-text {
+    font-size: 1.2rem;
+    font-weight: 600;
+    font-style: italic;
+    line-height: 1.5;
+    margin: 0;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.new-quote-text::before { content: '“'; font-size: 1.5rem; margin-right: 5px; opacity: 0.8; }
+.new-quote-text::after { content: '”'; font-size: 1.5rem; margin-left: 5px; opacity: 0.8; }
+
+/* Dark mode adjustment khusus quote banner */
+body.dark-mode .quote-banner {
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+}
+
+/* --- STYLE BARU: FOKUS MODE SELECTOR --- */
+.mode-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    color: white;
+    padding: 6px 15px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    transition: 0.3s;
+    cursor: pointer;
+}
+
+.mode-btn:hover {
+    background: rgba(255, 255, 255, 0.4);
+}
+
+.mode-btn.active {
+    background: white;
+    color: var(--red); /* Mengikuti warna tema Pomodoro */
+    border-color: white;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+}
