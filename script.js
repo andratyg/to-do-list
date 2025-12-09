@@ -1,108 +1,118 @@
 // ==================== SYSTEM & CONFIG ====================
 let currentUser = null; // UID User
-let isDataLoaded = false; // [PERBAIKAN] Penanda agar tidak menimpa data saat loading
 
-// Wadah Data Lokal
-let cachedData = { 
-    tasks: [], 
-    transactions: [], 
-    jadwal: null,
-    settings: {}
+// Wadah Data Lokal (Updated dengan fitur baru)
+let cachedData = {
+  tasks: [],
+  transactions: [],
+  jadwal: null,
+  settings: {},
+  // --- FITUR BARU A & E ---
+  gamification: { xp: 0, level: 1 },
+  streak: { count: 0, lastLogin: null },
+  focusLogs: {}, // Format: { "2023-10-27": 45 } (menit)
+  scheduleNotes: {}, // Format: { "Senin_0": "Catatan..." }
 };
 
 // --- CONFIG LAINNYA ---
-const WORK_DURATION_DEFAULT = 25 * 60; 
-const BREAK_DURATION_DEFAULT = 5 * 60;  
-const WORK_DURATION_EXAM = 50 * 60; 
-const BREAK_DURATION_EXAM = 10 * 60; 
+const WORK_DURATION_DEFAULT = 25 * 60;
+const BREAK_DURATION_DEFAULT = 5 * 60;
+const WORK_DURATION_EXAM = 50 * 60;
+const BREAK_DURATION_EXAM = 10 * 60;
 
 let timerInterval = null;
 let isPaused = true;
 let isWorking = true;
-let timeLeft = WORK_DURATION_DEFAULT; 
+let timeLeft = WORK_DURATION_DEFAULT;
 
-let lastTransaction = null; 
-let isExamMode = false;      
-let soundPreference = 'bell'; 
-let currentScheduleFilterGuru = 'all'; 
-let currentScheduleFilterCategory = 'all'; 
+let lastTransaction = null;
+let isExamMode = false;
+let soundPreference = "bell";
+let currentScheduleFilterGuru = "all";
+let currentScheduleFilterCategory = "all";
 
-// --- VARIABEL KONTROL FOKUS ---
+// --- VARIABEL KONTROL FOKUS (UPDATED) ---
 let isFocusLocked = false;
-let isTabBlurred = false; 
-let blurCount = 0; 
-let savedFocusTime = null; // Simpan waktu Fokus saat pindah ke istirahat
-let savedBreakTime = null; // Simpan waktu Istirahat saat diskip/lanjut fokus
-// --- END VARIABEL FOKUS ---
+let isTabBlurred = false;
+let blurCount = 0;
+let savedFocusTime = null;
+let savedBreakTime = null;
+let focusType = 'strict'; // Default: 'strict' (Ketat) atau 'chill' (Santai)
 
-// --- VARIABEL PENTING ---
-let taskFilter = 'all';
-let editingTaskId = null;
+// --- VARIABEL FITUR BARU ---
+let currentNoteTarget = null; // Untuk menyimpan target catatan mapel (C)
+let dragSrcEl = null; // Untuk Drag & Drop (F)
 
 // --- DATA JADWAL DEFAULT ---
 const days = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
 const defaultJadwalData = {
-    umum: {
-        "Senin": [
-            { mapel: "Koding & AI", guru: "Juliana Mansur, S.Kom", time: "08.20 - 09.40", type: "produktif" },
-            { mapel: "PAI & Budi Pekerti", guru: "Hapid, S.Ag", time: "10.00 - 11.20", type: "umum" },
-            { mapel: "Matematika", guru: "Wijiastuti, S.Pd", time: "11.20 - 13.20", type: "umum" },
-            { mapel: "Pend. Pancasila", guru: "Amanda Putri S, S.Pd", time: "13.20 - 14.40", type: "umum" },
-            { mapel: "Bahasa Inggris", guru: "Endang Setiawan, S.Pd", time: "14.40 - 16.00", type: "umum" }
-        ],
-        "Selasa": [ { mapel: "KOKURIKULER", guru: "Nurulia Aprilia, S.Si", time: "08.00 - 15.50", type: "kokurikuler" } ],
-        "Rabu": [
-            { mapel: "Bahasa Indonesia", guru: "Lia Siti Sholehah, S.Pd", time: "08.00 - 09.20", type: "umum" },
-            { mapel: "Bahasa Inggris", guru: "Endang Setiawan, S.Pd", time: "09.40 - 11.00", type: "umum" },
-            { mapel: "PAI", guru: "Hapid, S.Ag", time: "11.00 - 13.00", type: "umum" },
-            { mapel: "Matematika", guru: "Wijiastuti, S.Pd", time: "13.00 - 14.30", type: "umum" },
-            { mapel: "Pend. Pancasila", guru: "Amanda Putri S, S.Pd", time: "14.30 - 15.50", type: "umum" }
-        ],
-        "Kamis": [
-            { mapel: "Sejarah", guru: "Yessy Novita D, S.Pd", time: "08.00 - 09.20", type: "umum" },
-            { mapel: "Bahasa Indonesia", guru: "Lia Siti Sholehah, S.Pd", time: "09.40 - 11.00", type: "umum" },
-            { mapel: "Bahasa Sunda", guru: "Isti Hamidah", time: "11.00 - 13.00", type: "umum" },
-            { mapel: "Matematika", guru: "Wijiastuti, S.Pd", time: "13.00 - 14.30", type: "umum" },
-            { mapel: "Sejarah", guru: "Yessy Novita D, S.Pd", time: "14.30 - 15.50", "type": "umum" }
-        ],
-        "Jumat": [
-            { mapel: "Koding & AI", guru: "Juliana Mansur, S.Kom", time: "07.45 - 09.05", type: "produktif" },
-            { mapel: "Bahasa Inggris", guru: "Endang Setiawan, S.Pd", time: "09.05 - 10.25", type: "umum" },
-            { mapel: "Bahasa Indonesia", guru: "Lia Siti Sholehah, S.Pd", time: "10.25 - 13.40", type: "umum" },
-            { mapel: "Bahasa Sunda", guru: "Isti Hamidah", time: "13.40 - 15.00", type: "umum" }
-        ]
-    },
-    produktif: {
-        "Senin": [
-            { mapel: "DDPK (Juliana)", time: "08.20 - 09.40", type: "produktif" },
-            { mapel: "PJOK", guru: "Noer Sandy M, S.Pd", time: "10.00 - 12.00", type: "umum" },
-            { mapel: "DDPK (Duma)", time: "12.40 - 14.40", type: "produktif" },
-            { mapel: "DDPK (Muslih)", time: "14.40 - 16.00", type: "produktif" }
-        ],
-        "Selasa": [
-            { mapel: "Projek IPAS", guru: "Nurulia Aprilia, S.Si", time: "08.00 - 11.40", type: "umum" },
-            { mapel: "DDPK (Duma)", time: "12.20 - 14.30", type: "produktif" },
-            { mapel: "Informatika", guru: "Nurdin", time: "14.30 - 15.50", type: "produktif" }
-        ],
-        "Rabu": [
-            { mapel: "Informatika", guru: "Nurdin", time: "08.00 - 09.20", type: "produktif" },
-            { mapel: "PJOK", guru: "Noer Sandy M, S.Pd", time: "09.40 - 11.40", type: "umum" },
-            { mapel: "Projek IPAS", guru: "Nurulia Aprilia, S.Si", time: "12.20 - 15.50", type: "umum" }
-        ],
-        "Kamis": [ { mapel: "DDPK (Full Day)", guru: "Iqbal Fajar Syahbana", time: "08.00 - 15.50", type: "produktif" } ],
-        "Jumat": [
-            { mapel: "DDPK (Duma)", time: "07.45 - 10.25", type: "produktif" },
-            { mapel: "Informatika", guru: "Nurdin", time: "10.25 - 13.40", type: "produktif" },
-            { mapel: "DDPK (Duma)", time: "13.40 - 15.00", type: "produktif" }
-        ]
-    }
+  umum: {
+    Senin: [
+      { mapel: "Koding & AI", guru: "Juliana Mansur, S.Kom", time: "08.20 - 09.40", type: "produktif" },
+      { mapel: "PAI & Budi Pekerti", guru: "Hapid, S.Ag", time: "10.00 - 11.20", type: "umum" },
+      { mapel: "Matematika", guru: "Wijiastuti, S.Pd", time: "11.20 - 13.20", type: "umum" },
+      { mapel: "Pend. Pancasila", guru: "Amanda Putri S, S.Pd", time: "13.20 - 14.40", type: "umum" },
+      { mapel: "Bahasa Inggris", guru: "Endang Setiawan, S.Pd", time: "14.40 - 16.00", type: "umum" },
+    ],
+    Selasa: [
+      { mapel: "KOKURIKULER", guru: "Nurulia Aprilia, S.Si", time: "08.00 - 15.50", type: "kokurikuler" },
+    ],
+    Rabu: [
+      { mapel: "Bahasa Indonesia", guru: "Lia Siti Sholehah, S.Pd", time: "08.00 - 09.20", type: "umum" },
+      { mapel: "Bahasa Inggris", guru: "Endang Setiawan, S.Pd", time: "09.40 - 11.00", type: "umum" },
+      { mapel: "PAI", guru: "Hapid, S.Ag", time: "11.00 - 13.00", type: "umum" },
+      { mapel: "Matematika", guru: "Wijiastuti, S.Pd", time: "13.00 - 14.30", type: "umum" },
+      { mapel: "Pend. Pancasila", guru: "Amanda Putri S, S.Pd", time: "14.30 - 15.50", type: "umum" },
+    ],
+    Kamis: [
+      { mapel: "Sejarah", guru: "Yessy Novita D, S.Pd", time: "08.00 - 09.20", type: "umum" },
+      { mapel: "Bahasa Indonesia", guru: "Lia Siti Sholehah, S.Pd", time: "09.40 - 11.00", type: "umum" },
+      { mapel: "Bahasa Sunda", guru: "Isti Hamidah", time: "11.00 - 13.00", type: "umum" },
+      { mapel: "Matematika", guru: "Wijiastuti, S.Pd", time: "13.00 - 14.30", type: "umum" },
+      { mapel: "Sejarah", guru: "Yessy Novita D, S.Pd", time: "14.30 - 15.50", type: "umum" },
+    ],
+    Jumat: [
+      { mapel: "Koding & AI", guru: "Juliana Mansur, S.Kom", time: "07.45 - 09.05", type: "produktif" },
+      { mapel: "Bahasa Inggris", guru: "Endang Setiawan, S.Pd", time: "09.05 - 10.25", type: "umum" },
+      { mapel: "Bahasa Indonesia", guru: "Lia Siti Sholehah, S.Pd", time: "10.25 - 13.40", type: "umum" },
+      { mapel: "Bahasa Sunda", guru: "Isti Hamidah", time: "13.40 - 15.00", type: "umum" },
+    ],
+  },
+  produktif: {
+    Senin: [
+      { mapel: "DDPK (Juliana)", time: "08.20 - 09.40", type: "produktif" },
+      { mapel: "PJOK", guru: "Noer Sandy M, S.Pd", time: "10.00 - 12.00", type: "umum" },
+      { mapel: "DDPK (Duma)", time: "12.40 - 14.40", type: "produktif" },
+      { mapel: "DDPK (Muslih)", time: "14.40 - 16.00", type: "produktif" },
+    ],
+    Selasa: [
+      { mapel: "Projek IPAS", guru: "Nurulia Aprilia, S.Si", time: "08.00 - 11.40", type: "umum" },
+      { mapel: "DDPK (Duma)", time: "12.20 - 14.30", type: "produktif" },
+      { mapel: "Informatika", guru: "Nurdin", time: "14.30 - 15.50", type: "produktif" },
+    ],
+    Rabu: [
+      { mapel: "Informatika", guru: "Nurdin", time: "08.00 - 09.20", type: "produktif" },
+      { mapel: "PJOK", guru: "Noer Sandy M, S.Pd", time: "09.40 - 11.40", type: "umum" },
+      { mapel: "Projek IPAS", guru: "Nurulia Aprilia, S.Si", time: "12.20 - 15.50", type: "umum" },
+    ],
+    Kamis: [
+      { mapel: "DDPK (Full Day)", guru: "Iqbal Fajar Syahbana", time: "08.00 - 15.50", type: "produktif" },
+    ],
+    Jumat: [
+      { mapel: "DDPK (Duma)", time: "07.45 - 10.25", type: "produktif" },
+      { mapel: "Informatika", guru: "Nurdin", time: "10.25 - 13.40", type: "produktif" },
+      { mapel: "DDPK (Duma)", time: "13.40 - 15.00", type: "produktif" },
+    ],
+  },
 };
 
 let jadwalData = defaultJadwalData;
-let currentDayIdx = new Date().getDay(); 
-let currentWeekType = 'umum'; 
+let currentDayIdx = new Date().getDay();
+let currentWeekType = "umum";
+let taskFilter = "all";
+let editingTaskId = null;
 
-// ==================== SYSTEM RNG QUOTES ====================
+// ==================== QUOTES ====================
 const motivationalQuotes = [
     // --- MOTIVASI BELAJAR ---
     "Fokus 25 menit, hasilnya 100%. Kamu bisa! 💪",
@@ -903,7 +913,7 @@ function initAuthListener() {
                 document.getElementById('loginStatusText').innerText = "Online";
                 
                 startFirebaseListener(uid); 
-                initApp();
+                initApp(uid); 
             } else {
                 currentUser = null;
                 document.getElementById('loginOverlay').style.display = 'flex';
@@ -916,118 +926,29 @@ function initAuthListener() {
 window.switchAuthMode = function(mode) {
     const loginView = document.getElementById('loginView');
     const registerView = document.getElementById('registerView');
-    const errorMsg = document.getElementById('authErrorMsg');
-    if(errorMsg) errorMsg.innerText = ""; 
-
-    if (mode === 'register') {
-        loginView.style.display = 'none';
-        registerView.style.display = 'block';
-    } else {
-        loginView.style.display = 'block';
-        registerView.style.display = 'none';
-    }
+    if (mode === 'register') { loginView.style.display = 'none'; registerView.style.display = 'block'; }
+    else { loginView.style.display = 'block'; registerView.style.display = 'none'; }
 }
-
 window.handleLogin = function() {
     const email = document.getElementById('loginEmail').value;
     const pass = document.getElementById('loginPass').value;
-    const errorMsg = document.getElementById('authErrorMsg');
-
-    if(!email || !pass) { errorMsg.innerText = "Isi email dan password!"; return; }
-
-    errorMsg.innerText = "Sedang masuk...";
-    window.authSignIn(window.auth, email, pass)
-        .then(() => { errorMsg.innerText = ""; showToast("Berhasil Masuk!", "success"); })
-        .catch((error) => { errorMsg.innerText = "Gagal: Email/Password salah."; });
+    if(!email || !pass) { document.getElementById('authErrorMsg').innerText = "Isi email dan password!"; return; }
+    window.authSignIn(window.auth, email, pass).catch((e) => { document.getElementById('authErrorMsg').innerText = "Gagal: Email/Password salah."; });
 }
-
-window.handleGoogleLogin = function() {
-    const errorMsg = document.getElementById('authErrorMsg');
-    errorMsg.innerText = "Menghubungkan ke Google...";
-    errorMsg.style.color = "var(--text-sub)";
-    
-    window.authSignInGoogle(window.auth, window.googleProvider)
-        .then((result) => {
-            const user = result.user;
-            errorMsg.style.color = "var(--green)";
-            errorMsg.innerText = "Berhasil! Mengalihkan...";
-            showToast(`Masuk sebagai ${user.displayName}`, "success");
-        }).catch((error) => {
-            console.error(error);
-            errorMsg.style.color = "var(--red)";
-            if (error.code === 'auth/popup-closed-by-user') {
-                errorMsg.innerText = "Login dibatalkan.";
-            } else if (error.code === 'auth/network-request-failed') {
-                errorMsg.innerText = "Gagal: Periksa internet Anda.";
-            } else {
-                errorMsg.innerText = "Gagal masuk Google.";
-            }
-        });
-}
-
+window.handleGoogleLogin = function() { window.authSignInGoogle(window.auth, window.googleProvider).then(res => showToast(`Masuk: ${res.user.displayName}`, "success")).catch(e => console.error(e)); }
 window.handleRegister = function() {
-    const username = document.getElementById('regUsername').value;
-    const email = document.getElementById('regEmail').value;
-    const pass = document.getElementById('regPass').value;
-    
-    if(!username || !email || !pass) { alert("Lengkapi data pendaftaran!"); return; }
-    if(pass.length < 6) { alert("Password minimal 6 karakter!"); return; }
-
-    window.authSignUp(window.auth, email, pass)
-        .then((userCredential) => {
-            const user = userCredential.user;
-            window.authUpdateProfile(user, { displayName: username })
-                .then(() => {
-                    showToast(`Halo ${username}!`, "success");
-                    setTimeout(() => location.reload(), 1500);
-                });
-        })
-        .catch((error) => {
-            if(error.code === 'auth/email-already-in-use') alert("Email sudah terdaftar!");
-            else alert("Gagal: " + error.message);
-        });
+    const u = document.getElementById('regUsername').value; const e = document.getElementById('regEmail').value; const p = document.getElementById('regPass').value;
+    if(!u || !e || !p) return alert("Lengkapi data!");
+    window.authSignUp(window.auth, e, p).then(c => { window.authUpdateProfile(c.user, { displayName: u }).then(() => location.reload()); }).catch(e => alert(e.message));
 }
-
-window.logoutUser = function() {
-    if(confirm("Yakin ingin keluar?")) {
-        window.authSignOut(window.auth).then(() => {
-            location.reload();
-        });
-    }
-}
-
-window.editUsername = function() {
-    const user = window.auth.currentUser;
-    if(user) {
-        document.getElementById('newUsernameInput').value = user.displayName || "";
-        document.getElementById('usernameModal').style.display = 'flex';
-        const dropdown = document.getElementById('settingsDropdown');
-        if(dropdown) dropdown.classList.remove('active');
-    }
-}
-
-window.saveUsername = function() {
-    const newName = document.getElementById('newUsernameInput').value.trim();
-    if(!newName) return showToast("Nama tidak boleh kosong!", "error");
-
-    const user = window.auth.currentUser;
-    window.authUpdateProfile(user, { displayName: newName }).then(() => {
-        document.getElementById('displayUsername').innerText = newName;
-        updateGreeting();
-        document.getElementById('usernameModal').style.display = 'none';
-        showToast("Nama berhasil diganti!", "success");
-    }).catch(err => {
-        showToast("Gagal ganti nama: " + err.message, "error");
-    });
-}
+window.logoutUser = function() { if(confirm("Keluar?")) window.authSignOut(window.auth).then(() => location.reload()); }
+window.editUsername = function() { const u = window.auth.currentUser; if(u) { document.getElementById('newUsernameInput').value = u.displayName || ""; document.getElementById('usernameModal').style.display = 'flex'; } }
+window.saveUsername = function() { const n = document.getElementById('newUsernameInput').value.trim(); if(n) window.authUpdateProfile(window.auth.currentUser, { displayName: n }).then(() => { document.getElementById('displayUsername').innerText = n; updateGreeting(); document.getElementById('usernameModal').style.display = 'none'; }); }
 
 // ==================== C. FIREBASE DATA LOGIC ====================
 
 function startFirebaseListener(uid) {
-    if (!window.db || !window.dbOnValue) {
-        console.error("Firebase belum siap.");
-        return;
-    }
+    if (!window.db || !window.dbOnValue) return;
     const userPath = 'users/' + uid;
     
     window.dbOnValue(window.dbRef(window.db, userPath), (snapshot) => {
@@ -1035,12 +956,14 @@ function startFirebaseListener(uid) {
         if (data) {
             cachedData.tasks = data.tasks || [];
             cachedData.transactions = data.transactions || [];
-            if (data.jadwal && data.jadwal.umum) {
-                cachedData.jadwal = data.jadwal;
-            } else {
-                cachedData.jadwal = defaultJadwalData;
-                saveDB('jadwalData', defaultJadwalData); 
-            }
+            cachedData.gamification = data.gamification || { xp: 0, level: 1 };
+            cachedData.streak = data.streak || { count: 0, lastLogin: null };
+            cachedData.focusLogs = data.focusLogs || {};
+            cachedData.scheduleNotes = data.scheduleNotes || {};
+
+            if (data.jadwal && data.jadwal.umum) cachedData.jadwal = data.jadwal;
+            else { cachedData.jadwal = defaultJadwalData; saveDB('jadwalData', defaultJadwalData); }
+
             if(data.settings) {
                 if(data.settings.theme) applyTheme(data.settings.theme);
                 if(data.settings.weekType) currentWeekType = data.settings.weekType;
@@ -1052,73 +975,189 @@ function startFirebaseListener(uid) {
             saveAllToCloud(uid); 
         }
         jadwalData = cachedData.jadwal;
-        isDataLoaded = true; // [PERBAIKAN] Tandai bahwa data SUDAH dimuat
         renderAll();
     });
 }
 
 function saveDB(key, data) {
-    // [PERBAIKAN] Cek apakah data sudah siap sebelum menyimpan
-    if (!isDataLoaded) {
-        showToast("Tunggu sebentar, data sedang dimuat...", "error");
-        console.warn("Penyimpanan diblokir: Data Firebase belum selesai dimuat.");
-        return; 
-    }
-
     const uid = window.auth.currentUser.uid;
+    // Update local cache
     if(key === 'tasks') cachedData.tasks = data;
     if(key === 'transactions') cachedData.transactions = data;
-    if(key === 'jadwalData') { cachedData.jadwal = data; jadwalData = data; }
+    if(key === 'gamification') cachedData.gamification = data;
+    if(key === 'streak') cachedData.streak = data;
+    if(key === 'focusLogs') cachedData.focusLogs = data;
+    if(key === 'scheduleNotes') cachedData.scheduleNotes = data;
+    if(key === 'jadwalData') { cachedData.jadwal = data; jadwalData = data; key = 'jadwal'; }
 
-    let dbKey = key;
-    if(key === 'jadwalData') dbKey = 'jadwal';
-
-    window.dbSet(window.dbRef(window.db, `users/${uid}/${dbKey}`), data)
-    .catch(err => showToast("Gagal simpan ke Cloud: " + err.message, "error"));
+    window.dbSet(window.dbRef(window.db, `users/${uid}/${key}`), data).catch(err => console.error("Save Error:", err));
 }
 
-function saveSetting(key, val) {
-    const uid = window.auth.currentUser.uid;
-    window.dbSet(window.dbRef(window.db, `users/${uid}/settings/${key}`), val);
-}
+function saveSetting(key, val) { const uid = window.auth.currentUser.uid; window.dbSet(window.dbRef(window.db, `users/${uid}/settings/${key}`), val); }
 
 function saveAllToCloud(uid) {
     const targetUid = uid || (window.auth.currentUser ? window.auth.currentUser.uid : null);
-    if(targetUid) {
-        window.dbSet(window.dbRef(window.db, `users/${targetUid}`), cachedData);
-    }
+    if(targetUid) window.dbSet(window.dbRef(window.db, `users/${targetUid}`), cachedData);
 }
 
-function getDB(key) {
-    if (key === 'tasks') return cachedData.tasks || [];
-    if (key === 'transactions') return cachedData.transactions || [];
-    return [];
-}
+function getDB(key) { if (key === 'tasks') return cachedData.tasks || []; if (key === 'transactions') return cachedData.transactions || []; return []; }
 
 // ==================== D. APP FEATURES LOGIC ====================
 
-function initApp() {
-    startClock(); 
-    updateGreeting(); 
-    updateHeaderDate(); 
-    loadScheduleFilters(); 
-    loadSoundSettings(); 
-    loadRandomQuote(); 
+function initApp(uid) {
+    startClock(); updateGreeting(); updateHeaderDate(); 
+    loadScheduleFilters(); loadSoundSettings(); loadRandomQuote(); 
     updateTimerDisplay(); 
+    injectNewUI(); 
+    checkStreak(uid); 
     
     document.addEventListener('keydown', (e) => {
         if (e.ctrlKey || e.metaKey) { 
-            if (e.key === 't' || e.key === 'T') { e.preventDefault(); document.getElementById('taskInput').focus(); }
-            else if (e.key === 's' || e.key === 'S') { e.preventDefault(); document.getElementById('startPauseBtn').click(); }
-            else if (e.key === 'd' || e.key === 'D') { e.preventDefault(); toggleDarkMode(); }
+            if (e.key === 't') { e.preventDefault(); document.getElementById('taskInput').focus(); }
+            else if (e.key === 's') { e.preventDefault(); document.getElementById('startPauseBtn').click(); }
+            else if (e.key === 'd') { e.preventDefault(); toggleDarkMode(); }
         }
     });
     setInterval(checkReminders, 60000);
     
-    // --- INIT FOKUS LOCK & ANTI TAB SWITCH ---
     window.addEventListener('blur', handleTabBlur);
     window.addEventListener('focus', handleTabFocus);
     window.addEventListener('beforeunload', handleBeforeUnload);
+}
+
+function injectNewUI() {
+    // 1. XP Bar di Header Left
+    if(!document.getElementById('xpContainer')) {
+        const headerLeft = document.querySelector('.header-left');
+        const xpHTML = `
+            <div id="xpContainer" style="margin-top: 8px; background: rgba(0,0,0,0.1); border-radius: 10px; padding: 5px 10px; display: inline-block;">
+                <div style="display:flex; justify-content:space-between; font-size: 0.75rem; font-weight: 700; margin-bottom: 3px;">
+                    <span id="userLevelBadge">Lvl 1 Novice</span>
+                    <span id="userXPText">0 / 100 XP</span>
+                </div>
+                <div style="width: 150px; height: 6px; background: #ddd; border-radius: 3px; overflow: hidden;">
+                    <div id="userXPBar" style="height: 100%; width: 0%; background: linear-gradient(90deg, #6366f1, #8b5cf6); transition: width 0.5s;"></div>
+                </div>
+            </div>
+            <div id="streakBadge" style="display:inline-flex; align-items:center; gap:5px; background: #fee2e2; color: #ef4444; padding: 5px 10px; border-radius: 20px; font-weight:bold; font-size:0.8rem; margin-left:10px;">
+                <i class="fas fa-fire"></i> <span id="streakCount">0</span> Hari
+            </div>
+        `;
+        headerLeft.insertAdjacentHTML('beforeend', xpHTML);
+    }
+
+    // 2. Music Player (LoFi) Floating Widget
+    if(!document.getElementById('musicWidget')) {
+        const musicHTML = `
+            <div id="musicWidget" style="position: fixed; bottom: 20px; left: 20px; z-index: 1000; background: var(--card-bg); padding: 10px; border-radius: 15px; box-shadow: var(--shadow-lg); border: 1px solid var(--border-color); width: 200px; transition: 0.3s;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 5px;">
+                    <span style="font-weight:700; font-size:0.8rem;"><i class="fas fa-music"></i> Lo-Fi Radio</span>
+                    <button onclick="document.getElementById('musicFrame').classList.toggle('hidden-music')" style="background:none; color:var(--text-sub);"><i class="fas fa-chevron-down"></i></button>
+                </div>
+                <div id="musicFrame" style="height: 100px; overflow: hidden; border-radius: 10px;">
+                     <iframe width="100%" height="100%" src="https://www.youtube.com/embed/jfKfPfyJRdk?controls=0&autoplay=0" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                </div>
+                <style>.hidden-music { height: 0 !important; }</style>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', musicHTML);
+    }
+
+    // 3. Focus Stats Chart
+    const pomodoroCard = document.querySelector('.pomodoro-card');
+    if(pomodoroCard && !document.getElementById('focusChart')) {
+        const chartHTML = `
+            <div id="focusChartSection" style="margin-top: 20px; background: rgba(0,0,0,0.1); padding: 15px; border-radius: 12px; text-align: left;">
+                <h4 style="font-size: 0.9rem; margin-bottom: 10px; color: white;">📊 Statistik Fokus Minggu Ini</h4>
+                <div id="focusChart" style="display: flex; gap: 5px; align-items: flex-end; height: 80px; padding-bottom: 5px;">
+                    </div>
+            </div>
+        `;
+        pomodoroCard.appendChild(document.createElement('div')).innerHTML = chartHTML;
+    }
+}
+
+// --- GAMIFICATION ---
+function addXP(amount) {
+    let stats = cachedData.gamification;
+    stats.xp += amount;
+    const xpNeeded = stats.level * 100;
+    if (stats.xp >= xpNeeded) {
+        stats.xp -= xpNeeded;
+        stats.level++;
+        showToast(`🎉 LEVEL UP! Kamu sekarang Level ${stats.level}`, "success");
+        playSuccessSound('bell'); 
+        alert(`SELAMAT! 🥳\nKamu naik ke Level ${stats.level}\nTitle: ${getLevelTitle(stats.level)}`);
+    }
+    saveDB('gamification', stats);
+    updateGamificationUI();
+}
+
+function getLevelTitle(lvl) {
+    if(lvl < 5) return "Novice Student";
+    if(lvl < 10) return "Apprentice Learner";
+    if(lvl < 20) return "High Achiever";
+    if(lvl < 50) return "Master of Focus";
+    return "Grandmaster Scholar";
+}
+
+function updateGamificationUI() {
+    const stats = cachedData.gamification;
+    const xpNeeded = stats.level * 100;
+    const pct = (stats.xp / xpNeeded) * 100;
+    const xpBar = document.getElementById('userXPBar');
+    if(xpBar) xpBar.style.width = `${pct}%`;
+    const xpText = document.getElementById('userXPText');
+    if(xpText) xpText.innerText = `${stats.xp} / ${xpNeeded} XP`;
+    const lvlBadge = document.getElementById('userLevelBadge');
+    if(lvlBadge) lvlBadge.innerText = `Lvl ${stats.level} ${getLevelTitle(stats.level)}`;
+}
+
+// --- STREAK ---
+function checkStreak(uid) {
+    const today = new Date().toISOString().split('T')[0];
+    let streak = cachedData.streak;
+    if (streak.lastLogin !== today) {
+        const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayStr = yesterday.toISOString().split('T')[0];
+        if (streak.lastLogin === yesterdayStr) { streak.count++; } else { streak.count = 1; }
+        streak.lastLogin = today;
+        saveDB('streak', streak);
+    }
+    document.getElementById('streakCount').innerText = streak.count;
+}
+
+// --- FOCUS STATS ---
+function logFocusTime(minutes) {
+    if(minutes <= 0) return;
+    const today = new Date().toISOString().split('T')[0];
+    let logs = cachedData.focusLogs;
+    if(!logs[today]) logs[today] = 0;
+    logs[today] += minutes;
+    saveDB('focusLogs', logs);
+    renderFocusChart();
+}
+
+function renderFocusChart() {
+    const chart = document.getElementById('focusChart');
+    if(!chart) return;
+    chart.innerHTML = '';
+    for(let i=6; i>=0; i--) {
+        const d = new Date(); d.setDate(d.getDate() - i);
+        const dateStr = d.toISOString().split('T')[0];
+        const dayName = days[d.getDay()].substring(0,3); 
+        const minutes = cachedData.focusLogs[dateStr] || 0;
+        let heightPct = (minutes / 240) * 100;
+        if(heightPct > 100) heightPct = 100;
+        if(heightPct < 5 && minutes > 0) heightPct = 5;
+        
+        chart.innerHTML += `
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%;">
+                <div style="width:100%; background:rgba(255,255,255,0.3); height:${heightPct}%; border-radius:4px; position:relative; min-height: ${minutes>0?4:0}px;" title="${minutes} Menit"></div>
+                <small style="font-size:0.6rem; color:white; margin-top:4px;">${dayName}</small>
+            </div>
+        `;
+    }
 }
 
 function renderAll() {
@@ -1129,38 +1168,55 @@ function renderAll() {
     loadTransactions();
     loadTarget();
     loadPomodoroTasks();
+    updateGamificationUI(); 
+    renderFocusChart(); 
 }
 
-// --- FUNGSI KONTROL FOKUS ---
+// --- MODE FOKUS & LOGIKA KUNCI TAB (UPDATED) ---
+function setFocusType(type) {
+    if (!isPaused) return showToast("Jeda timer dulu untuk ganti mode!", "error");
+    focusType = type;
+    
+    // Update UI Tombol
+    document.getElementById('btnModeStrict').className = type === 'strict' ? 'mode-btn active' : 'mode-btn';
+    document.getElementById('btnModeChill').className = type === 'chill' ? 'mode-btn active' : 'mode-btn';
+    
+    if (type === 'strict') showToast("Mode Ketat: Pindah tab = Timer Pause 🔒", "info");
+    else showToast("Mode Santai: Bebas buka tab lain ☕", "success");
+}
+
 function setFocusLock(lock) {
-    isFocusLocked = lock;
+    // Kunci hanya aktif jika Mode Strict DAN sedang timer berjalan
+    isFocusLocked = lock && (focusType === 'strict');
+    
     const focusModeElement = document.getElementById('focusModeLockText'); 
     if(focusModeElement) {
-        focusModeElement.style.display = lock ? 'block' : 'none';
-        document.querySelector('.timer-controls').style.marginTop = lock ? '10px' : '0';
+        focusModeElement.style.display = isFocusLocked ? 'block' : 'none';
+        document.querySelector('.timer-controls').style.marginTop = isFocusLocked ? '10px' : '0';
     }
 }
 
 function handleTabBlur() {
-    if (isFocusLocked && !isPaused && isWorking) {
+    // Cek apakah Mode Strict aktif
+    if (focusType === 'strict' && isFocusLocked && !isPaused && isWorking) {
         isTabBlurred = true;
         blurCount++;
-        pauseTimer(); // Ini akan memicu penyimpanan waktu & switch ke istirahat
-        showToast(`❌ JANGAN BANDEL! Fokus dijeda karena pindah tab.`, 'error');
+        pauseTimer(); 
+        showToast(`❌ MODE KETAT: Timer dijeda karena pindah tab!`, 'error');
     }
 }
 
 function handleTabFocus() {
-    if (isFocusLocked && isTabBlurred) {
+    if (focusType === 'strict' && isFocusLocked && isTabBlurred) {
         isTabBlurred = false;
     }
 }
 
 function handleBeforeUnload(event) {
-    if (isFocusLocked && !isPaused && isWorking) {
+    if (!isPaused && isWorking) {
         event.preventDefault();
-        event.returnValue = "Mode Fokus sedang aktif! Yakin ingin meninggalkan halaman?";
-        return "Mode Fokus sedang aktif! Yakin ingin meninggalkan halaman?";
+        event.returnValue = "Timer sedang berjalan! Yakin ingin keluar?";
+        return "Timer sedang berjalan! Yakin ingin keluar?";
     }
 }
 
@@ -1189,7 +1245,6 @@ function toggleDarkMode() {
     document.body.classList.toggle('dark-mode'); 
     const uid = window.auth.currentUser.uid;
     const theme = document.body.classList.contains('dark-mode')?'dark':'light';
-    localStorage.setItem(`${uid}_theme`, theme);
     saveSetting('theme', theme);
 }
 function applyTheme(theme) {
@@ -1202,31 +1257,30 @@ const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 function playSuccessSound(type = 'ding') {
     if (soundPreference === 'silent') return;
     if (audioCtx.state === 'suspended') audioCtx.resume();
-    const oscillator = audioCtx.createOscillator();
-    const gainNode = audioCtx.createGain();
-    oscillator.connect(gainNode);
-    gainNode.connect(audioCtx.destination);
-    
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.connect(g);
+    g.connect(audioCtx.destination);
     if (type === 'ding') {
-        oscillator.type = 'sine'; oscillator.frequency.setValueAtTime(1200, audioCtx.currentTime); 
-        oscillator.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.5); 
-        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime); gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.5); 
-        oscillator.start(); oscillator.stop(audioCtx.currentTime + 0.5);
+        o.type = 'sine'; o.frequency.setValueAtTime(1200, audioCtx.currentTime); 
+        o.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.5); 
+        g.gain.setValueAtTime(0.1, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.5); 
+        o.start(); o.stop(audioCtx.currentTime + 0.5);
     } else if (type === 'coin') {
-        oscillator.type = 'triangle'; oscillator.frequency.setValueAtTime(900, audioCtx.currentTime);
-        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime); gainNode.gain.linearRampToValueAtTime(0.0001, audioCtx.currentTime + 0.3);
-        oscillator.start(); oscillator.stop(audioCtx.currentTime + 0.3);
+        o.type = 'triangle'; o.frequency.setValueAtTime(900, audioCtx.currentTime);
+        g.gain.setValueAtTime(0.1, audioCtx.currentTime); g.gain.linearRampToValueAtTime(0.0001, audioCtx.currentTime + 0.3);
+        o.start(); o.stop(audioCtx.currentTime + 0.3);
     } else if (type === 'bell') {
-        oscillator.type = 'sawtooth'; oscillator.frequency.setValueAtTime(440, audioCtx.currentTime);
-        gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime); gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 1.5);
-        oscillator.start(); oscillator.stop(audioCtx.currentTime + 1.5);
+        o.type = 'sawtooth'; o.frequency.setValueAtTime(440, audioCtx.currentTime);
+        g.gain.setValueAtTime(0.15, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 1.5);
+        o.start(); o.stop(audioCtx.currentTime + 1.5);
     }
 }
 
-function formatTime(seconds) {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
+function formatTime(s) {
+    const m = Math.floor(s / 60);
+    const rs = s % 60;
+    return `${String(m).padStart(2, '0')}:${String(rs).padStart(2, '0')}`;
 }
 
 function updateTimerDisplay() {
@@ -1238,36 +1292,31 @@ function updateTimerDisplay() {
         document.getElementById('timerMessage').innerText = "Waktunya Bekerja Keras";
         card.classList.remove('mode-break');
         if(!isPaused) {
-            document.getElementById('startPauseBtn').innerText = "Jeda (ke Istirahat)";
+            document.getElementById('startPauseBtn').innerText = "Jeda";
             document.getElementById('startPauseBtn').setAttribute('onclick', 'pauseTimer()');
         } else {
              document.getElementById('startPauseBtn').innerText = "Mulai";
              document.getElementById('startPauseBtn').setAttribute('onclick', 'startTimer()');
         }
-        
     } else {
         document.getElementById('timerMode').innerText = "ISTIRAHAT";
         document.getElementById('timerMessage').innerText = "Istirahat Sejenak";
         card.classList.add('mode-break');
-        
         if(!isPaused) {
-            document.getElementById('startPauseBtn').innerText = "Lanjut Fokus (Skip Istirahat)";
+            document.getElementById('startPauseBtn').innerText = "Skip Istirahat";
             document.getElementById('startPauseBtn').setAttribute('onclick', 'resumeFocus()');
         } else {
             document.getElementById('startPauseBtn').innerText = "Lanjut Fokus";
             document.getElementById('startPauseBtn').setAttribute('onclick', 'resumeFocus()');
         }
     }
-    
     if (timeLeft === 0) toggleMode();
 }
 
 function startTimer() {
     if (!isPaused) return;
     isPaused = false;
-    
     if(isWorking) setFocusLock(true); 
-    
     updateTimerDisplay();
     timerInterval = setInterval(() => { timeLeft--; updateTimerDisplay(); }, 1000);
 }
@@ -1278,34 +1327,27 @@ function pauseTimer() {
     clearInterval(timerInterval);
     
     if (isWorking) {
-        savedFocusTime = timeLeft; // SIMPAN WAKTU FOKUS
-        
+        savedFocusTime = timeLeft; 
+        const durationSetting = isExamMode ? WORK_DURATION_EXAM : WORK_DURATION_DEFAULT;
+        const workedMinutes = Math.floor((durationSetting - timeLeft) / 60);
+        if(workedMinutes > 0) logFocusTime(workedMinutes);
+
         isWorking = false; 
+        if (savedBreakTime !== null && savedBreakTime > 0) timeLeft = savedBreakTime; 
+        else timeLeft = isExamMode ? BREAK_DURATION_EXAM : BREAK_DURATION_DEFAULT; 
         
-        // --- LOGIKA RECOVERY WAKTU ISTIRAHAT ---
-        if (savedBreakTime !== null && savedBreakTime > 0) {
-             timeLeft = savedBreakTime; 
-        } else {
-             timeLeft = isExamMode ? BREAK_DURATION_EXAM : BREAK_DURATION_DEFAULT; 
-        }
-        
-        showToast("Fokus dijeda. Waktunya istirahat sebentar!", "info");
-        
+        showToast("Fokus dijeda. Istirahat dulu!", "info");
         updateTimerDisplay();
         startTimer(); 
     }
-    
     setFocusLock(false); 
 }
 
 function resumeFocus() {
-    savedBreakTime = timeLeft; // SIMPAN WAKTU ISTIRAHAT
-
+    savedBreakTime = timeLeft; 
     clearInterval(timerInterval);
     isPaused = true;
-
     isWorking = true;
-    
     if (savedFocusTime !== null && savedFocusTime > 0) {
         timeLeft = savedFocusTime;
         showToast("Melanjutkan Fokus...", "success");
@@ -1313,9 +1355,7 @@ function resumeFocus() {
         timeLeft = isExamMode ? WORK_DURATION_EXAM : WORK_DURATION_DEFAULT;
         showToast("Mulai Fokus Baru", "success");
     }
-    
     savedFocusTime = null;
-
     updateTimerDisplay();
     startTimer();
 }
@@ -1327,9 +1367,6 @@ function resetTimer() {
     timeLeft = isExamMode ? WORK_DURATION_EXAM : WORK_DURATION_DEFAULT; 
     savedFocusTime = null; 
     savedBreakTime = null;
-    
-    document.getElementById('startPauseBtn').innerText = "Mulai";
-    document.getElementById('startPauseBtn').setAttribute('onclick', 'startTimer()');
     updateTimerDisplay();
     setFocusLock(false);
 }
@@ -1337,35 +1374,33 @@ function resetTimer() {
 function toggleMode() {
     clearInterval(timerInterval);
     isPaused = true;
-    isWorking = !isWorking;
-    
     if (isWorking) {
-         savedBreakTime = null; // Istirahat selesai, reset.
-         if (savedFocusTime !== null) {
-            timeLeft = savedFocusTime;
-            savedFocusTime = null;
-         } else {
-            timeLeft = isExamMode ? WORK_DURATION_EXAM : WORK_DURATION_DEFAULT;
-         }
+         const durationSetting = isExamMode ? WORK_DURATION_EXAM : WORK_DURATION_DEFAULT;
+         const workedMinutes = Math.floor(durationSetting / 60);
+         logFocusTime(workedMinutes);
+         addXP(20); 
+         isWorking = false;
+         savedBreakTime = null;
+         timeLeft = isExamMode ? BREAK_DURATION_EXAM : BREAK_DURATION_DEFAULT;
+         showToast("Waktunya ISTIRAHAT! ☕ (+20 XP)", "info");
     } else {
-        savedFocusTime = null; // Fokus selesai, reset.
-        savedBreakTime = null;
-        timeLeft = isExamMode ? BREAK_DURATION_EXAM : BREAK_DURATION_DEFAULT;
+        isWorking = true;
+        savedFocusTime = null;
+        timeLeft = isExamMode ? WORK_DURATION_EXAM : WORK_DURATION_DEFAULT;
+        showToast("Kembali FOKUS! 🔔", "info");
     }
-
     playSuccessSound('bell');
-    showToast(isWorking ? "Waktunya FOKUS! 🔔" : "Waktunya ISTIRAHAT! ☕", "info");
     updateTimerDisplay();
     startTimer(); 
 }
 
 function loadPomodoroTasks() {
-    const selector = document.getElementById('pomodoroTaskSelector');
-    if(!selector) return;
-    selector.innerHTML = '<option value="">-- Pilih Tugas untuk Fokus --</option>';
+    const s = document.getElementById('pomodoroTaskSelector');
+    if(!s) return;
+    s.innerHTML = '<option value="">-- Pilih Tugas untuk Fokus --</option>';
     cachedData.tasks.filter(t => !t.completed).forEach(t => {
-        const option = document.createElement('option');
-        option.value = t.id; option.innerText = t.text; selector.appendChild(option);
+        const o = document.createElement('option');
+        o.value = t.id; o.innerText = t.text; s.appendChild(o);
     });
 }
 
@@ -1376,12 +1411,10 @@ function changeWeekType() {
     saveSetting('weekType', currentWeekType);
     renderSchedule(); 
 }
-
 function loadScheduleFilters() {
     const guruSet = new Set();
     const guruSelector = document.getElementById('scheduleFilterGuru');
     if (!guruSelector || !jadwalData) return;
-    
     Object.values(jadwalData).forEach(week => {
         Object.values(week).forEach(dayData => {
             dayData.forEach(item => { if (item.guru) guruSet.add(item.guru); });
@@ -1392,7 +1425,6 @@ function loadScheduleFilters() {
         guruSelector.innerHTML += `<option value="${escapeHtml(guru)}">${escapeHtml(guru)}</option>`;
     });
 }
-
 function getWeekNumber(d) {
     d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
     d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
@@ -1405,55 +1437,32 @@ function renderSchedule() {
     document.getElementById('activeDayName').innerText = dayName.toUpperCase();
     
     let currentWeekDisplay = currentWeekType;
-    if (currentWeekType === 'auto') {
-        currentWeekDisplay = (getWeekNumber(new Date()) % 2 !== 0) ? 'umum' : 'produktif';
-    }
+    if (currentWeekType === 'auto') currentWeekDisplay = (getWeekNumber(new Date()) % 2 !== 0) ? 'umum' : 'produktif';
     
     if(!jadwalData) return;
     let data = jadwalData[currentWeekDisplay][dayName];
     const tbody = document.getElementById('scheduleBody');
-
     const now = new Date();
-    const currentHour = now.getHours();
-    const currentMinute = now.getMinutes();
-    const curMins = currentHour * 60 + currentMinute;
+    const curMins = now.getHours() * 60 + now.getMinutes();
     const isToday = currentDayIdx === now.getDay();
     
     tbody.innerHTML = '';
-    
-    const filterCategory = document.getElementById('scheduleFilterCategory').value;
+    const filterCat = document.getElementById('scheduleFilterCategory').value;
     const filterGuru = document.getElementById('scheduleFilterGuru').value;
 
-    if (data) {
-        data = data.filter(item => {
-            return (filterCategory === 'all' || item.type === filterCategory) && 
-                   (filterGuru === 'all' || item.guru === filterGuru);
-        });
-    }
+    if (data) data = data.filter(item => (filterCat === 'all' || item.type === filterCat) && (filterGuru === 'all' || item.guru === filterGuru));
 
     let statusWidget = document.getElementById('liveStatusWidget');
     if (!statusWidget) {
-        const container = document.querySelector('.schedule-status-bar');
-        if(container) {
-            container.outerHTML = `
-            <div id="liveStatusWidget" class="live-status-widget">
-                <div class="status-icon-box"><i class="fas fa-bolt" id="statusIcon"></i></div>
-                <div class="status-content">
-                    <h4 id="statusLabel">STATUS SAAT INI</h4>
-                    <p id="statusText">Memuat...</p>
-                </div>
-            </div>`;
-            statusWidget = document.getElementById('liveStatusWidget');
-        }
+        document.querySelector('.schedule-status-bar').innerHTML = `<div id="liveStatusWidget" class="live-status-widget"><div class="status-icon-box"><i class="fas fa-bolt" id="statusIcon"></i></div><div class="status-content"><h4 id="statusLabel">STATUS SAAT INI</h4><p id="statusText">Memuat...</p></div></div>`;
+        statusWidget = document.getElementById('liveStatusWidget');
     }
 
     if(!data || data.length === 0) { 
         tbody.parentElement.style.display='none'; 
         document.getElementById('holidayMessage').style.display='block'; 
-        
         if(statusWidget) {
             document.getElementById('statusText').innerText = "Tidak ada jadwal (Libur)";
-            document.getElementById('statusIcon').className = "fas fa-mug-hot";
             statusWidget.className = "live-status-widget status-chill";
         }
         return; 
@@ -1461,48 +1470,39 @@ function renderSchedule() {
     
     tbody.parentElement.style.display='table'; 
     document.getElementById('holidayMessage').style.display='none';
-    
     let statusText = "Belum Mulai";
     let statusClass = "live-status-widget"; 
     let iconClass = "fas fa-clock";
 
     if (isToday) {
-        if (currentHour >= 17) {
-            statusText = "Selesai. Sampai Jumpa Besok!";
-            statusClass = "live-status-widget status-chill";
+        if (now.getHours() >= 17) {
+            statusText = "Selesai. Besok lagi!";
+            statusClass += " status-chill";
             iconClass = "fas fa-moon";
         } else {
             let ongoing = false;
             data.forEach(item => {
                 const parts = item.time.split("-");
                 if(parts.length >= 2) {
-                    const start = parts[0].trim().replace(/\./g, ':').split(':').map(Number);
-                    const end = parts[1].trim().split(" ")[0].replace(/\./g, ':').split(':').map(Number);
-                    const sM = start[0]*60+start[1]; 
-                    const eM = end[0]*60+end[1];
-                    
-                    if(curMins >= sM && curMins < eM) { 
-                        statusText = `Sedang Berlangsung: ${item.mapel}`; 
-                        statusClass = "live-status-widget status-busy"; 
+                    const start = parts[0].trim().replace('.', ':').split(':').map(Number);
+                    const end = parts[1].trim().split(" ")[0].replace('.', ':').split(':').map(Number);
+                    if(curMins >= (start[0]*60+start[1]) && curMins < (end[0]*60+end[1])) { 
+                        statusText = `Sedang: ${item.mapel}`; 
+                        statusClass += " status-busy"; 
                         iconClass = "fas fa-book-reader";
                         ongoing = true;
                     }
                 }
             });
-            if (!ongoing && currentHour < 17) {
-                if (curMins < (7*60 + 45)) { 
-                     statusText = "Menunggu jam masuk...";
-                     iconClass = "fas fa-hourglass-start";
-                } else {
-                     statusText = "Istirahat / Pergantian Jam";
-                     statusClass = "live-status-widget status-chill";
-                     iconClass = "fas fa-coffee";
-                }
+            if (!ongoing) {
+                 statusText = "Istirahat / Pergantian";
+                 statusClass += " status-chill";
+                 iconClass = "fas fa-coffee";
             }
         }
     } else {
-        statusText = `Lihat Jadwal Hari ${dayName}`;
-        statusClass = "live-status-widget status-chill";
+        statusText = `Jadwal ${dayName}`;
+        statusClass += " status-chill";
         iconClass = "fas fa-calendar-alt";
     }
 
@@ -1514,23 +1514,25 @@ function renderSchedule() {
 
     data.forEach((item, idx) => {
         let isActive = false;
-        if (isToday && currentHour < 17) {
+        if (isToday && now.getHours() < 17) {
             const parts = item.time.split("-");
             if(parts.length >= 2) {
-                const start = parts[0].trim().replace(/\./g, ':').split(':').map(Number);
-                const end = parts[1].trim().split(" ")[0].replace(/\./g, ':').split(':').map(Number);
-                const sM = start[0]*60+start[1]; const eM = end[0]*60+end[1];
-                if(curMins >= sM && curMins < eM) { isActive = true; }
+                const s = parts[0].trim().replace('.', ':').split(':').map(Number);
+                const e = parts[1].trim().split(" ")[0].replace('.', ':').split(':').map(Number);
+                if(curMins >= (s[0]*60+s[1]) && curMins < (e[0]*60+e[1])) isActive = true;
             }
         }
         
-        const noteElem = `<button class="btn-note" onclick="alert('Fitur catatan per mapel akan hadir di update berikutnya!')">
-                            <i class="fas fa-sticky-note"></i> Catatan
-                          </button>`;
+        const noteKey = `${dayName}_${idx}`;
+        const hasNote = cachedData.scheduleNotes && cachedData.scheduleNotes[noteKey];
+        const noteBtnClass = hasNote ? "btn-note" : "btn-note";
+        const noteIcon = hasNote ? "fas fa-check-square" : "fas fa-sticky-note";
+        const noteStyle = hasNote ? "background:var(--primary);color:white;" : "";
         
-        const editElem = `<button class="btn-edit-round" onclick="openScheduleEdit('${dayName}',${idx})" title="Edit Jadwal">
-                            <i class="fas fa-pencil-alt"></i>
+        const noteElem = `<button class="${noteBtnClass}" style="${noteStyle}" onclick="openMapelNote('${dayName}', ${idx})">
+                            <i class="${noteIcon}"></i> ${hasNote ? "Ada Catatan" : "Catatan"}
                           </button>`;
+        const editElem = `<button class="btn-edit-round" onclick="openScheduleEdit('${dayName}',${idx})"><i class="fas fa-pencil-alt"></i></button>`;
         
         tbody.innerHTML += `
         <tr class="${isActive?'active-row':''}">
@@ -1542,38 +1544,38 @@ function renderSchedule() {
     });
 }
 
-let currentScheduleEdit = null;
-function openScheduleEdit(day, idx) {
-    currentScheduleEdit = { day, idx };
-    let displayType = currentWeekType === 'auto' ? ((getWeekNumber(new Date()) % 2 !== 0) ? 'umum' : 'produktif') : currentWeekType;
-    const item = jadwalData[displayType][day][idx];
-    
-    document.getElementById('editMapelName').value = item.mapel;
-    document.getElementById('editMapelTime').value = item.time;
-    document.getElementById('editMapelType').value = item.type;
-    document.getElementById('scheduleEditModal').style.display = 'flex';
+function openMapelNote(day, idx) {
+    currentNoteTarget = `${day}_${idx}`;
+    const savedNote = cachedData.scheduleNotes[currentNoteTarget] || "";
+    document.getElementById('noteModalInput').value = savedNote;
+    document.getElementById('noteModalTitle').innerText = `📝 Catatan: ${jadwalData[currentWeekType==='auto' ? ((getWeekNumber(new Date())%2!==0)?'umum':'produktif') : currentWeekType][day][idx].mapel}`;
+    document.getElementById('noteModal').style.display = 'flex';
 }
 
-function saveScheduleChanges() {
-    const name = escapeHtml(document.getElementById('editMapelName').value);
-    const time = escapeHtml(document.getElementById('editMapelTime').value);
-    const type = document.getElementById('editMapelType').value;
-    
-    if (!name || !time) return showToast("Data tidak boleh kosong!", "error");
-    
-    const { day, idx } = currentScheduleEdit;
-    let displayType = currentWeekType === 'auto' ? ((getWeekNumber(new Date()) % 2 !== 0) ? 'umum' : 'produktif') : currentWeekType;
-    
-    jadwalData[displayType][day][idx] = { ...jadwalData[displayType][day][idx], mapel: name, time, type };
-    saveDB('jadwalData', jadwalData);
-    
-    document.getElementById('scheduleEditModal').style.display = 'none'; 
-    showToast("Jadwal diupdate!", "success");
+window.saveNoteFromModal = function() {
+    if(!currentNoteTarget) return;
+    const val = document.getElementById('noteModalInput').value;
+    if(!cachedData.scheduleNotes) cachedData.scheduleNotes = {};
+    cachedData.scheduleNotes[currentNoteTarget] = val;
+    saveDB('scheduleNotes', cachedData.scheduleNotes);
+    closeNoteModal();
+    renderSchedule(); 
+    showToast("Catatan Mapel Disimpan!", "success");
 }
-function closeScheduleEditModal() { document.getElementById('scheduleEditModal').style.display = 'none'; }
 
+window.deleteNote = function() {
+    if(!currentNoteTarget) return;
+    if(confirm("Hapus catatan ini?")) {
+        delete cachedData.scheduleNotes[currentNoteTarget];
+        saveDB('scheduleNotes', cachedData.scheduleNotes);
+        document.getElementById('noteModalInput').value = "";
+        closeNoteModal();
+        renderSchedule();
+        showToast("Catatan dihapus.", "info");
+    }
+}
+window.closeNoteModal = function() { document.getElementById('noteModal').style.display = 'none'; currentNoteTarget = null; }
 
-// --- TO-DO LIST ---
 function formatDateIndo(dateString) { if(!dateString) return ""; return new Date(dateString).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' }); }
 function getDaysRemaining(dateString) { if (!dateString) return null; const target = new Date(dateString); target.setHours(0,0,0,0); const today = new Date(); today.setHours(0,0,0,0); return Math.ceil((target - today) / (1000 * 60 * 60 * 24)); }
 function filterTasks(type, btn) { taskFilter = type; document.querySelectorAll('.tab').forEach(b => b.classList.remove('active')); btn.classList.add('active'); loadTasks(); }
@@ -1582,21 +1584,18 @@ function handleTaskButton() {
     const text = escapeHtml(document.getElementById('taskInput').value);
     const date = document.getElementById('taskDate').value; 
     const priority = document.getElementById('taskPriority').value;
-
-    if(!text) return showToast("Isi nama tugas dulu!", 'error');
-    if(!date) return showToast("Pilih tanggal deadline dulu!", 'error');
+    if(!text || !date) return showToast("Lengkapi data tugas!", 'error');
 
     let tasks = getDB('tasks'); 
-
     if(editingTaskId) {
         const idx = tasks.findIndex(t => t.id === editingTaskId);
         if(idx !== -1) { tasks[idx].text = text; tasks[idx].date = date; tasks[idx].priority = priority; showToast("Tugas diupdate!", "success"); }
         editingTaskId = null; document.getElementById('addTaskBtn').innerHTML = `Tambah Tugas`;
     } else {
         tasks.push({ id: Date.now(), text, date: date, priority, completed: false });
-        playSuccessSound('ding'); showToast("Tugas ditambah ke Cloud!", "success");
+        addXP(5); 
+        playSuccessSound('ding'); showToast("Tugas ditambah! (+5 XP)", "success");
     }
-    
     saveDB('tasks', tasks);
     document.getElementById('taskInput').value = ''; document.getElementById('taskDate').value = ''; 
 }
@@ -1637,9 +1636,12 @@ function loadTasks() {
         return;
     }
 
-    filtered.sort((a, b) => new Date(a.date) - new Date(b.date));
+    filtered.sort((a, b) => {
+        if (a.completed !== b.completed) return a.completed - b.completed;
+        return new Date(a.date) - new Date(b.date);
+    });
 
-    filtered.forEach(t => {
+    filtered.forEach((t, index) => {
         const daysLeft = getDaysRemaining(t.date);
         let dateDisplay = `<i class="far fa-calendar"></i> ${formatDateIndo(t.date)}`;
         let badgeClass = 'deadline-far';
@@ -1649,15 +1651,17 @@ function loadTasks() {
             else if (daysLeft === 0) { dateDisplay = `🔥 HARI INI`; badgeClass = 'deadline-urgent'; }
             else if (daysLeft === 1) { dateDisplay = `⏰ Besok`; badgeClass = 'deadline-near'; }
             else { 
-                dateDisplay = `📅 ${daysLeft} Hari Lagi (${formatDateIndo(t.date)})`; 
+                dateDisplay = `📅 ${daysLeft} Hari Lagi`; 
                 badgeClass = daysLeft <= 3 ? 'deadline-near' : 'deadline-far'; 
             }
         }
-
         const randomWord = funWords[Math.floor(Math.random() * funWords.length)];
 
-        list.innerHTML += `
-            <li class="task-item priority-${t.priority} ${t.completed ? 'completed' : ''}">
+        const li = document.createElement('li');
+        li.className = `task-item priority-${t.priority} ${t.completed ? 'completed' : ''}`;
+        li.draggable = true;
+        li.dataset.id = t.id;
+        li.innerHTML = `
                 <div class="task-content" style="display:flex;align-items:center;width:100%;">
                     <div class="check-btn" onclick="toggleTask(${t.id})"><i class="fas fa-check"></i></div>
                     <div class="task-text">
@@ -1669,10 +1673,51 @@ function loadTasks() {
                 <div class="task-actions">
                     <button class="action-btn" onclick="loadTaskToEdit(${t.id})"><i class="fas fa-pencil-alt"></i></button>
                     <button class="action-btn delete" onclick="deleteTask(${t.id})"><i class="fas fa-trash"></i></button>
-                </div>
-            </li>`;
+                    <i class="fas fa-grip-lines" style="cursor:move; color:#ccc; margin-left:10px;"></i>
+                </div>`;
+        
+        li.addEventListener('dragstart', handleDragStart);
+        li.addEventListener('dragover', handleDragOver);
+        li.addEventListener('drop', handleDrop);
+        li.addEventListener('dragenter', handleDragEnter);
+        li.addEventListener('dragleave', handleDragLeave);
+
+        list.appendChild(li);
     });
     renderUrgentDeadlines(tasks);
+}
+
+function handleDragStart(e) {
+    dragSrcEl = this;
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/html', this.innerHTML);
+    this.style.opacity = '0.4';
+}
+function handleDragOver(e) {
+    if (e.preventDefault) { e.preventDefault(); }
+    e.dataTransfer.dropEffect = 'move';
+    return false;
+}
+function handleDragEnter(e) { this.classList.add('over'); }
+function handleDragLeave(e) { this.classList.remove('over'); }
+function handleDrop(e) {
+    if (e.stopPropagation) { e.stopPropagation(); }
+    if (dragSrcEl !== this) {
+        const idSrc = parseInt(dragSrcEl.dataset.id);
+        const idDest = parseInt(this.dataset.id);
+        
+        const tasks = cachedData.tasks;
+        const idxSrc = tasks.findIndex(t => t.id === idSrc);
+        const idxDest = tasks.findIndex(t => t.id === idDest);
+        
+        if (idxSrc > -1 && idxDest > -1) {
+            const [movedItem] = tasks.splice(idxSrc, 1);
+            tasks.splice(idxDest, 0, movedItem);
+            saveDB('tasks', tasks);
+            loadTasks(); 
+        }
+    }
+    return false;
 }
 
 function renderUrgentDeadlines(tasks) {
@@ -1683,7 +1728,6 @@ function renderUrgentDeadlines(tasks) {
         const days = getDaysRemaining(t.date);
         return !t.completed && days !== null && days >= 0 && days <= 3;
     });
-    
     if (urgentTasks.length === 0) urgentList.innerHTML = '<div style="text-align:center;color:var(--text-sub);padding:10px;">Aman! Tidak ada deadline dekat. 🎉</div>';
     else {
         urgentTasks.forEach(t => {
@@ -1699,42 +1743,41 @@ function toggleTask(id) {
     const t = tasks.find(x => x.id === id); 
     if(t) { 
         t.completed = !t.completed; 
-        if(t.completed) playSuccessSound('ding');
+        if(t.completed) {
+            playSuccessSound('ding');
+            addXP(10); 
+            showToast("Tugas Selesai! (+10 XP)", "success");
+        }
         saveDB('tasks', tasks); 
     }
 }
-
 function deleteTask(id) { 
     if(confirm("Hapus?")) { 
         const tasks = cachedData.tasks.filter(x => x.id !== id); 
         saveDB('tasks', tasks); 
     } 
 }
-
 function clearCompletedTasks() {
     const tasks = cachedData.tasks.filter(t => !t.completed);
     if(confirm("Hapus semua yang selesai?")) saveDB('tasks', tasks);
 }
 
-// --- KEUANGAN ---
 function addTransaction(type) {
     const desc = escapeHtml(document.getElementById('moneyDesc').value);
     const amount = parseInt(document.getElementById('moneyAmount').value);
     const wallet = document.getElementById('selectedWallet').value; 
     const category = document.getElementById('txnCategory').value;
-    
     if(!desc || !amount || amount <= 0) return showToast("Data tidak valid!", 'error');
     
     const newTxn = { id: Date.now(), desc, amount, type, wallet, category, date: new Date().toISOString().split('T')[0] };
     let txns = cachedData.transactions;
     txns.push(newTxn);
     
-    lastTransaction = newTxn;
-    saveDB('transactions', txns);
+    if(type === 'in') { addXP(5); playSuccessSound('coin'); } 
     
-    if(type === 'in') playSuccessSound('coin'); 
+    saveDB('transactions', txns);
     document.getElementById('moneyDesc').value = ''; document.getElementById('moneyAmount').value = '';
-    showToast(`${type==='in'?"Masuk":"Keluar"} Rp ${amount.toLocaleString('id-ID')} tercatat!`, type==='in'?'success':'error');
+    showToast(`${type==='in'?"Masuk":"Keluar"} tercatat!`, type==='in'?'success':'error');
 }
 
 function loadTransactions() {
@@ -1743,64 +1786,37 @@ function loadTransactions() {
     const filter = document.getElementById('historyFilter').value;
     let bal = { total:0, dana:0, ovo:0, gopay:0, cash:0 };
     list.innerHTML = '';
-    
     txns.forEach(t => {
         if(t.type === 'in') { bal.total+=t.amount; bal[t.wallet]+=t.amount; } 
         else { bal.total-=t.amount; bal[t.wallet]-=t.amount; }
     });
 
-    const displayTxns = txns.slice().reverse();
-    displayTxns.forEach(t => {
+    txns.slice().reverse().forEach(t => {
         let show = (filter === 'all') || (filter === 'in' && t.type === 'in') || (filter === 'out' && t.type === 'out');
         if(show) {
             const color = t.type === 'in' ? 'var(--green)' : 'var(--red)';
             const sign = t.type === 'in' ? '+' : '-';
-            list.innerHTML += `
-                <li class="txn-item">
-                    <div class="txn-left"><b>${escapeHtml(t.desc)}</b><small>${t.wallet.toUpperCase()} • ${t.category}</small></div>
-                    <div class="txn-right"><b style="color:${color}">${sign} Rp ${t.amount.toLocaleString('id-ID')}</b>
-                    <button class="delete-txn-btn" onclick="delTxn(${t.id})"><i class="fas fa-trash"></i></button></div>
-                </li>`;
+            list.innerHTML += `<li class="txn-item"><div class="txn-left"><b>${escapeHtml(t.desc)}</b><small>${t.wallet.toUpperCase()} • ${t.category}</small></div><div class="txn-right"><b style="color:${color}">${sign} Rp ${t.amount.toLocaleString('id-ID')}</b><button class="delete-txn-btn" onclick="delTxn(${t.id})"><i class="fas fa-trash"></i></button></div></li>`;
         }
     });
-
     document.getElementById('totalBalance').innerText = "Rp " + bal.total.toLocaleString('id-ID');
     ['dana','ovo','gopay','cash'].forEach(k => document.getElementById(`saldo-${k}`).innerText = "Rp " + bal[k].toLocaleString('id-ID'));
-    
     renderExpenseChart(txns);
 }
-
 function delTxn(id) { 
     if(confirm("Hapus?")) { 
         const t = cachedData.transactions.filter(x => x.id !== id); 
         saveDB('transactions', t); 
     } 
 }
-
-// --- FUNGSI DOWNLOAD KEUANGAN (BARU) ---
 window.exportFinanceReport = function() {
     const txns = cachedData.transactions || [];
-    if (txns.length === 0) return showToast("Belum ada data transaksi!", "error");
-
-    let csvContent = "Tanggal,Keterangan,Kategori,Tipe,Jumlah,Dompet\n";
-
-    txns.forEach(t => {
-        const type = t.type === 'in' ? 'Pemasukan' : 'Pengeluaran';
-        // Handle comma in desc by wrapping in quotes
-        const desc = `"${t.desc.replace(/"/g, '""')}"`;
-        const row = `${t.date},${desc},${t.category},${type},${t.amount},${t.wallet.toUpperCase()}`;
-        csvContent += row + "\n";
-    });
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
+    if (txns.length === 0) return showToast("Kosong!", "error");
+    let csv = "Tanggal,Ket,Kat,Tipe,Jml,Dompet\n" + txns.map(t => `${t.date},"${t.desc}",${t.category},${t.type},${t.amount},${t.wallet}`).join("\n");
     const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `Laporan_Keuangan_${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
+    link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+    link.download = `Laporan.csv`;
     link.click();
-    document.body.removeChild(link);
-    showToast("Laporan berhasil diunduh!", "success");
 }
 
 function editTarget() { 
@@ -1812,59 +1828,27 @@ function editTarget() {
         loadTarget(); 
     } 
 }
-
 function loadTarget() {
     const uid = window.auth.currentUser ? window.auth.currentUser.uid : null;
     if(!uid) return;
-
     const target = parseInt(localStorage.getItem(`${uid}_target`) || 0);
-    const txns = cachedData.transactions;
-    
-    let saving = 0; 
-    txns.forEach(t => { 
-        if(t.category === 'Tabungan' && t.type === 'in') {
-            saving += t.amount; 
-        }
-        if(t.category === 'Tabungan' && t.type === 'out') {
-            saving -= t.amount;
-        }
-    });
-    
-    if (saving < 0) saving = 0;
-
+    const saving = cachedData.transactions.reduce((acc, t) => t.category === 'Tabungan' ? (t.type === 'in' ? acc + t.amount : acc - t.amount) : acc, 0);
     document.getElementById('targetAmount').innerText = "Rp " + target.toLocaleString('id-ID');
-    
-    let pct = 0;
-    if (target > 0) {
-        pct = (saving / target) * 100;
-    }
-    if (pct > 100) pct = 100;
-
-    let pctDisplay = pct.toFixed(1); 
-    if (pctDisplay.endsWith('.0')) pctDisplay = Math.round(pct);
-
+    const pct = target > 0 ? Math.min((Math.max(saving, 0) / target) * 100, 100) : 0;
     document.getElementById('targetProgressBar').style.width = `${pct}%`;
-    document.getElementById('targetPercentage').innerText = `${pctDisplay}% (Rp ${saving.toLocaleString('id-ID')})`;
+    document.getElementById('targetPercentage').innerText = `${pct.toFixed(1)}% (Rp ${Math.max(saving, 0).toLocaleString('id-ID')})`;
 }
 
 function renderExpenseChart(txns) {
     const container = document.getElementById('expenseChartContainer');
     let total = 0; let cats = {};
     txns.forEach(t => { if(t.type === 'out') { total+=t.amount; cats[t.category] = (cats[t.category]||0)+t.amount; }});
-    
     if(total === 0) { container.innerHTML = `<div class="empty-message small"><p>Belum ada pengeluaran.</p></div>`; return; }
-    
     let html = '';
     const colors = { 'Jajan':'#f97316', 'Transport':'#3b82f6', 'Tabungan':'#10b981', 'Belanja':'#8b5cf6', 'Lainnya':'#6b7280' };
-    
     Object.keys(cats).forEach(c => {
         const pct = Math.round((cats[c]/total)*100);
-        html += `
-        <div class="expense-item">
-            <div class="expense-label"><span class="dot" style="background:${colors[c]||'#ccc'}"></span>${c}</div>
-            <div class="expense-value">Rp ${cats[c].toLocaleString('id-ID')} <small>(${pct}%)</small></div>
-            <div class="expense-bar-bg"><div class="expense-bar-fill" style="width:${pct}%;background:${colors[c]||'#ccc'}"></div></div>
-        </div>`;
+        html += `<div class="expense-item"><div class="expense-label"><span class="dot" style="background:${colors[c]||'#ccc'}"></span>${c}</div><div class="expense-value">Rp ${cats[c].toLocaleString('id-ID')} <small>(${pct}%)</small></div><div class="expense-bar-bg"><div class="expense-bar-fill" style="width:${pct}%;background:${colors[c]||'#ccc'}"></div></div></div>`;
     });
     container.innerHTML = html;
 }
@@ -1879,7 +1863,7 @@ function saveSoundSettings() {
     soundPreference = document.getElementById('pomodoroSoundSelect').value; 
     localStorage.setItem(`${uid}_soundPreference`, soundPreference); 
     document.getElementById('soundModal').style.display='none'; 
-    showToast("Suara disimpan!", "success"); 
+    showToast("Disimpan!", "success"); 
 }
 function showSoundSettings() { document.getElementById('soundModal').style.display='flex'; }
 function checkExamMode() {
@@ -1905,108 +1889,74 @@ function escapeHtml(text) { if (!text) return text; return String(text).replace(
 
 function loadRandomQuote() {
     if(document.getElementById('motivationQuote')) {
-        const randomIndex = Math.floor(Math.random() * motivationalQuotes.length);
-        document.getElementById('motivationQuote').innerText = `"${motivationalQuotes[randomIndex]}"`;
+        document.getElementById('motivationQuote').innerText = `"${motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)]}"`;
     }
 }
-
 function openClearDataModal() { if(confirm("Yakin hapus data lokal dan logout?")) { localStorage.clear(); location.reload(); } }
 function exportData() { 
-    const d=cachedData; 
-    const b=new Blob([JSON.stringify(d)],{type:"application/json"}); 
+    const b=new Blob([JSON.stringify(cachedData)],{type:"application/json"}); 
     const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=`${currentUser}_backup.json`; a.click(); 
 }
-
-// --- UTILS UI & RESTORE DATA ---
-window.toggleSettings = function() { 
-    const dropdown = document.getElementById('settingsDropdown');
-    if (dropdown) dropdown.classList.toggle('active');
-}
-
-window.selectWallet = function(walletId, el) {
-    document.getElementById('selectedWallet').value = walletId;
-    document.querySelectorAll('.wallet-card').forEach(card => {
-        card.classList.remove('active');
-    });
-    el.classList.add('active');
-}
-
+window.toggleSettings = function() { document.getElementById('settingsDropdown').classList.toggle('active'); }
+window.selectWallet = function(id, el) { document.getElementById('selectedWallet').value = id; document.querySelectorAll('.wallet-card').forEach(c => c.classList.remove('active')); el.classList.add('active'); }
 window.importData = function(input) {
-    const file = input.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = function(e) {
+    const f = input.files[0]; if (!f) return;
+    const r = new FileReader();
+    r.onload = function(e) {
         try {
-            const data = JSON.parse(e.target.result);
-            if (confirm("Apakah Anda yakin ingin menimpa data saat ini dengan data backup?")) {
-                cachedData = data;
-                saveAllToCloud(); 
-                showToast("Data berhasil direstore!", "success");
-                setTimeout(() => location.reload(), 1000);
-            }
-        } catch (err) {
-            console.error(err);
-            showToast("File backup rusak atau tidak valid!", "error");
-        }
+            cachedData = JSON.parse(e.target.result);
+            saveAllToCloud(); 
+            showToast("Restored!", "success");
+            setTimeout(() => location.reload(), 1000);
+        } catch (err) { showToast("File rusak!", "error"); }
     };
-    reader.readAsText(file);
-    input.value = '';
+    r.readAsText(f);
 }
 
-// --- FITUR TAMBAH JADWAL ---
-window.openAddScheduleModal = function() {
-    const currentDayName = days[currentDayIdx];
-    document.getElementById('addScheduleDay').value = currentDayName;
-    
-    let currentType = document.getElementById('weekTypeSelector').value;
-    if(currentType === 'auto') currentType = 'umum'; 
-    document.getElementById('addScheduleWeekType').value = currentType;
-
-    document.getElementById('addScheduleMapel').value = '';
-    document.getElementById('addScheduleGuru').value = '';
-    document.getElementById('addScheduleTime').value = '';
-    
-    document.getElementById('addScheduleModal').style.display = 'flex';
+let currentScheduleEdit = null;
+function openScheduleEdit(day, idx) {
+    currentScheduleEdit = { day, idx };
+    let displayType = currentWeekType === 'auto' ? ((getWeekNumber(new Date()) % 2 !== 0) ? 'umum' : 'produktif') : currentWeekType;
+    const item = jadwalData[displayType][day][idx];
+    document.getElementById('editMapelName').value = item.mapel;
+    document.getElementById('editMapelTime').value = item.time;
+    document.getElementById('editMapelType').value = item.type;
+    document.getElementById('scheduleEditModal').style.display = 'flex';
 }
-
+function saveScheduleChanges() {
+    const n = document.getElementById('editMapelName').value;
+    const t = document.getElementById('editMapelTime').value;
+    const type = document.getElementById('editMapelType').value;
+    if (!n || !t) return showToast("Isi semua!", "error");
+    const { day, idx } = currentScheduleEdit;
+    let displayType = currentWeekType === 'auto' ? ((getWeekNumber(new Date()) % 2 !== 0) ? 'umum' : 'produktif') : currentWeekType;
+    jadwalData[displayType][day][idx] = { ...jadwalData[displayType][day][idx], mapel: n, time: t, type };
+    saveDB('jadwalData', jadwalData);
+    document.getElementById('scheduleEditModal').style.display = 'none';
+    showToast("Diupdate!", "success");
+}
+function closeScheduleEditModal() { document.getElementById('scheduleEditModal').style.display = 'none'; }
+window.openAddScheduleModal = function() { document.getElementById('addScheduleDay').value = days[currentDayIdx]; document.getElementById('addScheduleModal').style.display = 'flex'; }
 window.saveNewSchedule = function() {
-    const weekType = document.getElementById('addScheduleWeekType').value;
-    const day = document.getElementById('addScheduleDay').value;
-    const mapel = document.getElementById('addScheduleMapel').value;
-    const guru = document.getElementById('addScheduleGuru').value;
-    const time = document.getElementById('addScheduleTime').value;
-    const type = document.getElementById('addScheduleType').value;
-
-    if(!mapel || !time) {
-        showToast("Nama Mapel dan Waktu wajib diisi!", "error");
-        return;
-    }
-
-    const newItem = { mapel, guru, time, type };
-
-    if (!jadwalData[weekType]) jadwalData[weekType] = {};
-    if (!jadwalData[weekType][day]) jadwalData[weekType][day] = [];
-
-    jadwalData[weekType][day].push(newItem);
-    
-    jadwalData[weekType][day].sort((a, b) => {
-        const timeA = a.time.split('-')[0].trim().replace('.',':');
-        const timeB = b.time.split('-')[0].trim().replace('.',':');
-        return timeA.localeCompare(timeB);
-    });
-
+    const w = document.getElementById('addScheduleWeekType').value;
+    const d = document.getElementById('addScheduleDay').value;
+    const m = document.getElementById('addScheduleMapel').value;
+    const g = document.getElementById('addScheduleGuru').value;
+    const t = document.getElementById('addScheduleTime').value;
+    const ty = document.getElementById('addScheduleType').value;
+    if(!m || !t) return showToast("Wajib isi!", "error");
+    if (!jadwalData[w]) jadwalData[w] = {};
+    if (!jadwalData[w][d]) jadwalData[w][d] = [];
+    jadwalData[w][d].push({ mapel: m, guru: g, time: t, type: ty });
+    jadwalData[w][d].sort((a, b) => a.time.localeCompare(b.time));
     saveDB('jadwalData', jadwalData);
     renderSchedule();
     document.getElementById('addScheduleModal').style.display = 'none';
-    showToast("Jadwal berhasil ditambahkan!", "success");
+    showToast("Jadwal Baru!", "success");
 }
-
-// --- FITUR HAPUS JADWAL ---
 window.deleteSchedule = function() {
     if (!currentScheduleEdit) return;
-    
-    if(confirm("Yakin ingin menghapus jadwal mata pelajaran ini?")) {
+    if(confirm("Hapus mapel ini?")) {
         const { day, idx } = currentScheduleEdit;
         let displayType = currentWeekType;
         if (currentWeekType === 'auto') {
