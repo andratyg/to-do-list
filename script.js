@@ -72,7 +72,7 @@ let currentWeekType = "umum";
 let taskFilter = "all";
 let editingTaskId = null;
 
-// ==================== QUOTES (Disederhanakan agar ringan) ====================
+// ==================== QUOTES ====================
 const motivationalQuotes = [
     // --- MOTIVASI BELAJAR ---
     "Fokus 25 menit, hasilnya 100%. Kamu bisa! 💪",
@@ -848,7 +848,6 @@ const funWords = [
     "Top Global 🌍",
     "Gak Ada Obat! 💊"
 ];
-
 // ==================== B. AUTHENTICATION LOGIC ====================
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -946,7 +945,6 @@ function saveDB(key, data) {
     if (!window.auth.currentUser) return;
     const uid = window.auth.currentUser.uid;
     
-    // Update local cache
     if(key === 'tasks') cachedData.tasks = data;
     if(key === 'transactions') cachedData.transactions = data;
     if(key === 'gamification') cachedData.gamification = data;
@@ -956,12 +954,8 @@ function saveDB(key, data) {
     if(key === 'unlockedAchievements') cachedData.unlockedAchievements = data;
     if(key === 'jadwalData') { cachedData.jadwal = data; jadwalData = data; key = 'jadwal'; }
 
-    // Save to Firebase
     window.dbSet(window.dbRef(window.db, `users/${uid}/${key}`), data)
-        .then(() => {
-            // [FIX] Cek achievement SETIAP KALI data disimpan
-            checkAchievements();
-        })
+        .then(() => { checkAchievements(); })
         .catch(err => console.error("Save Error:", err));
 }
 
@@ -998,24 +992,7 @@ function initApp(uid) {
 }
 
 function injectNewUI() {
-    if(!document.getElementById('xpContainer')) {
-        const headerLeft = document.querySelector('.header-left');
-        if(headerLeft) {
-            const xpHTML = `
-                <div id="xpContainer" style="margin-top: 8px; background: rgba(0,0,0,0.1); border-radius: 10px; padding: 5px 10px; display: inline-block;">
-                    <div style="display:flex; justify-content:space-between; font-size: 0.75rem; font-weight: 700; margin-bottom: 3px;">
-                        <span id="userLevelBadge">Lvl 1 Novice</span>
-                        <span id="userXPText">0 / 100 XP</span>
-                    </div>
-                    <div style="width: 150px; height: 6px; background: #ddd; border-radius: 3px; overflow: hidden;">
-                        <div id="userXPBar" style="height: 100%; width: 0%; background: linear-gradient(90deg, #6366f1, #8b5cf6); transition: width 0.5s;"></div>
-                    </div>
-                </div>
-            `;
-            headerLeft.insertAdjacentHTML('beforeend', xpHTML);
-        }
-    }
-
+    // Inject XP container removed - handled by main HTML structure now
     if(!document.getElementById('musicWidget')) {
         const musicHTML = `
             <div id="musicWidget" style="position: fixed; bottom: 20px; left: 20px; z-index: 1000; background: var(--card-bg); padding: 10px; border-radius: 15px; box-shadow: var(--shadow-lg); border: 1px solid var(--border-color); width: 200px; transition: 0.3s;">
@@ -1045,16 +1022,32 @@ function injectNewUI() {
     }
 }
 
-// --- GAMIFICATION ---
+// --- GAMIFICATION & RANK LOGIC ---
+
+// Fungsi Baru: Mendapatkan Judul Berdasarkan Level
+function getLevelTitle(level) {
+    if (level >= 50) return "Immortal 💀";
+    if (level >= 40) return "Mythic 🔮";
+    if (level >= 30) return "Legend 🐉";
+    if (level >= 20) return "Grandmaster ⚔️";
+    if (level >= 10) return "Sepuh 👑";
+    if (level >= 5)  return "Bintang Kelas 🌟";
+    if (level >= 2)  return "Murid Teladan 📚";
+    return "Murid Baru 🌱";
+}
+
 function addXP(amount) {
     if (!cachedData.gamification) cachedData.gamification = { xp: 0, level: 1 };
     let stats = cachedData.gamification;
     stats.xp += amount;
     const xpNeeded = stats.level * 100;
+    
+    // Level Up Logic
     if (stats.xp >= xpNeeded) {
         stats.xp -= xpNeeded;
         stats.level++;
-        showToast(`🎉 LEVEL UP! Kamu sekarang Level ${stats.level}`, "success");
+        const newTitle = getLevelTitle(stats.level);
+        showToast(`🎉 LEVEL UP! Sekarang Level ${stats.level} (${newTitle})`, "success");
         playSuccessSound('bell'); 
     }
     saveDB('gamification', stats);
@@ -1066,15 +1059,25 @@ function updateGamificationUI() {
     const xpNeeded = stats.level * 100;
     const pct = Math.min((stats.xp / xpNeeded) * 100, 100);
     
-    // [FIX] Update untuk UI header baru & lama
+    // Update Progress Bar
     const xpBar = document.getElementById('xpBarFill'); 
     if(xpBar) xpBar.style.width = `${pct}%`;
+    
+    // Update XP Text
     const xpText = document.getElementById('xpText');
     if(xpText) xpText.innerText = `${stats.xp} / ${xpNeeded} XP`;
+    
+    // Update Level Badge
     const userLevel = document.getElementById('userLevel');
     if(userLevel) userLevel.innerText = stats.level;
     
-    // Legacy support
+    // [BARU] Update Rank Title Text
+    const rankElement = document.getElementById('userRank');
+    if(rankElement) {
+        rankElement.innerText = getLevelTitle(stats.level);
+    }
+    
+    // Legacy support (jika masih ada elemen lama)
     const legacyBar = document.getElementById('userXPBar');
     if(legacyBar) legacyBar.style.width = `${pct}%`;
     const legacyText = document.getElementById('userXPText');
@@ -1125,10 +1128,11 @@ function logFocusTime(minutes) {
 }
 
 function renderFocusChart() {
-    const chart = document.getElementById('focusChart'); // Fix ID
+    const chart = document.getElementById('focusChart');
     if(!chart) return;
     chart.innerHTML = '';
     
+    let html = '<div style="display: flex; gap: 5px; align-items: flex-end; height: 80px; padding-bottom: 5px; width:100%;">';
     for(let i=6; i>=0; i--) {
         const d = new Date(); d.setDate(d.getDate() - i);
         const dateStr = d.toISOString().split('T')[0];
@@ -1138,13 +1142,15 @@ function renderFocusChart() {
         if(heightPct > 100) heightPct = 100;
         if(heightPct < 5 && minutes > 0) heightPct = 5;
         
-        chart.innerHTML += `
+        html += `
             <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%;">
                 <div style="width:80%; background:rgba(255,255,255,0.5); height:${heightPct}%; border-radius:4px; position:relative; min-height: ${minutes>0?4:0}px;" title="${minutes} Menit"></div>
                 <small style="font-size:0.6rem; color:white; margin-top:4px;">${dayName}</small>
             </div>
         `;
     }
+    html += '</div>';
+    chart.innerHTML = html;
 }
 
 function renderAll() {
@@ -1922,70 +1928,22 @@ window.deleteSchedule = function() {
     }
 }
 
-// ==================== Z. ACHIEVEMENT SYSTEM (50 ITEMS) ====================
+// ==================== Z. ACHIEVEMENT SYSTEM (OPTIMIZED) ====================
 
 const achievementsData = [
-    // --- 1. LEVEL & PROGRESS (10 Items) ---
     { id: 'newbie', title: 'Murid Baru', desc: 'Login pertama kali.', icon: 'fas fa-baby', xp: 50, check: (d) => true },
     { id: 'level_2', title: 'Naik Kelas', desc: 'Capai Level 2.', icon: 'fas fa-arrow-up', xp: 100, check: (d) => d.gamification.level >= 2 },
     { id: 'level_5', title: 'Bintang Kelas', desc: 'Capai Level 5.', icon: 'fas fa-star', xp: 200, check: (d) => d.gamification.level >= 5 },
     { id: 'level_10', title: 'Sepuh', desc: 'Capai Level 10.', icon: 'fas fa-crown', xp: 500, check: (d) => d.gamification.level >= 10 },
-    { id: 'level_20', title: 'Legend', desc: 'Capai Level 20.', icon: 'fas fa-dragon', xp: 1000, check: (d) => d.gamification.level >= 20 },
-    { id: 'level_30', title: 'Mythic', desc: 'Capai Level 30.', icon: 'fas fa-dungeon', xp: 1500, check: (d) => d.gamification.level >= 30 },
-    { id: 'level_50', title: 'Immortal', desc: 'Capai Level 50.', icon: 'fas fa-skull', xp: 2500, check: (d) => d.gamification.level >= 50 },
     { id: 'xp_hunter', title: 'Pemburu XP', desc: 'Kumpulkan total 500 XP.', icon: 'fas fa-scroll', xp: 150, check: (d) => d.gamification.xp >= 500 },
-    { id: 'xp_master', title: 'Kolektor XP', desc: 'Kumpulkan total 2.000 XP.', icon: 'fas fa-gem', xp: 500, check: (d) => d.gamification.xp >= 2000 },
-    { id: 'xp_god', title: 'Dewa XP', desc: 'Kumpulkan total 10.000 XP.', icon: 'fas fa-meteor', xp: 2000, check: (d) => d.gamification.xp >= 10000 },
-
-    // --- 2. TUGAS / TASKS (10 Items) ---
     { id: 'task_1', title: 'Langkah Awal', desc: 'Selesaikan 1 tugas.', icon: 'fas fa-check', xp: 20, check: (d) => d.tasks.filter(t => t.completed).length >= 1 },
     { id: 'task_5', title: 'Si Rajin', desc: 'Selesaikan 5 tugas.', icon: 'fas fa-check-double', xp: 50, check: (d) => d.tasks.filter(t => t.completed).length >= 5 },
     { id: 'task_10', title: 'Produktif', desc: 'Selesaikan 10 tugas.', icon: 'fas fa-list-ol', xp: 100, check: (d) => d.tasks.filter(t => t.completed).length >= 10 },
-    { id: 'task_25', title: 'Workaholic', desc: 'Selesaikan 25 tugas.', icon: 'fas fa-briefcase', xp: 250, check: (d) => d.tasks.filter(t => t.completed).length >= 25 },
-    { id: 'task_50', title: 'Monster Tugas', desc: 'Selesaikan 50 tugas.', icon: 'fas fa-robot', xp: 500, check: (d) => d.tasks.filter(t => t.completed).length >= 50 },
-    { id: 'task_100', title: 'Tugas Destroyer', desc: 'Selesaikan 100 tugas.', icon: 'fas fa-bomb', xp: 1000, check: (d) => d.tasks.filter(t => t.completed).length >= 100 },
-    { id: 'task_clean', title: 'Meja Bersih', desc: 'Semua tugas selesai (kosong).', icon: 'fas fa-sparkles', xp: 50, check: (d) => d.tasks.length > 0 && d.tasks.filter(t => !t.completed).length === 0 },
-    { id: 'priority_high', title: 'Prioritas Utama', desc: 'Selesaikan 1 tugas Prioritas Tinggi (High).', icon: 'fas fa-exclamation', xp: 30, check: (d) => d.tasks.some(t => t.completed && t.priority === 'High') },
-    { id: 'priority_master', title: 'Komandan Prioritas', desc: 'Selesaikan 10 tugas Prioritas Tinggi.', icon: 'fas fa-medal', xp: 300, check: (d) => d.tasks.filter(t => t.completed && t.priority === 'High').length >= 10 },
-    { id: 'lazy_cleaner', title: 'Bersih-bersih', desc: 'Hapus 5 tugas yang sudah selesai.', icon: 'fas fa-trash-alt', xp: 20, check: (d) => true }, // Manual trigger di tombol hapus
-
-    // --- 3. FOKUS / POMODORO (8 Items) ---
+    { id: 'task_clean', title: 'Meja Bersih', desc: 'Semua tugas selesai.', icon: 'fas fa-sparkles', xp: 50, check: (d) => d.tasks.length > 0 && d.tasks.filter(t => !t.completed).length === 0 },
     { id: 'focus_25', title: 'Fokus Pemula', desc: 'Fokus total 25 menit.', icon: 'fas fa-clock', xp: 30, check: (d) => getTotalFocus(d) >= 25 },
-    { id: 'focus_100', title: 'Dewa Fokus', desc: 'Fokus total 100 menit.', icon: 'fas fa-brain', xp: 100, check: (d) => getTotalFocus(d) >= 100 },
-    { id: 'focus_500', title: 'Deep Work', desc: 'Fokus total 500 menit.', icon: 'fas fa-headset', xp: 400, check: (d) => getTotalFocus(d) >= 500 },
-    { id: 'focus_1000', title: 'Zen Master', desc: 'Fokus total 1.000 menit.', icon: 'fas fa-yin-yang', xp: 1000, check: (d) => getTotalFocus(d) >= 1000 },
-    { id: 'focus_5000', title: 'Time Lord', desc: 'Fokus total 5.000 menit.', icon: 'fas fa-hourglass-half', xp: 2500, check: (d) => getTotalFocus(d) >= 5000 },
-    { id: 'focus_streak', title: 'Marathon Fokus', desc: 'Selesaikan 4 sesi fokus berturut-turut.', icon: 'fas fa-running', xp: 100, check: (d) => true }, // Logic handled in timer
-    { id: 'night_focus', title: 'Lembur Malam', desc: 'Selesaikan sesi fokus di atas jam 10 malam.', icon: 'fas fa-moon', xp: 50, check: (d) => { const h = new Date().getHours(); return h >= 22 || h < 4; } },
-    { id: 'morning_glory', title: 'Semangat Pagi', desc: 'Selesaikan sesi fokus sebelum jam 7 pagi.', icon: 'fas fa-sun', xp: 50, check: (d) => { const h = new Date().getHours(); return h >= 4 && h < 7; } },
-
-    // --- 4. STREAK / LOGIN (7 Items) ---
     { id: 'streak_3', title: 'On Fire!', desc: 'Login 3 hari berturut-turut.', icon: 'fas fa-fire', xp: 50, check: (d) => d.streak.count >= 3 },
-    { id: 'streak_7', title: 'Seminggu Penuh', desc: 'Login 7 hari berturut-turut.', icon: 'fas fa-calendar-week', xp: 150, check: (d) => d.streak.count >= 7 },
-    { id: 'streak_14', title: 'Konsisten', desc: 'Login 14 hari berturut-turut.', icon: 'fas fa-calendar-check', xp: 300, check: (d) => d.streak.count >= 14 },
-    { id: 'streak_30', title: 'Sebulan Penuh', desc: 'Login 30 hari berturut-turut.', icon: 'fas fa-calendar-alt', xp: 1000, check: (d) => d.streak.count >= 30 },
-    { id: 'streak_60', title: 'Dedikasi Tinggi', desc: 'Login 60 hari berturut-turut.', icon: 'fas fa-shield-alt', xp: 2000, check: (d) => d.streak.count >= 60 },
-    { id: 'streak_100', title: 'Murid Teladan', desc: 'Login 100 hari berturut-turut.', icon: 'fas fa-award', xp: 5000, check: (d) => d.streak.count >= 100 },
-    { id: 'weekend_warrior', title: 'Pejuang Weekend', desc: 'Login pada hari Sabtu atau Minggu.', icon: 'fas fa-couch', xp: 30, check: (d) => { const day = new Date().getDay(); return day === 0 || day === 6; } },
-
-    // --- 5. KEUANGAN / FINANCE (8 Items) ---
     { id: 'rich_kid', title: 'Calon Sultan', desc: 'Saldo di atas Rp 500.000.', icon: 'fas fa-money-bill-wave', xp: 100, check: (d) => getBalance(d) >= 500000 },
-    { id: 'millionaire', title: 'Jutawan', desc: 'Total saldo di atas Rp 1.000.000.', icon: 'fas fa-gem', xp: 250, check: (d) => getBalance(d) >= 1000000 },
-    { id: 'saver', title: 'Penabung', desc: 'Catat 1 transaksi Tabungan (Masuk).', icon: 'fas fa-piggy-bank', xp: 20, check: (d) => d.transactions.some(t => t.category === 'Tabungan' && t.type === 'in') },
-    { id: 'spender', title: 'Tukang Jajan', desc: 'Catat 5 pengeluaran.', icon: 'fas fa-shopping-cart', xp: 20, check: (d) => d.transactions.filter(t => t.type === 'out').length >= 5 },
-    { id: 'finance_guru', title: 'Guru Keuangan', desc: 'Catat 50 transaksi.', icon: 'fas fa-chart-line', xp: 300, check: (d) => d.transactions.length >= 50 },
-    { id: 'big_spender', title: 'Boros', desc: 'Catat pengeluaran > Rp 100.000 dalam sekali transaksi.', icon: 'fas fa-receipt', xp: 50, check: (d) => d.transactions.some(t => t.type === 'out' && t.amount >= 100000) },
-    { id: 'wallet_user', title: 'Digital Native', desc: 'Gunakan e-wallet (Dana/Ovo/Gopay).', icon: 'fas fa-mobile-alt', xp: 20, check: (d) => d.transactions.some(t => ['dana', 'ovo', 'gopay'].includes(t.wallet)) },
-    { id: 'cash_king', title: 'Cash is King', desc: 'Gunakan uang tunai.', icon: 'fas fa-money-bill', xp: 20, check: (d) => d.transactions.some(t => t.wallet === 'cash') },
-
-    // --- 6. LAIN-LAIN / MISC (7 Items) ---
-    { id: 'custom_sched', title: 'Manager Jadwal', desc: 'Edit atau tambah jadwal manual.', icon: 'fas fa-edit', xp: 30, check: (d) => true }, // Triggered manually
-    { id: 'note_taker', title: 'Rajin Mencatat', desc: 'Buat 1 catatan pada mapel.', icon: 'fas fa-sticky-note', xp: 20, check: (d) => Object.keys(d.scheduleNotes || {}).length > 0 },
-    { id: 'theme_changer', title: 'Stylist', desc: 'Ganti tema (Dark/Light Mode).', icon: 'fas fa-palette', xp: 10, check: (d) => true }, // Triggered manually
-    { id: 'exam_mode', title: 'Siap Ujian', desc: 'Aktifkan Mode Ujian.', icon: 'fas fa-graduation-cap', xp: 20, check: (d) => true }, // Triggered manually
-    { id: 'music_lover', title: 'Anak Indie', desc: 'Putar musik Lo-Fi.', icon: 'fas fa-music', xp: 10, check: (d) => true }, // Manual trigger needed
-    { id: 'profile_editor', title: 'Who Am I?', desc: 'Ganti nama profil.', icon: 'fas fa-id-card', xp: 10, check: (d) => true }, // Triggered manually
-    { id: 'backup_master', title: 'Safety First', desc: 'Download backup data.', icon: 'fas fa-save', xp: 50, check: (d) => true } // Triggered manually
+    { id: 'custom_sched', title: 'Manager Jadwal', desc: 'Edit jadwal manual.', icon: 'fas fa-edit', xp: 30, check: (d) => true } 
 ];
 
 function getTotalFocus(d) {
@@ -2063,3 +2021,4 @@ window.openAchievementModal = function() {
         document.getElementById('settingsDropdown').classList.remove('active');
     }
 }
+
