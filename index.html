@@ -18,11 +18,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
-<<<<<<< HEAD
      <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚀</text></svg>">
-=======
-     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎓</text></svg>">
->>>>>>> a28c318820073aec544ca6169e56bec21556d722
 </head>
 <body>
 
@@ -85,66 +81,89 @@
 
     <div class="main-container" id="mainContent" style="display: none;">
         
-        <header class="glass-panel fade-in">
-            <div class="header-left">
-                <h1 id="greeting">Halo, User! 👋</h1>
-                <div class="xp-container">
-                    <div class="level-badge">Lvl <span id="userLevel">1</span></div>
-                    <div class="xp-bar-bg">
-                        <div class="xp-bar-fill" id="xpBarFill" style="width: 0%;"></div>
+        <header class="header-modern fade-in">
+            <div class="header-profile-section">
+                <div class="avatar-container" onclick="toggleSettings()">
+                    <div class="avatar-hexagon">
+                        <i class="fas fa-user-astronaut"></i>
                     </div>
-                    <small id="xpText" style="color:var(--text-sub); font-size:0.7rem; font-weight:600;">0 / 100 XP</small>
+                    <div class="level-badge-floating">Lvl <span id="userLevel">1</span></div>
                 </div>
-                <p id="headerDate" style="margin-bottom: 0; font-size: 0.85rem; color: var(--text-sub);"></p>
+                <div class="text-info">
+                    <p id="headerDate" class="mini-date"></p>
+                    <h1 id="greeting">Halo, User! 👋</h1>
+                    <div class="status-pill"><span class="dot-online"></span> <span id="loginStatusText">Online</span></div>
+                </div>
             </div>
-            
-            <div class="header-center">
-                <div class="live-clock">
+        
+            <div class="header-stats-section">
+                <div class="xp-box">
+                    <div class="xp-info">
+                        <span class="xp-label">Progress Level</span>
+                        <span id="xpText" class="xp-val">0 / 100 XP</span>
+                    </div>
+                    <div class="xp-track">
+                        <div class="xp-fill" id="xpBarFill" style="width: 0%;">
+                            <div class="xp-glow"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="streak-box" title="Login Berturut-turut">
+                    <i class="fas fa-fire flame-anim"></i>
+                    <div class="streak-info">
+                        <span id="streakCount" class="streak-num">0</span>
+                        <span class="streak-label">Streak</span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="header-action-section">
+                <div class="digital-clock">
                     <span id="clockTime">00:00</span>
                 </div>
-            </div>
-
-            <div class="header-right">
-                <div class="streak-badge" title="Login Harian Berturut-turut">
-                    <i class="fas fa-fire"></i> <span id="streakCount">0</span> Hari
-                </div>
-
-                <button class="icon-btn" onclick="toggleDarkMode()" title="Ganti Tema">
-                    <i class="fas fa-moon" id="themeIcon"></i>
-                </button>
-                <div class="profile-menu">
-                    <span id="backupReminder" class="backup-badge"></span> 
-                    <button class="profile-btn" onclick="toggleSettings()">
-                        <div class="avatar-ring"><i class="fas fa-user"></i></div>
-                        <span class="profile-name">Akun</span>
+                
+                <div class="action-buttons">
+                    <button class="icon-btn-glass" onclick="toggleDarkMode()" title="Ganti Tema">
+                        <i class="fas fa-moon" id="themeIcon"></i>
                     </button>
-                    <div class="dropdown-menu" id="settingsDropdown">
-                        <div class="dropdown-header">
-                            <span id="displayUsername">User</span>
-                            <small id="loginStatusText">Online</small>
+                    <div class="profile-menu">
+                        <span id="backupReminder" class="backup-badge"></span> 
+                        <button class="icon-btn-glass" onclick="toggleSettings()">
+                            <i class="fas fa-cog"></i>
+                        </button>
+                        
+                        <div class="dropdown-menu" id="settingsDropdown">
+                            <div class="dropdown-header">
+                                <span id="displayUsername">User</span>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <button onclick="editUsername()"><i class="fas fa-user-edit"></i> Ganti Nama</button>
+                            <button onclick="openAchievementModal()"><i class="fas fa-trophy"></i> Pencapaian</button>
+                            
+                            <button onclick="toggleExamMode()"><i class="fas fa-graduation-cap"></i> Mode Ujian</button>
+                            <button onclick="showSoundSettings()"><i class="fas fa-volume-up"></i> Suara</button>
+                            <div class="dropdown-divider"></div>
+                            <button onclick="exportData()"><i class="fas fa-download"></i> Backup</button>
+                            <button onclick="document.getElementById('importFile').click()"><i class="fas fa-upload"></i> Restore</button>
+                            <input type="file" id="importFile" hidden onchange="importData(this)">
+                            <div class="dropdown-divider"></div>
+                            <button onclick="logoutUser()"><i class="fas fa-sign-out-alt"></i> Keluar</button>
+                            <button onclick="openClearDataModal()" class="text-danger"><i class="fas fa-trash-alt"></i> Reset</button>
                         </div>
-                        <div class="dropdown-divider"></div>
-                        <button onclick="editUsername()"><i class="fas fa-user-edit"></i> Ganti Nama</button>
-                        <button onclick="toggleExamMode()"><i class="fas fa-graduation-cap"></i> Mode Ujian</button>
-                        <button onclick="showSoundSettings()"><i class="fas fa-volume-up"></i> Pengaturan Suara</button>
-                        <div class="dropdown-divider"></div>
-                        <button onclick="exportData()"><i class="fas fa-download"></i> Backup Data</button>
-                        <button onclick="document.getElementById('importFile').click()"><i class="fas fa-upload"></i> Restore Data</button>
-                        <input type="file" id="importFile" hidden onchange="importData(this)">
-                        <div class="dropdown-divider"></div>
-                        <button onclick="logoutUser()"><i class="fas fa-sign-out-alt"></i> Keluar</button>
-                        <button onclick="openClearDataModal()" class="text-danger"><i class="fas fa-trash-alt"></i> Hapus Data</button>
                     </div>
                 </div>
             </div>
         </header>
 
-        <div class="quote-banner fade-in-up">
-            <div class="quote-content">
-                <div class="quote-badge">✨ KATA-KATA HARI INI ✨</div>
-                <p id="motivationQuote" class="new-quote-text">"Memuat motivasi..."</p>
+        <div class="quote-modern fade-in-up">
+            <div class="quote-icon"><i class="fas fa-quote-left"></i></div>
+            <div class="quote-text-wrapper">
+                <p id="motivationQuote" class="quote-text">"Memuat motivasi..."</p>
             </div>
+            <div class="quote-deco">✨</div>
         </div>
+
         <div class="dashboard-grid fade-in-up">
             
             <div class="left-column">
@@ -488,6 +507,24 @@
             </div>
         </div>
     </div>
+    
+    <div id="achievementModal" class="modal-backdrop" style="display: none;">
+        <div class="modal-content fade-in-up" style="max-width: 450px;">
+            <div class="modal-head">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <h3 style="margin:0;">🏆 Pencapaian Saya</h3>
+                    <span id="achievelmentCountBadge" style="background:var(--primary); color:white; padding:2px 8px; border-radius:10px; font-size:0.75rem; font-weight:700;">0/6</span>
+                </div>
+                <button class="close-icon" onclick="document.getElementById('achievementModal').style.display='none'">×</button>
+            </div>
+            <div class="modal-body">
+                <p style="font-size:0.85rem; color:var(--text-sub); margin-bottom:15px;">Selesaikan misi untuk membuka piala!</p>
+                <div id="achievementList" class="achievement-grid">
+                    </div>
+            </div>
+        </div>
+    </div>
+
     <div id="clearDataModal" class="modal-backdrop" style="display: none;">
         <div class="modal-content fade-in-up" style="max-width: 400px;">
             <div class="modal-head">
