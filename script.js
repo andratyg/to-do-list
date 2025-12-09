@@ -1976,3 +1976,109 @@ window.deleteSchedule = function() {
 window.closeNoteModal = function() { document.getElementById('noteModal').style.display = 'none'; }
 window.saveNoteFromModal = function() { showToast("Catatan disimpan (Placeholder)", "success"); closeNoteModal(); }
 window.deleteNote = function() { if(confirm("Hapus catatan?")) { document.getElementById('noteModalInput').value = ""; closeNoteModal(); } }
+
+// ==================== Z. ACHIEVEMENT SYSTEM LOGIC ====================
+
+// Konfigurasi Daftar Achievement
+const achievementsData = [
+    {
+        id: 'newbie',
+        title: 'Murid Baru',
+        desc: 'Login ke aplikasi untuk pertama kali.',
+        icon: 'fas fa-user-graduate',
+        check: (data) => true // Selalu benar jika user sudah login
+    },
+    {
+        id: 'task_master',
+        title: 'Si Rajin',
+        desc: 'Selesaikan total 5 tugas.',
+        icon: 'fas fa-check-double',
+        check: (data) => {
+            const completed = (data.tasks || []).filter(t => t.completed).length;
+            return completed >= 5;
+        }
+    },
+    {
+        id: 'rich_kid',
+        title: 'Calon Sultan',
+        desc: 'Miliki total saldo di atas Rp 500.000.',
+        icon: 'fas fa-money-bill-wave',
+        check: (data) => {
+            const txns = data.transactions || [];
+            let total = 0;
+            txns.forEach(t => { if(t.type === 'in') total+=t.amount; else total-=t.amount; });
+            return total >= 500000;
+        }
+    },
+    {
+        id: 'level_5',
+        title: 'Bintang Kelas',
+        desc: 'Mencapai Level 5.',
+        icon: 'fas fa-star',
+        check: (data) => (data.gamification && data.gamification.level >= 5)
+    },
+    {
+        id: 'streak_3',
+        title: 'On Fire!',
+        desc: 'Login 3 hari berturut-turut.',
+        icon: 'fas fa-fire',
+        check: (data) => (data.streak && data.streak.count >= 3)
+    },
+    {
+        id: 'focus_god',
+        title: 'Dewa Fokus',
+        desc: 'Total fokus lebih dari 100 menit.',
+        icon: 'fas fa-brain',
+        check: (data) => {
+            const logs = data.focusLogs || {};
+            let totalMins = 0;
+            Object.values(logs).forEach(mins => totalMins += mins);
+            return totalMins >= 100;
+        }
+    }
+];
+
+// Fungsi Membuka Modal Achievement
+window.openAchievementModal = function() {
+    const listContainer = document.getElementById('achievementList');
+    const badge = document.getElementById('achievelmentCountBadge');
+    
+    listContainer.innerHTML = ''; // Reset list
+    let unlockedCount = 0;
+
+    // Loop semua achievement config
+    achievementsData.forEach(ach => {
+        // Cek apakah user memenuhi syarat berdasarkan cachedData
+        const isUnlocked = ach.check(cachedData);
+        if(isUnlocked) unlockedCount++;
+
+        // Tentukan style & icon
+        const itemClass = isUnlocked ? 'unlocked' : 'locked';
+        const statusIcon = isUnlocked ? '<i class="fas fa-check-circle ach-status"></i>' : '<i class="fas fa-lock ach-status lock-icon"></i>';
+        const titleColor = isUnlocked ? 'var(--primary)' : 'inherit';
+
+        // Buat HTML Item
+        const html = `
+            <div class="ach-item ${itemClass}">
+                <div class="ach-icon">
+                    <i class="${ach.icon}"></i>
+                </div>
+                <div class="ach-info">
+                    <h4 style="color:${titleColor}">${ach.title}</h4>
+                    <p>${ach.desc}</p>
+                </div>
+                ${statusIcon}
+            </div>
+        `;
+        listContainer.innerHTML += html;
+    });
+
+    // Update badge count
+    badge.innerText = `${unlockedCount}/${achievementsData.length}`;
+    
+    // Tampilkan Modal
+    document.getElementById('achievementModal').style.display = 'flex';
+    
+    // Tutup dropdown settings agar rapi
+    document.getElementById('settingsDropdown').classList.remove('active');
+}
