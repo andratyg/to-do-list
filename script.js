@@ -1,17 +1,17 @@
 // ==================== SYSTEM & CONFIG ====================
 let currentUser = null; // UID User
 
-// Wadah Data Lokal (Updated dengan fitur baru)
+// Wadah Data Lokal
 let cachedData = {
   tasks: [],
   transactions: [],
   jadwal: null,
   settings: {},
-  // --- FITUR BARU A & E ---
   gamification: { xp: 0, level: 1 },
   streak: { count: 0, lastLogin: null },
-  focusLogs: {}, // Format: { "2023-10-27": 45 } (menit)
-  scheduleNotes: {}, // Format: { "Senin_0": "Catatan..." }
+  focusLogs: {}, 
+  scheduleNotes: {}, 
+  unlockedAchievements: []
 };
 
 // --- CONFIG LAINNYA ---
@@ -31,17 +31,17 @@ let soundPreference = "bell";
 let currentScheduleFilterGuru = "all";
 let currentScheduleFilterCategory = "all";
 
-// --- VARIABEL KONTROL FOKUS (UPDATED) ---
+// --- VARIABEL KONTROL FOKUS ---
 let isFocusLocked = false;
 let isTabBlurred = false;
 let blurCount = 0;
 let savedFocusTime = null;
 let savedBreakTime = null;
-let focusType = 'strict'; // Default: 'strict' (Ketat) atau 'chill' (Santai)
+let focusType = 'strict'; 
 
 // --- VARIABEL FITUR BARU ---
-let currentNoteTarget = null; // Untuk menyimpan target catatan mapel (C)
-let dragSrcEl = null; // Untuk Drag & Drop (F)
+let currentNoteTarget = null;
+let dragSrcEl = null;
 
 // --- DATA JADWAL DEFAULT ---
 const days = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
@@ -901,7 +901,10 @@ function initAuthListener() {
 
         window.authListener(window.auth, (user) => {
             if (user) {
-                const displayName = user.displayName ? user.displayName : user.email.split('@')[0];
+                // [FIX] MEMBERSIHKAN NAMA DARI ANGKA ID
+                let rawName = user.displayName || user.email.split('@')[0];
+                const displayName = rawName.replace(/[0-9]/g, '').replace(/^\s+|\s+$/g, ''); 
+                
                 currentUser = displayName;
                 const uid = user.uid; 
                 
@@ -960,6 +963,7 @@ function startFirebaseListener(uid) {
             cachedData.streak = data.streak || { count: 0, lastLogin: null };
             cachedData.focusLogs = data.focusLogs || {};
             cachedData.scheduleNotes = data.scheduleNotes || {};
+            cachedData.unlockedAchievements = data.unlockedAchievements || [];
 
             if (data.jadwal && data.jadwal.umum) cachedData.jadwal = data.jadwal;
             else { cachedData.jadwal = defaultJadwalData; saveDB('jadwalData', defaultJadwalData); }
@@ -980,14 +984,15 @@ function startFirebaseListener(uid) {
 }
 
 function saveDB(key, data) {
+    if (!window.auth.currentUser) return;
     const uid = window.auth.currentUser.uid;
-    // Update local cache
     if(key === 'tasks') cachedData.tasks = data;
     if(key === 'transactions') cachedData.transactions = data;
     if(key === 'gamification') cachedData.gamification = data;
     if(key === 'streak') cachedData.streak = data;
     if(key === 'focusLogs') cachedData.focusLogs = data;
     if(key === 'scheduleNotes') cachedData.scheduleNotes = data;
+    if(key === 'unlockedAchievements') cachedData.unlockedAchievements = data;
     if(key === 'jadwalData') { cachedData.jadwal = data; jadwalData = data; key = 'jadwal'; }
 
     window.dbSet(window.dbRef(window.db, `users/${uid}/${key}`), data).catch(err => console.error("Save Error:", err));
@@ -1026,27 +1031,24 @@ function initApp(uid) {
 }
 
 function injectNewUI() {
-    // 1. XP Bar di Header Left
     if(!document.getElementById('xpContainer')) {
         const headerLeft = document.querySelector('.header-left');
-        const xpHTML = `
-            <div id="xpContainer" style="margin-top: 8px; background: rgba(0,0,0,0.1); border-radius: 10px; padding: 5px 10px; display: inline-block;">
-                <div style="display:flex; justify-content:space-between; font-size: 0.75rem; font-weight: 700; margin-bottom: 3px;">
-                    <span id="userLevelBadge">Lvl 1 Novice</span>
-                    <span id="userXPText">0 / 100 XP</span>
+        if(headerLeft) {
+            const xpHTML = `
+                <div id="xpContainer" style="margin-top: 8px; background: rgba(0,0,0,0.1); border-radius: 10px; padding: 5px 10px; display: inline-block;">
+                    <div style="display:flex; justify-content:space-between; font-size: 0.75rem; font-weight: 700; margin-bottom: 3px;">
+                        <span id="userLevelBadge">Lvl 1 Novice</span>
+                        <span id="userXPText">0 / 100 XP</span>
+                    </div>
+                    <div style="width: 150px; height: 6px; background: #ddd; border-radius: 3px; overflow: hidden;">
+                        <div id="userXPBar" style="height: 100%; width: 0%; background: linear-gradient(90deg, #6366f1, #8b5cf6); transition: width 0.5s;"></div>
+                    </div>
                 </div>
-                <div style="width: 150px; height: 6px; background: #ddd; border-radius: 3px; overflow: hidden;">
-                    <div id="userXPBar" style="height: 100%; width: 0%; background: linear-gradient(90deg, #6366f1, #8b5cf6); transition: width 0.5s;"></div>
-                </div>
-            </div>
-            <div id="streakBadge" style="display:inline-flex; align-items:center; gap:5px; background: #fee2e2; color: #ef4444; padding: 5px 10px; border-radius: 20px; font-weight:bold; font-size:0.8rem; margin-left:10px;">
-                <i class="fas fa-fire"></i> <span id="streakCount">0</span> Hari
-            </div>
-        `;
-        headerLeft.insertAdjacentHTML('beforeend', xpHTML);
+            `;
+            headerLeft.insertAdjacentHTML('beforeend', xpHTML);
+        }
     }
 
-    // 2. Music Player (LoFi) Floating Widget
     if(!document.getElementById('musicWidget')) {
         const musicHTML = `
             <div id="musicWidget" style="position: fixed; bottom: 20px; left: 20px; z-index: 1000; background: var(--card-bg); padding: 10px; border-radius: 15px; box-shadow: var(--shadow-lg); border: 1px solid var(--border-color); width: 200px; transition: 0.3s;">
@@ -1063,7 +1065,6 @@ function injectNewUI() {
         document.body.insertAdjacentHTML('beforeend', musicHTML);
     }
 
-    // 3. Focus Stats Chart
     const pomodoroCard = document.querySelector('.pomodoro-card');
     if(pomodoroCard && !document.getElementById('focusChart')) {
         const chartHTML = `
@@ -1079,6 +1080,7 @@ function injectNewUI() {
 
 // --- GAMIFICATION ---
 function addXP(amount) {
+    if (!cachedData.gamification) cachedData.gamification = { xp: 0, level: 1 };
     let stats = cachedData.gamification;
     stats.xp += amount;
     const xpNeeded = stats.level * 100;
@@ -1102,29 +1104,58 @@ function getLevelTitle(lvl) {
 }
 
 function updateGamificationUI() {
-    const stats = cachedData.gamification;
+    const stats = cachedData.gamification || { xp: 0, level: 1 };
     const xpNeeded = stats.level * 100;
-    const pct = (stats.xp / xpNeeded) * 100;
-    const xpBar = document.getElementById('userXPBar');
+    const pct = Math.min((stats.xp / xpNeeded) * 100, 100);
+    
+    // [FIX] Target elemen header baru (index.html)
+    const xpBar = document.getElementById('xpBarFill'); 
     if(xpBar) xpBar.style.width = `${pct}%`;
-    const xpText = document.getElementById('userXPText');
+    
+    const xpText = document.getElementById('xpText');
     if(xpText) xpText.innerText = `${stats.xp} / ${xpNeeded} XP`;
-    const lvlBadge = document.getElementById('userLevelBadge');
-    if(lvlBadge) lvlBadge.innerText = `Lvl ${stats.level} ${getLevelTitle(stats.level)}`;
+    
+    const userLevel = document.getElementById('userLevel');
+    if(userLevel) userLevel.innerText = stats.level;
+    
+    // Update legacy jika ada
+    const legacyBar = document.getElementById('userXPBar');
+    if(legacyBar) legacyBar.style.width = `${pct}%`;
+    const legacyText = document.getElementById('userXPText');
+    if(legacyText) legacyText.innerText = `${stats.xp} / ${xpNeeded} XP`;
 }
 
 // --- STREAK ---
 function checkStreak(uid) {
-    const today = new Date().toISOString().split('T')[0];
-    let streak = cachedData.streak;
+    // Menggunakan waktu lokal
+    const localDate = new Date();
+    localDate.setMinutes(localDate.getMinutes() - localDate.getTimezoneOffset());
+    const today = localDate.toISOString().split('T')[0];
+
+    let streak = cachedData.streak || { count: 0, lastLogin: null };
+
     if (streak.lastLogin !== today) {
-        const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
-        const yesterdayStr = yesterday.toISOString().split('T')[0];
-        if (streak.lastLogin === yesterdayStr) { streak.count++; } else { streak.count = 1; }
+        const yesterdayDate = new Date(localDate);
+        yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+        const yesterdayStr = yesterdayDate.toISOString().split('T')[0];
+
+        if (streak.lastLogin === yesterdayStr) {
+            streak.count++;
+        } else {
+            streak.count = 1;
+        }
+        
         streak.lastLogin = today;
         saveDB('streak', streak);
+        
+        setTimeout(() => {
+            addXP(10);
+            showToast("Login Harian: +10 XP 🔥", "success");
+        }, 1500);
     }
-    document.getElementById('streakCount').innerText = streak.count;
+    
+    const streakBadge = document.getElementById('streakCount');
+    if(streakBadge) streakBadge.innerText = streak.count;
 }
 
 // --- FOCUS STATS ---
@@ -1170,34 +1201,33 @@ function renderAll() {
     loadPomodoroTasks();
     updateGamificationUI(); 
     renderFocusChart(); 
+    
+    if(document.getElementById('streakCount')) {
+        document.getElementById('streakCount').innerText = cachedData.streak.count || 0;
+    }
 }
 
-// --- MODE FOKUS & LOGIKA KUNCI TAB (UPDATED) ---
+// --- MODE FOKUS ---
 function setFocusType(type) {
     if (!isPaused) return showToast("Jeda timer dulu untuk ganti mode!", "error");
     focusType = type;
-    
-    // Update UI Tombol
     document.getElementById('btnModeStrict').className = type === 'strict' ? 'mode-btn active' : 'mode-btn';
     document.getElementById('btnModeChill').className = type === 'chill' ? 'mode-btn active' : 'mode-btn';
-    
     if (type === 'strict') showToast("Mode Ketat: Pindah tab = Timer Pause 🔒", "info");
     else showToast("Mode Santai: Bebas buka tab lain ☕", "success");
 }
 
 function setFocusLock(lock) {
-    // Kunci hanya aktif jika Mode Strict DAN sedang timer berjalan
     isFocusLocked = lock && (focusType === 'strict');
-    
     const focusModeElement = document.getElementById('focusModeLockText'); 
     if(focusModeElement) {
         focusModeElement.style.display = isFocusLocked ? 'block' : 'none';
-        document.querySelector('.timer-controls').style.marginTop = isFocusLocked ? '10px' : '0';
+        const controls = document.querySelector('.timer-controls');
+        if(controls) controls.style.marginTop = isFocusLocked ? '10px' : '0';
     }
 }
 
 function handleTabBlur() {
-    // Cek apakah Mode Strict aktif
     if (focusType === 'strict' && isFocusLocked && !isPaused && isWorking) {
         isTabBlurred = true;
         blurCount++;
@@ -1261,19 +1291,20 @@ function playSuccessSound(type = 'ding') {
     const g = audioCtx.createGain();
     o.connect(g);
     g.connect(audioCtx.destination);
+    const now = audioCtx.currentTime;
     if (type === 'ding') {
-        o.type = 'sine'; o.frequency.setValueAtTime(1200, audioCtx.currentTime); 
-        o.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.5); 
-        g.gain.setValueAtTime(0.1, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.5); 
-        o.start(); o.stop(audioCtx.currentTime + 0.5);
+        o.type = 'sine'; o.frequency.setValueAtTime(1200, now); 
+        o.frequency.exponentialRampToValueAtTime(600, now + 0.5); 
+        g.gain.setValueAtTime(0.1, now); g.gain.exponentialRampToValueAtTime(0.0001, now + 0.5); 
+        o.start(); o.stop(now + 0.5);
     } else if (type === 'coin') {
-        o.type = 'triangle'; o.frequency.setValueAtTime(900, audioCtx.currentTime);
-        g.gain.setValueAtTime(0.1, audioCtx.currentTime); g.gain.linearRampToValueAtTime(0.0001, audioCtx.currentTime + 0.3);
-        o.start(); o.stop(audioCtx.currentTime + 0.3);
+        o.type = 'triangle'; o.frequency.setValueAtTime(900, now);
+        g.gain.setValueAtTime(0.1, now); g.gain.linearRampToValueAtTime(0.0001, now + 0.3);
+        o.start(); o.stop(now + 0.3);
     } else if (type === 'bell') {
-        o.type = 'sawtooth'; o.frequency.setValueAtTime(440, audioCtx.currentTime);
-        g.gain.setValueAtTime(0.15, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 1.5);
-        o.start(); o.stop(audioCtx.currentTime + 1.5);
+        o.type = 'sawtooth'; o.frequency.setValueAtTime(440, now);
+        g.gain.setValueAtTime(0.15, now); g.gain.exponentialRampToValueAtTime(0.0001, now + 1.5);
+        o.start(); o.stop(now + 1.5);
     }
 }
 
@@ -1286,7 +1317,6 @@ function formatTime(s) {
 function updateTimerDisplay() {
     document.getElementById('timerDisplay').innerText = formatTime(timeLeft);
     const card = document.querySelector('.pomodoro-card');
-    
     if(isWorking) {
         document.getElementById('timerMode').innerText = "FOKUS";
         document.getElementById('timerMessage').innerText = "Waktunya Bekerja Keras";
@@ -1325,17 +1355,14 @@ function pauseTimer() {
     if (isPaused) return;
     isPaused = true;
     clearInterval(timerInterval);
-    
     if (isWorking) {
         savedFocusTime = timeLeft; 
         const durationSetting = isExamMode ? WORK_DURATION_EXAM : WORK_DURATION_DEFAULT;
         const workedMinutes = Math.floor((durationSetting - timeLeft) / 60);
         if(workedMinutes > 0) logFocusTime(workedMinutes);
-
         isWorking = false; 
         if (savedBreakTime !== null && savedBreakTime > 0) timeLeft = savedBreakTime; 
         else timeLeft = isExamMode ? BREAK_DURATION_EXAM : BREAK_DURATION_DEFAULT; 
-        
         showToast("Fokus dijeda. Istirahat dulu!", "info");
         updateTimerDisplay();
         startTimer(); 
@@ -1435,21 +1462,17 @@ function getWeekNumber(d) {
 function renderSchedule() {
     const dayName = days[currentDayIdx];
     document.getElementById('activeDayName').innerText = dayName.toUpperCase();
-    
     let currentWeekDisplay = currentWeekType;
     if (currentWeekType === 'auto') currentWeekDisplay = (getWeekNumber(new Date()) % 2 !== 0) ? 'umum' : 'produktif';
-    
     if(!jadwalData) return;
     let data = jadwalData[currentWeekDisplay][dayName];
     const tbody = document.getElementById('scheduleBody');
     const now = new Date();
     const curMins = now.getHours() * 60 + now.getMinutes();
     const isToday = currentDayIdx === now.getDay();
-    
     tbody.innerHTML = '';
     const filterCat = document.getElementById('scheduleFilterCategory').value;
     const filterGuru = document.getElementById('scheduleFilterGuru').value;
-
     if (data) data = data.filter(item => (filterCat === 'all' || item.type === filterCat) && (filterGuru === 'all' || item.guru === filterGuru));
 
     let statusWidget = document.getElementById('liveStatusWidget');
@@ -1461,10 +1484,7 @@ function renderSchedule() {
     if(!data || data.length === 0) { 
         tbody.parentElement.style.display='none'; 
         document.getElementById('holidayMessage').style.display='block'; 
-        if(statusWidget) {
-            document.getElementById('statusText').innerText = "Tidak ada jadwal (Libur)";
-            statusWidget.className = "live-status-widget status-chill";
-        }
+        if(statusWidget) { document.getElementById('statusText').innerText = "Tidak ada jadwal (Libur)"; statusWidget.className = "live-status-widget status-chill"; }
         return; 
     }
     
@@ -1522,25 +1542,14 @@ function renderSchedule() {
                 if(curMins >= (s[0]*60+s[1]) && curMins < (e[0]*60+e[1])) isActive = true;
             }
         }
-        
         const noteKey = `${dayName}_${idx}`;
         const hasNote = cachedData.scheduleNotes && cachedData.scheduleNotes[noteKey];
         const noteBtnClass = hasNote ? "btn-note" : "btn-note";
         const noteIcon = hasNote ? "fas fa-check-square" : "fas fa-sticky-note";
         const noteStyle = hasNote ? "background:var(--primary);color:white;" : "";
-        
-        const noteElem = `<button class="${noteBtnClass}" style="${noteStyle}" onclick="openMapelNote('${dayName}', ${idx})">
-                            <i class="${noteIcon}"></i> ${hasNote ? "Ada Catatan" : "Catatan"}
-                          </button>`;
+        const noteElem = `<button class="${noteBtnClass}" style="${noteStyle}" onclick="openMapelNote('${dayName}', ${idx})"><i class="${noteIcon}"></i> ${hasNote ? "Ada Catatan" : "Catatan"}</button>`;
         const editElem = `<button class="btn-edit-round" onclick="openScheduleEdit('${dayName}',${idx})"><i class="fas fa-pencil-alt"></i></button>`;
-        
-        tbody.innerHTML += `
-        <tr class="${isActive?'active-row':''}">
-            <td><b>${escapeHtml(item.mapel)}</b><br><small style="color:var(--text-sub)">${escapeHtml(item.guru || '')}</small></td>
-            <td>${escapeHtml(item.time)}</td>
-            <td>${noteElem}</td>
-            <td>${editElem}</td>
-        </tr>`;
+        tbody.innerHTML += `<tr class="${isActive?'active-row':''}"><td><b>${escapeHtml(item.mapel)}</b><br><small style="color:var(--text-sub)">${escapeHtml(item.guru || '')}</small></td><td>${escapeHtml(item.time)}</td><td>${noteElem}</td><td>${editElem}</td></tr>`;
     });
 }
 
@@ -1598,6 +1607,7 @@ function handleTaskButton() {
     }
     saveDB('tasks', tasks);
     document.getElementById('taskInput').value = ''; document.getElementById('taskDate').value = ''; 
+    loadTasks();
 }
 
 function loadTaskToEdit(id) {
@@ -1616,7 +1626,6 @@ function loadTasks() {
     const list = document.getElementById('taskList');
     const tasks = cachedData.tasks || [];
     list.innerHTML = '';
-    
     const total = tasks.length; 
     const done = tasks.filter(t => t.completed).length;
     const pct = total ? Math.round((done/total)*100) : 0;
@@ -1645,59 +1654,30 @@ function loadTasks() {
         const daysLeft = getDaysRemaining(t.date);
         let dateDisplay = `<i class="far fa-calendar"></i> ${formatDateIndo(t.date)}`;
         let badgeClass = 'deadline-far';
-        
         if (daysLeft !== null && !t.completed) {
             if (daysLeft < 0) { dateDisplay = `⚠️ Telat ${Math.abs(daysLeft)} hari`; badgeClass = 'deadline-urgent'; }
             else if (daysLeft === 0) { dateDisplay = `🔥 HARI INI`; badgeClass = 'deadline-urgent'; }
             else if (daysLeft === 1) { dateDisplay = `⏰ Besok`; badgeClass = 'deadline-near'; }
-            else { 
-                dateDisplay = `📅 ${daysLeft} Hari Lagi`; 
-                badgeClass = daysLeft <= 3 ? 'deadline-near' : 'deadline-far'; 
-            }
+            else { dateDisplay = `📅 ${daysLeft} Hari Lagi`; badgeClass = daysLeft <= 3 ? 'deadline-near' : 'deadline-far'; }
         }
         const randomWord = funWords[Math.floor(Math.random() * funWords.length)];
-
         const li = document.createElement('li');
         li.className = `task-item priority-${t.priority} ${t.completed ? 'completed' : ''}`;
         li.draggable = true;
         li.dataset.id = t.id;
-        li.innerHTML = `
-                <div class="task-content" style="display:flex;align-items:center;width:100%;">
-                    <div class="check-btn" onclick="toggleTask(${t.id})"><i class="fas fa-check"></i></div>
-                    <div class="task-text">
-                        <span>${escapeHtml(t.text)}</span>
-                        <small class="${badgeClass}">${dateDisplay} • ${t.priority}</small>
-                    </div>
-                     <span class="fun-badge">${randomWord}</span>
-                </div>
-                <div class="task-actions">
-                    <button class="action-btn" onclick="loadTaskToEdit(${t.id})"><i class="fas fa-pencil-alt"></i></button>
-                    <button class="action-btn delete" onclick="deleteTask(${t.id})"><i class="fas fa-trash"></i></button>
-                    <i class="fas fa-grip-lines" style="cursor:move; color:#ccc; margin-left:10px;"></i>
-                </div>`;
-        
+        li.innerHTML = `<div class="task-content" style="display:flex;align-items:center;width:100%;"><div class="check-btn" onclick="toggleTask(${t.id})"><i class="fas fa-check"></i></div><div class="task-text"><span>${escapeHtml(t.text)}</span><small class="${badgeClass}">${dateDisplay} • ${t.priority}</small></div><span class="fun-badge">${randomWord}</span></div><div class="task-actions"><button class="action-btn" onclick="loadTaskToEdit(${t.id})"><i class="fas fa-pencil-alt"></i></button><button class="action-btn delete" onclick="deleteTask(${t.id})"><i class="fas fa-trash"></i></button><i class="fas fa-grip-lines" style="cursor:move; color:#ccc; margin-left:10px;"></i></div>`;
         li.addEventListener('dragstart', handleDragStart);
         li.addEventListener('dragover', handleDragOver);
         li.addEventListener('drop', handleDrop);
         li.addEventListener('dragenter', handleDragEnter);
         li.addEventListener('dragleave', handleDragLeave);
-
         list.appendChild(li);
     });
     renderUrgentDeadlines(tasks);
 }
 
-function handleDragStart(e) {
-    dragSrcEl = this;
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/html', this.innerHTML);
-    this.style.opacity = '0.4';
-}
-function handleDragOver(e) {
-    if (e.preventDefault) { e.preventDefault(); }
-    e.dataTransfer.dropEffect = 'move';
-    return false;
-}
+function handleDragStart(e) { dragSrcEl = this; e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/html', this.innerHTML); this.style.opacity = '0.4'; }
+function handleDragOver(e) { if (e.preventDefault) { e.preventDefault(); } e.dataTransfer.dropEffect = 'move'; return false; }
 function handleDragEnter(e) { this.classList.add('over'); }
 function handleDragLeave(e) { this.classList.remove('over'); }
 function handleDrop(e) {
@@ -1705,11 +1685,9 @@ function handleDrop(e) {
     if (dragSrcEl !== this) {
         const idSrc = parseInt(dragSrcEl.dataset.id);
         const idDest = parseInt(this.dataset.id);
-        
         const tasks = cachedData.tasks;
         const idxSrc = tasks.findIndex(t => t.id === idSrc);
         const idxDest = tasks.findIndex(t => t.id === idDest);
-        
         if (idxSrc > -1 && idxDest > -1) {
             const [movedItem] = tasks.splice(idxSrc, 1);
             tasks.splice(idxDest, 0, movedItem);
@@ -1749,12 +1727,14 @@ function toggleTask(id) {
             showToast("Tugas Selesai! (+10 XP)", "success");
         }
         saveDB('tasks', tasks); 
+        loadTasks();
     }
 }
 function deleteTask(id) { 
     if(confirm("Hapus?")) { 
         const tasks = cachedData.tasks.filter(x => x.id !== id); 
         saveDB('tasks', tasks); 
+        loadTasks();
     } 
 }
 function clearCompletedTasks() {
@@ -1768,16 +1748,14 @@ function addTransaction(type) {
     const wallet = document.getElementById('selectedWallet').value; 
     const category = document.getElementById('txnCategory').value;
     if(!desc || !amount || amount <= 0) return showToast("Data tidak valid!", 'error');
-    
     const newTxn = { id: Date.now(), desc, amount, type, wallet, category, date: new Date().toISOString().split('T')[0] };
     let txns = cachedData.transactions;
     txns.push(newTxn);
-    
     if(type === 'in') { addXP(5); playSuccessSound('coin'); } 
-    
     saveDB('transactions', txns);
     document.getElementById('moneyDesc').value = ''; document.getElementById('moneyAmount').value = '';
     showToast(`${type==='in'?"Masuk":"Keluar"} tercatat!`, type==='in'?'success':'error');
+    loadTransactions();
 }
 
 function loadTransactions() {
@@ -1790,7 +1768,6 @@ function loadTransactions() {
         if(t.type === 'in') { bal.total+=t.amount; bal[t.wallet]+=t.amount; } 
         else { bal.total-=t.amount; bal[t.wallet]-=t.amount; }
     });
-
     txns.slice().reverse().forEach(t => {
         let show = (filter === 'all') || (filter === 'in' && t.type === 'in') || (filter === 'out' && t.type === 'out');
         if(show) {
@@ -1807,6 +1784,7 @@ function delTxn(id) {
     if(confirm("Hapus?")) { 
         const t = cachedData.transactions.filter(x => x.id !== id); 
         saveDB('transactions', t); 
+        loadTransactions();
     } 
 }
 window.exportFinanceReport = function() {
@@ -1934,6 +1912,7 @@ function saveScheduleChanges() {
     saveDB('jadwalData', jadwalData);
     document.getElementById('scheduleEditModal').style.display = 'none';
     showToast("Diupdate!", "success");
+    renderSchedule();
 }
 function closeScheduleEditModal() { document.getElementById('scheduleEditModal').style.display = 'none'; }
 window.openAddScheduleModal = function() { document.getElementById('addScheduleDay').value = days[currentDayIdx]; document.getElementById('addScheduleModal').style.display = 'flex'; }
@@ -1958,11 +1937,7 @@ window.deleteSchedule = function() {
     if (!currentScheduleEdit) return;
     if(confirm("Hapus mapel ini?")) {
         const { day, idx } = currentScheduleEdit;
-        let displayType = currentWeekType;
-        if (currentWeekType === 'auto') {
-             displayType = (getWeekNumber(new Date()) % 2 !== 0) ? 'umum' : 'produktif';
-        }
-
+        let displayType = currentWeekType === 'auto' ? ((getWeekNumber(new Date()) % 2 !== 0) ? 'umum' : 'produktif') : currentWeekType;
         if(jadwalData[displayType] && jadwalData[displayType][day]) {
             jadwalData[displayType][day].splice(idx, 1);
             saveDB('jadwalData', jadwalData);
@@ -1973,98 +1948,101 @@ window.deleteSchedule = function() {
     }
 }
 
-window.closeNoteModal = function() { document.getElementById('noteModal').style.display = 'none'; }
-window.saveNoteFromModal = function() { showToast("Catatan disimpan (Placeholder)", "success"); closeNoteModal(); }
-window.deleteNote = function() { if(confirm("Hapus catatan?")) { document.getElementById('noteModalInput').value = ""; closeNoteModal(); } }
-
 // ==================== Z. ACHIEVEMENT SYSTEM LOGIC ====================
 
-// Konfigurasi Daftar Achievement
 const achievementsData = [
-    {
-        id: 'newbie',
-        title: 'Murid Baru',
-        desc: 'Login ke aplikasi untuk pertama kali.',
-        icon: 'fas fa-user-graduate',
-        check: (data) => true // Selalu benar jika user sudah login
-    },
-    {
-        id: 'task_master',
-        title: 'Si Rajin',
-        desc: 'Selesaikan total 5 tugas.',
-        icon: 'fas fa-check-double',
-        check: (data) => {
-            const completed = (data.tasks || []).filter(t => t.completed).length;
-            return completed >= 5;
-        }
-    },
-    {
-        id: 'rich_kid',
-        title: 'Calon Sultan',
-        desc: 'Miliki total saldo di atas Rp 500.000.',
-        icon: 'fas fa-money-bill-wave',
-        check: (data) => {
-            const txns = data.transactions || [];
-            let total = 0;
-            txns.forEach(t => { if(t.type === 'in') total+=t.amount; else total-=t.amount; });
-            return total >= 500000;
-        }
-    },
-    {
-        id: 'level_5',
-        title: 'Bintang Kelas',
-        desc: 'Mencapai Level 5.',
-        icon: 'fas fa-star',
-        check: (data) => (data.gamification && data.gamification.level >= 5)
-    },
-    {
-        id: 'streak_3',
-        title: 'On Fire!',
-        desc: 'Login 3 hari berturut-turut.',
-        icon: 'fas fa-fire',
-        check: (data) => (data.streak && data.streak.count >= 3)
-    },
-    {
-        id: 'focus_god',
-        title: 'Dewa Fokus',
-        desc: 'Total fokus lebih dari 100 menit.',
-        icon: 'fas fa-brain',
-        check: (data) => {
-            const logs = data.focusLogs || {};
-            let totalMins = 0;
-            Object.values(logs).forEach(mins => totalMins += mins);
-            return totalMins >= 100;
-        }
-    }
+    // --- LEVEL & PROGRESS ---
+    { id: 'newbie', title: 'Murid Baru', desc: 'Login pertama kali.', icon: 'fas fa-baby', xp: 50, check: (d) => true },
+    { id: 'level_2', title: 'Naik Kelas', desc: 'Capai Level 2.', icon: 'fas fa-arrow-up', xp: 100, check: (d) => d.gamification.level >= 2 },
+    { id: 'level_5', title: 'Bintang Kelas', desc: 'Capai Level 5.', icon: 'fas fa-star', xp: 200, check: (d) => d.gamification.level >= 5 },
+    { id: 'level_10', title: 'Sepuh', desc: 'Capai Level 10.', icon: 'fas fa-crown', xp: 500, check: (d) => d.gamification.level >= 10 },
+    { id: 'level_20', title: 'Legend', desc: 'Capai Level 20.', icon: 'fas fa-dragon', xp: 1000, check: (d) => d.gamification.level >= 20 },
+    { id: 'xp_hunter', title: 'Pemburu XP', desc: 'Kumpulkan total 500 XP.', icon: 'fas fa-scroll', xp: 150, check: (d) => d.gamification.xp >= 500 },
+
+    // --- TUGAS (TASKS) ---
+    { id: 'task_1', title: 'Langkah Awal', desc: 'Selesaikan 1 tugas.', icon: 'fas fa-check', xp: 20, check: (d) => d.tasks.filter(t => t.completed).length >= 1 },
+    { id: 'task_5', title: 'Si Rajin', desc: 'Selesaikan 5 tugas.', icon: 'fas fa-check-double', xp: 50, check: (d) => d.tasks.filter(t => t.completed).length >= 5 },
+    { id: 'task_10', title: 'Produktif', desc: 'Selesaikan 10 tugas.', icon: 'fas fa-list-ol', xp: 100, check: (d) => d.tasks.filter(t => t.completed).length >= 10 },
+    { id: 'task_25', title: 'Workaholic', desc: 'Selesaikan 25 tugas.', icon: 'fas fa-briefcase', xp: 250, check: (d) => d.tasks.filter(t => t.completed).length >= 25 },
+    { id: 'task_50', title: 'Monster Tugas', desc: 'Selesaikan 50 tugas.', icon: 'fas fa-robot', xp: 500, check: (d) => d.tasks.filter(t => t.completed).length >= 50 },
+    { id: 'task_clean', title: 'Meja Bersih', desc: 'Tidak ada tugas tertunda (harus ada minimal 1 tugas selesai).', icon: 'fas fa-sparkles', xp: 50, check: (d) => d.tasks.length > 0 && d.tasks.filter(t => !t.completed).length === 0 },
+    { id: 'priority_high', title: 'Prioritas Utama', desc: 'Selesaikan 1 tugas Prioritas Tinggi (High).', icon: 'fas fa-exclamation', xp: 30, check: (d) => d.tasks.some(t => t.completed && t.priority === 'High') },
+
+    // --- FOKUS (POMODORO) ---
+    { id: 'focus_25', title: 'Fokus Pemula', desc: 'Fokus total 25 menit.', icon: 'fas fa-clock', xp: 30, check: (d) => getTotalFocus(d) >= 25 },
+    { id: 'focus_100', title: 'Dewa Fokus', desc: 'Fokus total 100 menit.', icon: 'fas fa-brain', xp: 100, check: (d) => getTotalFocus(d) >= 100 },
+    { id: 'focus_500', title: 'Deep Work', desc: 'Fokus total 500 menit.', icon: 'fas fa-headset', xp: 400, check: (d) => getTotalFocus(d) >= 500 },
+    { id: 'focus_1000', title: 'Zen Master', desc: 'Fokus total 1000 menit.', icon: 'fas fa-yin-yang', xp: 1000, check: (d) => getTotalFocus(d) >= 1000 },
+
+    // --- STREAK (LOGIN) ---
+    { id: 'streak_3', title: 'On Fire!', desc: 'Login 3 hari berturut-turut.', icon: 'fas fa-fire', xp: 50, check: (d) => d.streak.count >= 3 },
+    { id: 'streak_7', title: 'Seminggu Penuh', desc: 'Login 7 hari berturut-turut.', icon: 'fas fa-calendar-week', xp: 150, check: (d) => d.streak.count >= 7 },
+    { id: 'streak_14', title: 'Konsisten', desc: 'Login 14 hari berturut-turut.', icon: 'fas fa-calendar-check', xp: 300, check: (d) => d.streak.count >= 14 },
+    { id: 'streak_30', title: 'Sebulan Penuh', desc: 'Login 30 hari berturut-turut.', icon: 'fas fa-calendar-alt', xp: 1000, check: (d) => d.streak.count >= 30 },
+
+    // --- KEUANGAN ---
+    { id: 'rich_kid', title: 'Calon Sultan', desc: 'Total saldo di atas Rp 500.000.', icon: 'fas fa-money-bill-wave', xp: 100, check: (d) => getBalance(d) >= 500000 },
+    { id: 'millionaire', title: 'Jutawan', desc: 'Total saldo di atas Rp 1.000.000.', icon: 'fas fa-gem', xp: 250, check: (d) => getBalance(d) >= 1000000 },
+    { id: 'saver', title: 'Penabung', desc: 'Catat 1 transaksi Tabungan (Masuk).', icon: 'fas fa-piggy-bank', xp: 20, check: (d) => d.transactions.some(t => t.category === 'Tabungan' && t.type === 'in') },
+    { id: 'spender', title: 'Tukang Jajan', desc: 'Catat 5 pengeluaran.', icon: 'fas fa-shopping-cart', xp: 20, check: (d) => d.transactions.filter(t => t.type === 'out').length >= 5 },
+
+    // --- WAKTU LOGIN (TIME) ---
+    { id: 'early_bird', title: 'Bangun Pagi', desc: 'Login antara jam 4 - 6 pagi.', icon: 'fas fa-sun', xp: 40, check: (d) => { const h = new Date().getHours(); return h >= 4 && h <= 6; } },
+    { id: 'night_owl', title: 'Begadang', desc: 'Login di atas jam 10 malam.', icon: 'fas fa-moon', xp: 40, check: (d) => { const h = new Date().getHours(); return h >= 22 || h <= 2; } },
+    { id: 'weekend_warrior', title: 'Lembur Minggu', desc: 'Login di hari Minggu.', icon: 'fas fa-couch', xp: 30, check: (d) => new Date().getDay() === 0 },
+
+    // --- FITUR LAIN ---
+    { id: 'note_taker', title: 'Rajin Catat', desc: 'Buat 1 catatan pada jadwal.', icon: 'fas fa-sticky-note', xp: 20, check: (d) => Object.keys(d.scheduleNotes || {}).length > 0 },
+    { id: 'custom_sched', title: 'Manager Jadwal', desc: 'Edit atau tambah jadwal manual.', icon: 'fas fa-edit', xp: 30, check: (d) => true } 
 ];
 
-// Fungsi Membuka Modal Achievement
+function getTotalFocus(d) {
+    let total = 0;
+    if(d.focusLogs) Object.values(d.focusLogs).forEach(v => total += v);
+    return total;
+}
+function getBalance(d) {
+    let total = 0;
+    if(d.transactions) d.transactions.forEach(t => { if(t.type==='in') total+=t.amount; else total-=t.amount; });
+    return total;
+}
+
 window.openAchievementModal = function() {
     const listContainer = document.getElementById('achievementList');
     const badge = document.getElementById('achievelmentCountBadge');
     
-    listContainer.innerHTML = ''; // Reset list
-    let unlockedCount = 0;
+    if (!cachedData.unlockedAchievements) cachedData.unlockedAchievements = [];
 
-    // Loop semua achievement config
+    listContainer.innerHTML = ''; 
+    let unlockedCount = 0;
+    let newUnlock = false;
+
     achievementsData.forEach(ach => {
-        // Cek apakah user memenuhi syarat berdasarkan cachedData
         const isUnlocked = ach.check(cachedData);
+        const alreadyClaimed = cachedData.unlockedAchievements.includes(ach.id);
+
+        if (isUnlocked && !alreadyClaimed) {
+            addXP(ach.xp); 
+            cachedData.unlockedAchievements.push(ach.id); 
+            showToast(`🏆 Achievement: ${ach.title} (+${ach.xp} XP)`, "success");
+            playSuccessSound('coin');
+            newUnlock = true;
+        }
+
         if(isUnlocked) unlockedCount++;
 
-        // Tentukan style & icon
         const itemClass = isUnlocked ? 'unlocked' : 'locked';
         const statusIcon = isUnlocked ? '<i class="fas fa-check-circle ach-status"></i>' : '<i class="fas fa-lock ach-status lock-icon"></i>';
         const titleColor = isUnlocked ? 'var(--primary)' : 'inherit';
+        const xpBadge = `<span style="font-size:0.7rem; background:rgba(99,102,241,0.1); color:var(--primary); padding:2px 6px; border-radius:4px; margin-left:5px;">+${ach.xp} XP</span>`;
 
-        // Buat HTML Item
         const html = `
             <div class="ach-item ${itemClass}">
                 <div class="ach-icon">
                     <i class="${ach.icon}"></i>
                 </div>
                 <div class="ach-info">
-                    <h4 style="color:${titleColor}">${ach.title}</h4>
+                    <h4 style="color:${titleColor}">${ach.title} ${xpBadge}</h4>
                     <p>${ach.desc}</p>
                 </div>
                 ${statusIcon}
@@ -2073,12 +2051,14 @@ window.openAchievementModal = function() {
         listContainer.innerHTML += html;
     });
 
-    // Update badge count
+    if (newUnlock) {
+        saveDB('unlockedAchievements', cachedData.unlockedAchievements);
+    }
+
     badge.innerText = `${unlockedCount}/${achievementsData.length}`;
-    
-    // Tampilkan Modal
     document.getElementById('achievementModal').style.display = 'flex';
     
-    // Tutup dropdown settings agar rapi
-    document.getElementById('settingsDropdown').classList.remove('active');
+    if(document.getElementById('settingsDropdown')) {
+        document.getElementById('settingsDropdown').classList.remove('active');
+    }
 }
