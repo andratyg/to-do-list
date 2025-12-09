@@ -183,16 +183,32 @@ body.dark-mode .header-modern {
     border: 2px solid var(--card-bg);
 }
 
+/* [PERBAIKAN] Style Header Name */
 .text-info h1 {
-    font-size: 1.4rem;
+    font-size: 1.3rem;
     font-weight: 800;
     line-height: 1.2;
     margin-bottom: 2px;
+    
+    /* Agar teks panjang tidak turun baris */
+    white-space: nowrap; 
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 280px;
+    
     background: linear-gradient(90deg, var(--text-main), var(--primary));
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
     color: transparent;
+}
+
+@media (max-width: 900px) {
+    .text-info h1 {
+        font-size: 1.2rem;
+        max-width: 100%;
+        white-space: normal;
+    }
 }
 
 .mini-date {
