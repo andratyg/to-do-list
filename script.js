@@ -51,58 +51,18 @@ const defaultJadwalData = {
       { mapel: "Koding & AI", guru: "Juliana Mansur, S.Kom", time: "08.20 - 09.40", type: "produktif" },
       { mapel: "PAI & Budi Pekerti", guru: "Hapid, S.Ag", time: "10.00 - 11.20", type: "umum" },
       { mapel: "Matematika", guru: "Wijiastuti, S.Pd", time: "11.20 - 13.20", type: "umum" },
-      { mapel: "Pend. Pancasila", guru: "Amanda Putri S, S.Pd", time: "13.20 - 14.40", type: "umum" },
-      { mapel: "Bahasa Inggris", guru: "Endang Setiawan, S.Pd", time: "14.40 - 16.00", type: "umum" },
     ],
-    Selasa: [
-      { mapel: "KOKURIKULER", guru: "Nurulia Aprilia, S.Si", time: "08.00 - 15.50", type: "kokurikuler" },
-    ],
-    Rabu: [
-      { mapel: "Bahasa Indonesia", guru: "Lia Siti Sholehah, S.Pd", time: "08.00 - 09.20", type: "umum" },
-      { mapel: "Bahasa Inggris", guru: "Endang Setiawan, S.Pd", time: "09.40 - 11.00", type: "umum" },
-      { mapel: "PAI", guru: "Hapid, S.Ag", time: "11.00 - 13.00", type: "umum" },
-      { mapel: "Matematika", guru: "Wijiastuti, S.Pd", time: "13.00 - 14.30", type: "umum" },
-      { mapel: "Pend. Pancasila", guru: "Amanda Putri S, S.Pd", time: "14.30 - 15.50", type: "umum" },
-    ],
-    Kamis: [
-      { mapel: "Sejarah", guru: "Yessy Novita D, S.Pd", time: "08.00 - 09.20", type: "umum" },
-      { mapel: "Bahasa Indonesia", guru: "Lia Siti Sholehah, S.Pd", time: "09.40 - 11.00", type: "umum" },
-      { mapel: "Bahasa Sunda", guru: "Isti Hamidah", time: "11.00 - 13.00", type: "umum" },
-      { mapel: "Matematika", guru: "Wijiastuti, S.Pd", time: "13.00 - 14.30", type: "umum" },
-      { mapel: "Sejarah", guru: "Yessy Novita D, S.Pd", time: "14.30 - 15.50", type: "umum" },
-    ],
-    Jumat: [
-      { mapel: "Koding & AI", guru: "Juliana Mansur, S.Kom", time: "07.45 - 09.05", type: "produktif" },
-      { mapel: "Bahasa Inggris", guru: "Endang Setiawan, S.Pd", time: "09.05 - 10.25", type: "umum" },
-      { mapel: "Bahasa Indonesia", guru: "Lia Siti Sholehah, S.Pd", time: "10.25 - 13.40", type: "umum" },
-      { mapel: "Bahasa Sunda", guru: "Isti Hamidah", time: "13.40 - 15.00", type: "umum" },
-    ],
+    Selasa: [ { mapel: "KOKURIKULER", guru: "Nurulia Aprilia, S.Si", time: "08.00 - 15.50", type: "kokurikuler" } ],
+    Rabu: [ { mapel: "Bahasa Indonesia", guru: "Lia Siti Sholehah, S.Pd", time: "08.00 - 09.20", type: "umum" } ],
+    Kamis: [ { mapel: "Sejarah", guru: "Yessy Novita D, S.Pd", time: "08.00 - 09.20", type: "umum" } ],
+    Jumat: [ { mapel: "Koding & AI", guru: "Juliana Mansur, S.Kom", time: "07.45 - 09.05", type: "produktif" } ],
   },
   produktif: {
-    Senin: [
-      { mapel: "DDPK (Juliana)", time: "08.20 - 09.40", type: "produktif" },
-      { mapel: "PJOK", guru: "Noer Sandy M, S.Pd", time: "10.00 - 12.00", type: "umum" },
-      { mapel: "DDPK (Duma)", time: "12.40 - 14.40", type: "produktif" },
-      { mapel: "DDPK (Muslih)", time: "14.40 - 16.00", type: "produktif" },
-    ],
-    Selasa: [
-      { mapel: "Projek IPAS", guru: "Nurulia Aprilia, S.Si", time: "08.00 - 11.40", type: "umum" },
-      { mapel: "DDPK (Duma)", time: "12.20 - 14.30", type: "produktif" },
-      { mapel: "Informatika", guru: "Nurdin", time: "14.30 - 15.50", type: "produktif" },
-    ],
-    Rabu: [
-      { mapel: "Informatika", guru: "Nurdin", time: "08.00 - 09.20", type: "produktif" },
-      { mapel: "PJOK", guru: "Noer Sandy M, S.Pd", time: "09.40 - 11.40", type: "umum" },
-      { mapel: "Projek IPAS", guru: "Nurulia Aprilia, S.Si", time: "12.20 - 15.50", type: "umum" },
-    ],
-    Kamis: [
-      { mapel: "DDPK (Full Day)", guru: "Iqbal Fajar Syahbana", time: "08.00 - 15.50", type: "produktif" },
-    ],
-    Jumat: [
-      { mapel: "DDPK (Duma)", time: "07.45 - 10.25", type: "produktif" },
-      { mapel: "Informatika", guru: "Nurdin", time: "10.25 - 13.40", type: "produktif" },
-      { mapel: "DDPK (Duma)", time: "13.40 - 15.00", type: "produktif" },
-    ],
+    Senin: [ { mapel: "DDPK (Juliana)", time: "08.20 - 09.40", type: "produktif" } ],
+    Selasa: [ { mapel: "Projek IPAS", guru: "Nurulia Aprilia, S.Si", time: "08.00 - 11.40", type: "umum" } ],
+    Rabu: [ { mapel: "Informatika", guru: "Nurdin", time: "08.00 - 09.20", type: "produktif" } ],
+    Kamis: [ { mapel: "DDPK (Full Day)", guru: "Iqbal Fajar Syahbana", time: "08.00 - 15.50", type: "produktif" } ],
+    Jumat: [ { mapel: "DDPK (Duma)", time: "07.45 - 10.25", type: "produktif" } ],
   },
 };
 
@@ -112,7 +72,7 @@ let currentWeekType = "umum";
 let taskFilter = "all";
 let editingTaskId = null;
 
-// ==================== QUOTES ====================
+// ==================== QUOTES (Disederhanakan agar ringan) ====================
 const motivationalQuotes = [
     // --- MOTIVASI BELAJAR ---
     "Fokus 25 menit, hasilnya 100%. Kamu bisa! 💪",
@@ -901,7 +861,6 @@ function initAuthListener() {
 
         window.authListener(window.auth, (user) => {
             if (user) {
-                // [FIX] MEMBERSIHKAN NAMA DARI ANGKA ID
                 let rawName = user.displayName || user.email.split('@')[0];
                 const displayName = rawName.replace(/[0-9]/g, '').replace(/^\s+|\s+$/g, ''); 
                 
@@ -986,6 +945,8 @@ function startFirebaseListener(uid) {
 function saveDB(key, data) {
     if (!window.auth.currentUser) return;
     const uid = window.auth.currentUser.uid;
+    
+    // Update local cache
     if(key === 'tasks') cachedData.tasks = data;
     if(key === 'transactions') cachedData.transactions = data;
     if(key === 'gamification') cachedData.gamification = data;
@@ -995,7 +956,13 @@ function saveDB(key, data) {
     if(key === 'unlockedAchievements') cachedData.unlockedAchievements = data;
     if(key === 'jadwalData') { cachedData.jadwal = data; jadwalData = data; key = 'jadwal'; }
 
-    window.dbSet(window.dbRef(window.db, `users/${uid}/${key}`), data).catch(err => console.error("Save Error:", err));
+    // Save to Firebase
+    window.dbSet(window.dbRef(window.db, `users/${uid}/${key}`), data)
+        .then(() => {
+            // [FIX] Cek achievement SETIAP KALI data disimpan
+            checkAchievements();
+        })
+        .catch(err => console.error("Save Error:", err));
 }
 
 function saveSetting(key, val) { const uid = window.auth.currentUser.uid; window.dbSet(window.dbRef(window.db, `users/${uid}/settings/${key}`), val); }
@@ -1013,7 +980,7 @@ function initApp(uid) {
     startClock(); updateGreeting(); updateHeaderDate(); 
     loadScheduleFilters(); loadSoundSettings(); loadRandomQuote(); 
     updateTimerDisplay(); 
-    injectNewUI(); 
+    injectNewUI();
     checkStreak(uid); 
     
     document.addEventListener('keydown', (e) => {
@@ -1066,7 +1033,7 @@ function injectNewUI() {
     }
 
     const pomodoroCard = document.querySelector('.pomodoro-card');
-    if(pomodoroCard && !document.getElementById('focusChart')) {
+    if(pomodoroCard && !document.getElementById('focusChartSection')) {
         const chartHTML = `
             <div id="focusChartSection" style="margin-top: 20px; background: rgba(0,0,0,0.1); padding: 15px; border-radius: 12px; text-align: left;">
                 <h4 style="font-size: 0.9rem; margin-bottom: 10px; color: white;">📊 Statistik Fokus Minggu Ini</h4>
@@ -1089,18 +1056,9 @@ function addXP(amount) {
         stats.level++;
         showToast(`🎉 LEVEL UP! Kamu sekarang Level ${stats.level}`, "success");
         playSuccessSound('bell'); 
-        alert(`SELAMAT! 🥳\nKamu naik ke Level ${stats.level}\nTitle: ${getLevelTitle(stats.level)}`);
     }
     saveDB('gamification', stats);
     updateGamificationUI();
-}
-
-function getLevelTitle(lvl) {
-    if(lvl < 5) return "Novice Student";
-    if(lvl < 10) return "Apprentice Learner";
-    if(lvl < 20) return "High Achiever";
-    if(lvl < 50) return "Master of Focus";
-    return "Grandmaster Scholar";
 }
 
 function updateGamificationUI() {
@@ -1108,17 +1066,15 @@ function updateGamificationUI() {
     const xpNeeded = stats.level * 100;
     const pct = Math.min((stats.xp / xpNeeded) * 100, 100);
     
-    // [FIX] Target elemen header baru (index.html)
+    // [FIX] Update untuk UI header baru & lama
     const xpBar = document.getElementById('xpBarFill'); 
     if(xpBar) xpBar.style.width = `${pct}%`;
-    
     const xpText = document.getElementById('xpText');
     if(xpText) xpText.innerText = `${stats.xp} / ${xpNeeded} XP`;
-    
     const userLevel = document.getElementById('userLevel');
     if(userLevel) userLevel.innerText = stats.level;
     
-    // Update legacy jika ada
+    // Legacy support
     const legacyBar = document.getElementById('userXPBar');
     if(legacyBar) legacyBar.style.width = `${pct}%`;
     const legacyText = document.getElementById('userXPText');
@@ -1127,7 +1083,6 @@ function updateGamificationUI() {
 
 // --- STREAK ---
 function checkStreak(uid) {
-    // Menggunakan waktu lokal
     const localDate = new Date();
     localDate.setMinutes(localDate.getMinutes() - localDate.getTimezoneOffset());
     const today = localDate.toISOString().split('T')[0];
@@ -1170,21 +1125,22 @@ function logFocusTime(minutes) {
 }
 
 function renderFocusChart() {
-    const chart = document.getElementById('focusChart');
+    const chart = document.getElementById('focusChart'); // Fix ID
     if(!chart) return;
     chart.innerHTML = '';
+    
     for(let i=6; i>=0; i--) {
         const d = new Date(); d.setDate(d.getDate() - i);
         const dateStr = d.toISOString().split('T')[0];
         const dayName = days[d.getDay()].substring(0,3); 
         const minutes = cachedData.focusLogs[dateStr] || 0;
-        let heightPct = (minutes / 240) * 100;
+        let heightPct = (minutes / 120) * 100; 
         if(heightPct > 100) heightPct = 100;
         if(heightPct < 5 && minutes > 0) heightPct = 5;
         
         chart.innerHTML += `
             <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%;">
-                <div style="width:100%; background:rgba(255,255,255,0.3); height:${heightPct}%; border-radius:4px; position:relative; min-height: ${minutes>0?4:0}px;" title="${minutes} Menit"></div>
+                <div style="width:80%; background:rgba(255,255,255,0.5); height:${heightPct}%; border-radius:4px; position:relative; min-height: ${minutes>0?4:0}px;" title="${minutes} Menit"></div>
                 <small style="font-size:0.6rem; color:white; margin-top:4px;">${dayName}</small>
             </div>
         `;
@@ -1222,8 +1178,6 @@ function setFocusLock(lock) {
     const focusModeElement = document.getElementById('focusModeLockText'); 
     if(focusModeElement) {
         focusModeElement.style.display = isFocusLocked ? 'block' : 'none';
-        const controls = document.querySelector('.timer-controls');
-        if(controls) controls.style.marginTop = isFocusLocked ? '10px' : '0';
     }
 }
 
@@ -1245,27 +1199,21 @@ function handleTabFocus() {
 function handleBeforeUnload(event) {
     if (!isPaused && isWorking) {
         event.preventDefault();
-        event.returnValue = "Timer sedang berjalan! Yakin ingin keluar?";
-        return "Timer sedang berjalan! Yakin ingin keluar?";
+        event.returnValue = "Timer sedang berjalan!";
+        return "Timer sedang berjalan!";
     }
 }
 
 // --- UTILS UI ---
 function updateGreeting() { 
     const h = new Date().getHours(); 
-    let greet = 'Halo';
-    let emoji = '👋';
-    if (h < 11) { greet = 'Selamat Pagi'; emoji = '☀️'; }
-    else if (h < 15) { greet = 'Selamat Siang'; emoji = '🌤️'; }
-    else if (h < 18) { greet = 'Selamat Sore'; emoji = '🌇'; }
-    else { greet = 'Selamat Malam'; emoji = '🌙'; }
-
+    let greet = h < 11 ? 'Selamat Pagi' : h < 15 ? 'Selamat Siang' : h < 18 ? 'Selamat Sore' : 'Selamat Malam';
     const userDisplay = currentUser || 'User';
-    document.getElementById('greeting').innerHTML = `${greet}, <span class="text-gradient">${escapeHtml(userDisplay)}</span>! ${emoji}`; 
+    document.getElementById('greeting').innerHTML = `${greet}, <span class="text-gradient">${escapeHtml(userDisplay)}</span>!`; 
 }
 
 function updateHeaderDate() { document.getElementById('headerDate').innerHTML = `<i class="far fa-calendar"></i> ${new Date().toLocaleDateString('id-ID', {weekday:'long', day:'numeric', month:'long', year:'numeric'})}`; }
-function startClock() { setInterval(() => { const n=new Date(); document.getElementById('clockTime').innerText=n.toLocaleTimeString('id-ID'); }, 1000); }
+function startClock() { setInterval(() => { const n=new Date(); document.getElementById('clockTime').innerText=n.toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}); }, 1000); }
 function showToast(m, t) { 
     const b=document.getElementById('toastBox'); const d=document.createElement('div'); 
     d.className=`toast ${t}`; d.innerHTML=`<i class="fas fa-${t==='success'?'check-circle':t==='info'?'bell':'exclamation-circle'}"></i> ${m}`; 
@@ -1273,7 +1221,6 @@ function showToast(m, t) {
 }
 function toggleDarkMode() { 
     document.body.classList.toggle('dark-mode'); 
-    const uid = window.auth.currentUser.uid;
     const theme = document.body.classList.contains('dark-mode')?'dark':'light';
     saveSetting('theme', theme);
 }
@@ -1292,9 +1239,9 @@ function playSuccessSound(type = 'ding') {
     o.connect(g);
     g.connect(audioCtx.destination);
     const now = audioCtx.currentTime;
+    
     if (type === 'ding') {
-        o.type = 'sine'; o.frequency.setValueAtTime(1200, now); 
-        o.frequency.exponentialRampToValueAtTime(600, now + 0.5); 
+        o.type = 'sine'; o.frequency.setValueAtTime(1200, now); o.frequency.exponentialRampToValueAtTime(600, now + 0.5); 
         g.gain.setValueAtTime(0.1, now); g.gain.exponentialRampToValueAtTime(0.0001, now + 0.5); 
         o.start(); o.stop(now + 0.5);
     } else if (type === 'coin') {
@@ -1333,10 +1280,10 @@ function updateTimerDisplay() {
         document.getElementById('timerMessage').innerText = "Istirahat Sejenak";
         card.classList.add('mode-break');
         if(!isPaused) {
-            document.getElementById('startPauseBtn').innerText = "Skip Istirahat";
+            document.getElementById('startPauseBtn').innerText = "Skip";
             document.getElementById('startPauseBtn').setAttribute('onclick', 'resumeFocus()');
         } else {
-            document.getElementById('startPauseBtn').innerText = "Lanjut Fokus";
+            document.getElementById('startPauseBtn').innerText = "Lanjut";
             document.getElementById('startPauseBtn').setAttribute('onclick', 'resumeFocus()');
         }
     }
@@ -1465,6 +1412,10 @@ function renderSchedule() {
     let currentWeekDisplay = currentWeekType;
     if (currentWeekType === 'auto') currentWeekDisplay = (getWeekNumber(new Date()) % 2 !== 0) ? 'umum' : 'produktif';
     if(!jadwalData) return;
+    
+    // Safety check
+    if(!jadwalData[currentWeekDisplay]) jadwalData[currentWeekDisplay] = {};
+    
     let data = jadwalData[currentWeekDisplay][dayName];
     const tbody = document.getElementById('scheduleBody');
     const now = new Date();
@@ -1477,18 +1428,21 @@ function renderSchedule() {
 
     let statusWidget = document.getElementById('liveStatusWidget');
     if (!statusWidget) {
-        document.querySelector('.schedule-status-bar').innerHTML = `<div id="liveStatusWidget" class="live-status-widget"><div class="status-icon-box"><i class="fas fa-bolt" id="statusIcon"></i></div><div class="status-content"><h4 id="statusLabel">STATUS SAAT INI</h4><p id="statusText">Memuat...</p></div></div>`;
-        statusWidget = document.getElementById('liveStatusWidget');
+        const statusBar = document.querySelector('.schedule-status-bar');
+        if(statusBar) {
+             statusBar.innerHTML = `<div id="liveStatusWidget" class="live-status-widget"><div class="status-icon-box"><i class="fas fa-bolt" id="statusIcon"></i></div><div class="status-content"><h4 id="statusLabel">STATUS SAAT INI</h4><p id="statusText">Memuat...</p></div></div>`;
+             statusWidget = document.getElementById('liveStatusWidget');
+        }
     }
 
     if(!data || data.length === 0) { 
-        tbody.parentElement.style.display='none'; 
+        if(tbody.parentElement) tbody.parentElement.style.display='none'; 
         document.getElementById('holidayMessage').style.display='block'; 
         if(statusWidget) { document.getElementById('statusText').innerText = "Tidak ada jadwal (Libur)"; statusWidget.className = "live-status-widget status-chill"; }
         return; 
     }
     
-    tbody.parentElement.style.display='table'; 
+    if(tbody.parentElement) tbody.parentElement.style.display='table'; 
     document.getElementById('holidayMessage').style.display='none';
     let statusText = "Belum Mulai";
     let statusClass = "live-status-widget"; 
@@ -1544,10 +1498,9 @@ function renderSchedule() {
         }
         const noteKey = `${dayName}_${idx}`;
         const hasNote = cachedData.scheduleNotes && cachedData.scheduleNotes[noteKey];
-        const noteBtnClass = hasNote ? "btn-note" : "btn-note";
+        const noteBtnClass = hasNote ? "btn-note has-content" : "btn-note";
         const noteIcon = hasNote ? "fas fa-check-square" : "fas fa-sticky-note";
-        const noteStyle = hasNote ? "background:var(--primary);color:white;" : "";
-        const noteElem = `<button class="${noteBtnClass}" style="${noteStyle}" onclick="openMapelNote('${dayName}', ${idx})"><i class="${noteIcon}"></i> ${hasNote ? "Ada Catatan" : "Catatan"}</button>`;
+        const noteElem = `<button class="${noteBtnClass}" onclick="openMapelNote('${dayName}', ${idx})"><i class="${noteIcon}"></i> ${hasNote ? "Ada Catatan" : "Catatan"}</button>`;
         const editElem = `<button class="btn-edit-round" onclick="openScheduleEdit('${dayName}',${idx})"><i class="fas fa-pencil-alt"></i></button>`;
         tbody.innerHTML += `<tr class="${isActive?'active-row':''}"><td><b>${escapeHtml(item.mapel)}</b><br><small style="color:var(--text-sub)">${escapeHtml(item.guru || '')}</small></td><td>${escapeHtml(item.time)}</td><td>${noteElem}</td><td>${editElem}</td></tr>`;
     });
@@ -1557,7 +1510,10 @@ function openMapelNote(day, idx) {
     currentNoteTarget = `${day}_${idx}`;
     const savedNote = cachedData.scheduleNotes[currentNoteTarget] || "";
     document.getElementById('noteModalInput').value = savedNote;
-    document.getElementById('noteModalTitle').innerText = `📝 Catatan: ${jadwalData[currentWeekType==='auto' ? ((getWeekNumber(new Date())%2!==0)?'umum':'produktif') : currentWeekType][day][idx].mapel}`;
+    let displayType = currentWeekType === 'auto' ? ((getWeekNumber(new Date()) % 2 !== 0) ? 'umum' : 'produktif') : currentWeekType;
+    if(jadwalData[displayType] && jadwalData[displayType][day]) {
+         document.getElementById('noteModalTitle').innerText = `📝 Catatan: ${jadwalData[displayType][day][idx].mapel}`;
+    }
     document.getElementById('noteModal').style.display = 'flex';
 }
 
@@ -1650,7 +1606,7 @@ function loadTasks() {
         return new Date(a.date) - new Date(b.date);
     });
 
-    filtered.forEach((t, index) => {
+    filtered.forEach((t) => {
         const daysLeft = getDaysRemaining(t.date);
         let dateDisplay = `<i class="far fa-calendar"></i> ${formatDateIndo(t.date)}`;
         let badgeClass = 'deadline-far';
@@ -1666,20 +1622,18 @@ function loadTasks() {
         li.draggable = true;
         li.dataset.id = t.id;
         li.innerHTML = `<div class="task-content" style="display:flex;align-items:center;width:100%;"><div class="check-btn" onclick="toggleTask(${t.id})"><i class="fas fa-check"></i></div><div class="task-text"><span>${escapeHtml(t.text)}</span><small class="${badgeClass}">${dateDisplay} • ${t.priority}</small></div><span class="fun-badge">${randomWord}</span></div><div class="task-actions"><button class="action-btn" onclick="loadTaskToEdit(${t.id})"><i class="fas fa-pencil-alt"></i></button><button class="action-btn delete" onclick="deleteTask(${t.id})"><i class="fas fa-trash"></i></button><i class="fas fa-grip-lines" style="cursor:move; color:#ccc; margin-left:10px;"></i></div>`;
-        li.addEventListener('dragstart', handleDragStart);
-        li.addEventListener('dragover', handleDragOver);
+        
+        // Drag Events
+        li.addEventListener('dragstart', function(e) { dragSrcEl = this; e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/html', this.innerHTML); this.style.opacity = '0.4'; });
+        li.addEventListener('dragover', function(e) { if (e.preventDefault) e.preventDefault(); e.dataTransfer.dropEffect = 'move'; return false; });
         li.addEventListener('drop', handleDrop);
-        li.addEventListener('dragenter', handleDragEnter);
-        li.addEventListener('dragleave', handleDragLeave);
+        li.addEventListener('dragend', function() { this.style.opacity = '1'; });
+        
         list.appendChild(li);
     });
     renderUrgentDeadlines(tasks);
 }
 
-function handleDragStart(e) { dragSrcEl = this; e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/html', this.innerHTML); this.style.opacity = '0.4'; }
-function handleDragOver(e) { if (e.preventDefault) { e.preventDefault(); } e.dataTransfer.dropEffect = 'move'; return false; }
-function handleDragEnter(e) { this.classList.add('over'); }
-function handleDragLeave(e) { this.classList.remove('over'); }
 function handleDrop(e) {
     if (e.stopPropagation) { e.stopPropagation(); }
     if (dragSrcEl !== this) {
@@ -1860,8 +1814,10 @@ function checkReminders() {
     if(!jadwalData) return;
     const now=new Date(); const m=now.getHours()*60+now.getMinutes(); const d=days[now.getDay()]; 
     let displayType = currentWeekType === 'auto' ? ((getWeekNumber(new Date()) % 2 !== 0) ? 'umum' : 'produktif') : currentWeekType;
-    const data=jadwalData[displayType][d]; 
-    if(data) data.forEach(i => { const p=i.time.split("-"); if(p.length>=2) { const s=p[0].trim().replace(/\./g,':').split(':').map(Number); if(m===(s[0]*60+s[1])-5) showToast(`🔔 5 Menit lagi: ${i.mapel}`, 'info'); } }); 
+    if(jadwalData[displayType] && jadwalData[displayType][d]) {
+        const data=jadwalData[displayType][d]; 
+        data.forEach(i => { const p=i.time.split("-"); if(p.length>=2) { const s=p[0].trim().replace(/\./g,':').split(':').map(Number); if(m===(s[0]*60+s[1])-5) showToast(`🔔 5 Menit lagi: ${i.mapel}`, 'info'); } }); 
+    }
 }
 function escapeHtml(text) { if (!text) return text; return String(text).replace(/[&<>"']/g, function(m) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m]; }); }
 
@@ -1870,7 +1826,25 @@ function loadRandomQuote() {
         document.getElementById('motivationQuote').innerText = `"${motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)]}"`;
     }
 }
-function openClearDataModal() { if(confirm("Yakin hapus data lokal dan logout?")) { localStorage.clear(); location.reload(); } }
+
+// [FIX] FUNGSI RESET DATA YANG SEBELUMNYA HILANG
+window.confirmClearUserData = function() {
+    const input = document.getElementById('clearDataConfirmationInput').value;
+    if (input === 'HAPUS') {
+        if(confirm("Yakin hapus data lokal dan logout?")) {
+            localStorage.clear();
+            window.authSignOut(window.auth).then(() => location.reload());
+        }
+    } else {
+        alert("Ketik HAPUS dengan benar untuk mengonfirmasi.");
+    }
+}
+
+window.openClearDataModal = function() {
+    document.getElementById('clearDataConfirmationInput').value = "";
+    document.getElementById('clearDataModal').style.display = 'flex';
+}
+
 function exportData() { 
     const b=new Blob([JSON.stringify(cachedData)],{type:"application/json"}); 
     const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=`${currentUser}_backup.json`; a.click(); 
@@ -1948,52 +1922,22 @@ window.deleteSchedule = function() {
     }
 }
 
-// ==================== Z. ACHIEVEMENT SYSTEM LOGIC ====================
+// ==================== Z. ACHIEVEMENT SYSTEM (OPTIMIZED) ====================
 
 const achievementsData = [
-    // --- LEVEL & PROGRESS ---
     { id: 'newbie', title: 'Murid Baru', desc: 'Login pertama kali.', icon: 'fas fa-baby', xp: 50, check: (d) => true },
     { id: 'level_2', title: 'Naik Kelas', desc: 'Capai Level 2.', icon: 'fas fa-arrow-up', xp: 100, check: (d) => d.gamification.level >= 2 },
     { id: 'level_5', title: 'Bintang Kelas', desc: 'Capai Level 5.', icon: 'fas fa-star', xp: 200, check: (d) => d.gamification.level >= 5 },
     { id: 'level_10', title: 'Sepuh', desc: 'Capai Level 10.', icon: 'fas fa-crown', xp: 500, check: (d) => d.gamification.level >= 10 },
-    { id: 'level_20', title: 'Legend', desc: 'Capai Level 20.', icon: 'fas fa-dragon', xp: 1000, check: (d) => d.gamification.level >= 20 },
     { id: 'xp_hunter', title: 'Pemburu XP', desc: 'Kumpulkan total 500 XP.', icon: 'fas fa-scroll', xp: 150, check: (d) => d.gamification.xp >= 500 },
-
-    // --- TUGAS (TASKS) ---
     { id: 'task_1', title: 'Langkah Awal', desc: 'Selesaikan 1 tugas.', icon: 'fas fa-check', xp: 20, check: (d) => d.tasks.filter(t => t.completed).length >= 1 },
     { id: 'task_5', title: 'Si Rajin', desc: 'Selesaikan 5 tugas.', icon: 'fas fa-check-double', xp: 50, check: (d) => d.tasks.filter(t => t.completed).length >= 5 },
     { id: 'task_10', title: 'Produktif', desc: 'Selesaikan 10 tugas.', icon: 'fas fa-list-ol', xp: 100, check: (d) => d.tasks.filter(t => t.completed).length >= 10 },
-    { id: 'task_25', title: 'Workaholic', desc: 'Selesaikan 25 tugas.', icon: 'fas fa-briefcase', xp: 250, check: (d) => d.tasks.filter(t => t.completed).length >= 25 },
-    { id: 'task_50', title: 'Monster Tugas', desc: 'Selesaikan 50 tugas.', icon: 'fas fa-robot', xp: 500, check: (d) => d.tasks.filter(t => t.completed).length >= 50 },
-    { id: 'task_clean', title: 'Meja Bersih', desc: 'Tidak ada tugas tertunda (harus ada minimal 1 tugas selesai).', icon: 'fas fa-sparkles', xp: 50, check: (d) => d.tasks.length > 0 && d.tasks.filter(t => !t.completed).length === 0 },
-    { id: 'priority_high', title: 'Prioritas Utama', desc: 'Selesaikan 1 tugas Prioritas Tinggi (High).', icon: 'fas fa-exclamation', xp: 30, check: (d) => d.tasks.some(t => t.completed && t.priority === 'High') },
-
-    // --- FOKUS (POMODORO) ---
+    { id: 'task_clean', title: 'Meja Bersih', desc: 'Semua tugas selesai.', icon: 'fas fa-sparkles', xp: 50, check: (d) => d.tasks.length > 0 && d.tasks.filter(t => !t.completed).length === 0 },
     { id: 'focus_25', title: 'Fokus Pemula', desc: 'Fokus total 25 menit.', icon: 'fas fa-clock', xp: 30, check: (d) => getTotalFocus(d) >= 25 },
-    { id: 'focus_100', title: 'Dewa Fokus', desc: 'Fokus total 100 menit.', icon: 'fas fa-brain', xp: 100, check: (d) => getTotalFocus(d) >= 100 },
-    { id: 'focus_500', title: 'Deep Work', desc: 'Fokus total 500 menit.', icon: 'fas fa-headset', xp: 400, check: (d) => getTotalFocus(d) >= 500 },
-    { id: 'focus_1000', title: 'Zen Master', desc: 'Fokus total 1000 menit.', icon: 'fas fa-yin-yang', xp: 1000, check: (d) => getTotalFocus(d) >= 1000 },
-
-    // --- STREAK (LOGIN) ---
     { id: 'streak_3', title: 'On Fire!', desc: 'Login 3 hari berturut-turut.', icon: 'fas fa-fire', xp: 50, check: (d) => d.streak.count >= 3 },
-    { id: 'streak_7', title: 'Seminggu Penuh', desc: 'Login 7 hari berturut-turut.', icon: 'fas fa-calendar-week', xp: 150, check: (d) => d.streak.count >= 7 },
-    { id: 'streak_14', title: 'Konsisten', desc: 'Login 14 hari berturut-turut.', icon: 'fas fa-calendar-check', xp: 300, check: (d) => d.streak.count >= 14 },
-    { id: 'streak_30', title: 'Sebulan Penuh', desc: 'Login 30 hari berturut-turut.', icon: 'fas fa-calendar-alt', xp: 1000, check: (d) => d.streak.count >= 30 },
-
-    // --- KEUANGAN ---
-    { id: 'rich_kid', title: 'Calon Sultan', desc: 'Total saldo di atas Rp 500.000.', icon: 'fas fa-money-bill-wave', xp: 100, check: (d) => getBalance(d) >= 500000 },
-    { id: 'millionaire', title: 'Jutawan', desc: 'Total saldo di atas Rp 1.000.000.', icon: 'fas fa-gem', xp: 250, check: (d) => getBalance(d) >= 1000000 },
-    { id: 'saver', title: 'Penabung', desc: 'Catat 1 transaksi Tabungan (Masuk).', icon: 'fas fa-piggy-bank', xp: 20, check: (d) => d.transactions.some(t => t.category === 'Tabungan' && t.type === 'in') },
-    { id: 'spender', title: 'Tukang Jajan', desc: 'Catat 5 pengeluaran.', icon: 'fas fa-shopping-cart', xp: 20, check: (d) => d.transactions.filter(t => t.type === 'out').length >= 5 },
-
-    // --- WAKTU LOGIN (TIME) ---
-    { id: 'early_bird', title: 'Bangun Pagi', desc: 'Login antara jam 4 - 6 pagi.', icon: 'fas fa-sun', xp: 40, check: (d) => { const h = new Date().getHours(); return h >= 4 && h <= 6; } },
-    { id: 'night_owl', title: 'Begadang', desc: 'Login di atas jam 10 malam.', icon: 'fas fa-moon', xp: 40, check: (d) => { const h = new Date().getHours(); return h >= 22 || h <= 2; } },
-    { id: 'weekend_warrior', title: 'Lembur Minggu', desc: 'Login di hari Minggu.', icon: 'fas fa-couch', xp: 30, check: (d) => new Date().getDay() === 0 },
-
-    // --- FITUR LAIN ---
-    { id: 'note_taker', title: 'Rajin Catat', desc: 'Buat 1 catatan pada jadwal.', icon: 'fas fa-sticky-note', xp: 20, check: (d) => Object.keys(d.scheduleNotes || {}).length > 0 },
-    { id: 'custom_sched', title: 'Manager Jadwal', desc: 'Edit atau tambah jadwal manual.', icon: 'fas fa-edit', xp: 30, check: (d) => true } 
+    { id: 'rich_kid', title: 'Calon Sultan', desc: 'Saldo di atas Rp 500.000.', icon: 'fas fa-money-bill-wave', xp: 100, check: (d) => getBalance(d) >= 500000 },
+    { id: 'custom_sched', title: 'Manager Jadwal', desc: 'Edit jadwal manual.', icon: 'fas fa-edit', xp: 30, check: (d) => true } 
 ];
 
 function getTotalFocus(d) {
@@ -2007,14 +1951,9 @@ function getBalance(d) {
     return total;
 }
 
-window.openAchievementModal = function() {
-    const listContainer = document.getElementById('achievementList');
-    const badge = document.getElementById('achievelmentCountBadge');
-    
+// [FIX] Cek achievement secara otomatis saat data disimpan
+function checkAchievements() {
     if (!cachedData.unlockedAchievements) cachedData.unlockedAchievements = [];
-
-    listContainer.innerHTML = ''; 
-    let unlockedCount = 0;
     let newUnlock = false;
 
     achievementsData.forEach(ach => {
@@ -2028,7 +1967,25 @@ window.openAchievementModal = function() {
             playSuccessSound('coin');
             newUnlock = true;
         }
+    });
 
+    if (newUnlock) {
+        const uid = window.auth.currentUser.uid;
+        window.dbSet(window.dbRef(window.db, `users/${uid}/unlockedAchievements`), cachedData.unlockedAchievements);
+    }
+}
+
+window.openAchievementModal = function() {
+    const listContainer = document.getElementById('achievementList');
+    const badge = document.getElementById('achievelmentCountBadge');
+    
+    if (!cachedData.unlockedAchievements) cachedData.unlockedAchievements = [];
+
+    listContainer.innerHTML = ''; 
+    let unlockedCount = 0;
+
+    achievementsData.forEach(ach => {
+        const isUnlocked = cachedData.unlockedAchievements.includes(ach.id) || ach.check(cachedData); 
         if(isUnlocked) unlockedCount++;
 
         const itemClass = isUnlocked ? 'unlocked' : 'locked';
@@ -2050,10 +2007,6 @@ window.openAchievementModal = function() {
         `;
         listContainer.innerHTML += html;
     });
-
-    if (newUnlock) {
-        saveDB('unlockedAchievements', cachedData.unlockedAchievements);
-    }
 
     badge.innerText = `${unlockedCount}/${achievementsData.length}`;
     document.getElementById('achievementModal').style.display = 'flex';
