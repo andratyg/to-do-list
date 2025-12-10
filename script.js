@@ -1782,178 +1782,113 @@ window.exportFinanceReport = function() {
     const txns = cachedData.transactions || [];
     if (txns.length === 0) return showToast("Belum ada data keuangan!", "error");
 
-    // --- 1. STRUKTUR DATA ---
-    // Wadah data: [Dompet] -> [Tipe]
-    let reportData = {
-        cash: { in: [], out: [] },
-        dana: { in: [], out: [] },
-        ovo: { in: [], out: [] },
-        gopay: { in: [], out: [] },
-        lainnya: { in: [], out: [] }
-    };
+    const userName = currentUser || "Pengguna";
+    const dateStr = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
-    let totalGlobalMasuk = 0;
-    let totalGlobalKeluar = 0;
+    // --- 1. SIAPKAN DATA ---
+    let wallets = { 'dana': 0, 'ovo': 0, 'gopay': 0, 'cash': 0, 'lainnya': 0 };
+    let totalMasuk = 0;
+    let totalKeluar = 0;
+    
+    // Kita buat array data untuk tabel Excel
+    // Baris 1: Judul
+    let dataRows = [
+        [{ v: "LAPORAN KEUANGAN: " + userName.toUpperCase(), s: { font: { bold: true, sz: 14, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "4F46E5" } }, alignment: { horizontal: "center" } } }],
+        [{ v: "Tanggal: " + dateStr, s: { alignment: { horizontal: "center" } } }],
+        [] // Baris kosong
+    ];
 
-    // Pisahkan data berdasarkan Dompet & Tipe
+    // Proses Transaksi untuk Ringkasan
     txns.forEach(t => {
         let w = t.wallet ? t.wallet.toLowerCase() : 'lainnya';
-        if (!reportData[w]) w = 'lainnya';
+        if (!wallets.hasOwnProperty(w)) w = 'lainnya'; // Safety check
         
-        if (t.type === 'in') {
-            reportData[w].in.push(t);
-            totalGlobalMasuk += t.amount;
-        } else {
-            reportData[w].out.push(t);
-            totalGlobalKeluar += t.amount;
+        if (t.type === 'in') { wallets[w] += t.amount; totalMasuk += t.amount; } 
+        else { wallets[w] -= t.amount; totalKeluar += t.amount; }
+    });
+
+    // Baris Ringkasan
+    const styleSubHeader = { font: { bold: true }, fill: { fgColor: { rgb: "E5E7EB" } } };
+    dataRows.push([{ v: "RINGKASAN SALDO", s: styleSubHeader }]);
+    dataRows.push(["Total Pemasukan", { v: totalMasuk, t: 'n', z: '"Rp" #,##0' }]);
+    dataRows.push(["Total Pengeluaran", { v: totalKeluar, t: 'n', z: '"Rp" #,##0' }]);
+    dataRows.push(["Saldo Bersih", { v: totalMasuk - totalKeluar, t: 'n', z: '"Rp" #,##0', s: { font: { bold: true } } }]);
+    dataRows.push([]); // Spasi
+
+    // Baris Rincian Per Dompet
+    const walletKeys = ['cash', 'dana', 'ovo', 'gopay'];
+    const styleHeaderCol = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "6B7280" } }, alignment: { horizontal: "center" } };
+
+    walletKeys.forEach(w => {
+        // Ambil transaksi khusus dompet ini
+        const wTxns = txns.filter(t => (t.wallet || 'lainnya').toLowerCase() === w);
+        
+        if (wTxns.length > 0) {
+            // Header Dompet
+            dataRows.push([{ v: `DOMPET: ${w.toUpperCase()} (Saldo: Rp ${wallets[w].toLocaleString('id-ID')})`, s: { font: { bold: true, color: { rgb: "4F46E5" } } } }]);
+            
+            // Header Kolom Tabel
+            dataRows.push([
+                { v: "No", s: styleHeaderCol },
+                { v: "Tanggal", s: styleHeaderCol },
+                { v: "Keterangan", s: styleHeaderCol },
+                { v: "Kategori", s: styleHeaderCol },
+                { v: "Tipe", s: styleHeaderCol },
+                { v: "Jumlah", s: styleHeaderCol }
+            ]);
+
+            // Data Transaksi
+            wTxns.reverse().forEach((t, idx) => {
+                const isMasuk = t.type === 'in';
+                const color = isMasuk ? "10B981" : "EF4444"; // Hijau / Merah
+                
+                dataRows.push([
+                    { v: idx + 1, s: { alignment: { horizontal: "center" } } },
+                    { v: t.date, s: { alignment: { horizontal: "center" } } },
+                    { v: t.desc },
+                    { v: t.category },
+                    { v: isMasuk ? "Masuk" : "Keluar", s: { alignment: { horizontal: "center" } } },
+                    { v: t.amount, t: 'n', z: '"Rp" #,##0', s: { font: { color: { rgb: color }, bold: true } } }
+                ]);
+            });
+            dataRows.push([]); // Spasi antar dompet
         }
     });
 
-    let saldoAkhir = totalGlobalMasuk - totalGlobalKeluar;
-    let userName = currentUser || "Siswa";
-    let tanggalDownload = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    // --- 2. BUAT WORKBOOK ---
+    // Menggunakan library XLSX yang baru ditambahkan
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(dataRows);
 
-    // --- 2. STYLE EXCEL (CSS) ---
-    const styleTable = `border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; margin-bottom: 20px;`;
+    // Atur Lebar Kolom (Optional biar rapi)
+    ws['!cols'] = [
+        { wch: 5 },  // No
+        { wch: 12 }, // Tanggal
+        { wch: 25 }, // Keterangan
+        { wch: 15 }, // Kategori
+        { wch: 10 }, // Tipe
+        { wch: 15 }  // Jumlah
+    ];
+
+    // Merge Cells untuk Judul Utama (Gabung 6 kolom)
+    ws['!merges'] = [
+        { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }, // Judul
+        { s: { r: 1, c: 0 }, e: { r: 1, c: 5 } }, // Tanggal
+        { s: { r: 3, c: 0 }, e: { r: 3, c: 5 } }  // Header Ringkasan
+    ];
+
+    XLSX.utils.book_append_sheet(wb, ws, "Laporan Keuangan");
+
+    // --- 3. DOWNLOAD FILE .XLSX ---
+    // Nama file asli Excel modern
+    const fileName = `Laporan_${userName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.xlsx`;
     
-    // Header Utama (Nama Dompet)
-    const styleHeaderMain = `background-color: #4f46e5; color: white; font-weight: bold; font-size: 1.2em; padding: 10px; border: 1px solid #000; text-align: left;`;
-    
-    // Header Tipe (IN/OUT)
-    const styleHeaderIn = `background-color: #d1fae5; color: #065f46; font-weight: bold; padding: 8px; border: 1px solid #000; text-align: left; font-size: 1.1em;`;
-    const styleHeaderOut = `background-color: #fee2e2; color: #991b1b; font-weight: bold; padding: 8px; border: 1px solid #000; text-align: left; font-size: 1.1em;`;
-    
-    // Header Kategori (Jajan, Transport, dll)
-    const styleCatHeader = `background-color: #f3f4f6; color: #333; font-weight: bold; font-style: italic; padding: 6px; border: 1px solid #000; text-align: left;`;
+    // Download!
+    XLSX.writeFile(wb, fileName);
 
-    const styleTh = `background-color: #e5e7eb; font-weight: bold; border: 1px solid #000; padding: 5px; text-align: center;`;
-    const styleTd = `border: 1px solid #000; padding: 5px;`;
-    const styleMoneyIn = `color: #10b981; font-weight: bold; text-align: right; border: 1px solid #000; padding: 5px;`;
-    const styleMoneyOut = `color: #ef4444; font-weight: bold; text-align: right; border: 1px solid #000; padding: 5px;`;
-    const styleSubTotal = `background-color: #fafafa; font-weight: bold; font-style: italic; border: 1px solid #000; padding: 5px; text-align: right;`;
-
-    // --- 3. HELPER: Grouping per Kategori ---
-    const groupByCategory = (list) => {
-        let groups = {};
-        list.forEach(item => {
-            let c = item.category || 'Lainnya';
-            if(!groups[c]) groups[c] = [];
-            groups[c].push(item);
-        });
-        return groups;
-    };
-
-    // --- 4. BUAT HTML ---
-    let html = `
-    <html xmlns:x="urn:schemas-microsoft-com:office:excel">
-    <head><meta http-equiv="content-type" content="application/vnd.ms-excel; charset=UTF-8"></head>
-    <body>
-        <h2 style="text-align:center; color:#4f46e5;">LAPORAN KEUANGAN DETAIL (PER KATEGORI)</h2>
-        <p style="text-align:center;">
-            <strong>User:</strong> ${userName} | <strong>Tanggal:</strong> ${tanggalDownload}
-        </p>
-
-        <table border="1" style="${styleTable} width:50%; margin:auto;">
-            <tr><td style="${styleTh}">Total Pemasukan</td><td style="${styleMoneyIn}">Rp ${totalGlobalMasuk.toLocaleString('id-ID')}</td></tr>
-            <tr><td style="${styleTh}">Total Pengeluaran</td><td style="${styleMoneyOut}">Rp ${totalGlobalKeluar.toLocaleString('id-ID')}</td></tr>
-            <tr><td style="${styleTh} background:#e0e7ff;">SALDO BERSIH</td><td style="font-weight:bold; text-align:right; border:1px solid #000; padding:5px; font-size:1.2em;">Rp ${saldoAkhir.toLocaleString('id-ID')}</td></tr>
-        </table>
-        <br>
-    `;
-
-    // --- 5. LOOP WALLET ---
-    const walletOrder = ['cash', 'dana', 'ovo', 'gopay'];
-
-    walletOrder.forEach(walletName => {
-        const dataWallet = reportData[walletName];
-        if (dataWallet.in.length === 0 && dataWallet.out.length === 0) return;
-
-        html += `<table border="1" style="${styleTable}">`;
-        html += `<tr><th colspan="5" style="${styleHeaderMain}">💼 DOMPET: ${walletName.toUpperCase()}</th></tr>`;
-
-        // === PEMASUKAN (IN) ===
-        if (dataWallet.in.length > 0) {
-            html += `<tr><th colspan="5" style="${styleHeaderIn}">⬇️ PEMASUKAN (IN)</th></tr>`;
-            
-            // Group data masuk per kategori
-            const catGroups = groupByCategory(dataWallet.in);
-            let totalWalletIn = 0;
-
-            for (let cat in catGroups) {
-                // Header Kategori
-                html += `<tr><td colspan="5" style="${styleCatHeader}">📂 Kategori: ${cat}</td></tr>`;
-                html += `<tr><th style="${styleTh}">Tanggal</th><th style="${styleTh}">Keterangan</th><th style="${styleTh}">Tipe</th><th style="${styleTh}">Dompet</th><th style="${styleTh}">Jumlah</th></tr>`;
-                
-                let subTotalCat = 0;
-                catGroups[cat].forEach(t => {
-                    subTotalCat += t.amount;
-                    html += `<tr>
-                        <td style="${styleTd} text-align:center;">${t.date}</td>
-                        <td style="${styleTd}">${t.desc}</td>
-                        <td style="${styleTd} text-align:center;">Masuk</td>
-                        <td style="${styleTd} text-align:center;">${t.wallet.toUpperCase()}</td>
-                        <td style="${styleMoneyIn}">+ Rp ${t.amount.toLocaleString('id-ID')}</td>
-                    </tr>`;
-                });
-                // Subtotal Kategori
-                html += `<tr><td colspan="4" style="${styleSubTotal}">Subtotal ${cat}:</td><td style="${styleMoneyIn}">Rp ${subTotalCat.toLocaleString('id-ID')}</td></tr>`;
-                totalWalletIn += subTotalCat;
-            }
-            // Total Pemasukan Wallet ini
-            html += `<tr><td colspan="4" style="${styleTh} text-align:right;">TOTAL MASUK ${walletName.toUpperCase()}:</td><td style="${styleMoneyIn} font-size:1.1em;">Rp ${totalWalletIn.toLocaleString('id-ID')}</td></tr>`;
-        }
-
-        // === PENGELUARAN (OUT) ===
-        if (dataWallet.out.length > 0) {
-            html += `<tr><th colspan="5" style="${styleHeaderOut}">⬆️ PENGELUARAN (OUT)</th></tr>`;
-            
-            // Group data keluar per kategori
-            const catGroups = groupByCategory(dataWallet.out);
-            let totalWalletOut = 0;
-
-            for (let cat in catGroups) {
-                // Header Kategori
-                html += `<tr><td colspan="5" style="${styleCatHeader}">📂 Kategori: ${cat}</td></tr>`;
-                html += `<tr><th style="${styleTh}">Tanggal</th><th style="${styleTh}">Keterangan</th><th style="${styleTh}">Tipe</th><th style="${styleTh}">Dompet</th><th style="${styleTh}">Jumlah</th></tr>`;
-                
-                let subTotalCat = 0;
-                catGroups[cat].forEach(t => {
-                    subTotalCat += t.amount;
-                    html += `<tr>
-                        <td style="${styleTd} text-align:center;">${t.date}</td>
-                        <td style="${styleTd}">${t.desc}</td>
-                        <td style="${styleTd} text-align:center;">Keluar</td>
-                        <td style="${styleTd} text-align:center;">${t.wallet.toUpperCase()}</td>
-                        <td style="${styleMoneyOut}">- Rp ${t.amount.toLocaleString('id-ID')}</td>
-                    </tr>`;
-                });
-                // Subtotal Kategori
-                html += `<tr><td colspan="4" style="${styleSubTotal}">Subtotal ${cat}:</td><td style="${styleMoneyOut}">Rp ${subTotalCat.toLocaleString('id-ID')}</td></tr>`;
-                totalWalletOut += subTotalCat;
-            }
-            // Total Pengeluaran Wallet ini
-            html += `<tr><td colspan="4" style="${styleTh} text-align:right;">TOTAL KELUAR ${walletName.toUpperCase()}:</td><td style="${styleMoneyOut} font-size:1.1em;">Rp ${totalWalletOut.toLocaleString('id-ID')}</td></tr>`;
-        }
-
-        html += `</table><br>`;
-    });
-
-    html += `</body></html>`;
-
-    // --- DOWNLOAD ---
-    const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    const fileName = `Laporan_Per_Kategori_${userName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.xls`;
-
-    link.setAttribute("href", url);
-    link.setAttribute("download", fileName);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    showToast("Laporan Per Kategori Siap! 📊", "success");
-}
+    showToast("Laporan Excel Berhasil Didownload! 📊", "success");
+    playSuccessSound('ding');
+};
 
 function editTarget() { 
     const uid = window.auth.currentUser.uid;
