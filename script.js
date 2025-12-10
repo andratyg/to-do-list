@@ -909,12 +909,17 @@ window.saveUsername = function() { const n = document.getElementById('newUsernam
 // ==================== C. FIREBASE DATA LOGIC ====================
 
 function startFirebaseListener(uid) {
+    // Cek apakah database sudah siap
     if (!window.db || !window.dbOnValue) return;
+    
     const userPath = 'users/' + uid;
     
+    // Dengarkan perubahan data secara realtime
     window.dbOnValue(window.dbRef(window.db, userPath), (snapshot) => {
         const data = snapshot.val();
+        
         if (data) {
+            // 1. Load Data Utama
             cachedData.tasks = data.tasks || [];
             cachedData.transactions = data.transactions || [];
             cachedData.gamification = data.gamification || { xp: 0, level: 1 };
@@ -923,19 +928,33 @@ function startFirebaseListener(uid) {
             cachedData.scheduleNotes = data.scheduleNotes || {};
             cachedData.unlockedAchievements = data.unlockedAchievements || [];
 
-            if (data.jadwal && data.jadwal.umum) cachedData.jadwal = data.jadwal;
-            else { cachedData.jadwal = defaultJadwalData; saveDB('jadwalData', defaultJadwalData); }
+            // 2. Load Jadwal
+            if (data.jadwal && data.jadwal.umum) {
+                cachedData.jadwal = data.jadwal;
+            } else { 
+                cachedData.jadwal = defaultJadwalData; 
+                saveDB('jadwalData', defaultJadwalData); 
+            }
 
+            // 3. Load Pengaturan (Settings)
             if(data.settings) {
                 if(data.settings.theme) applyTheme(data.settings.theme);
                 if(data.settings.weekType) currentWeekType = data.settings.weekType;
                 if(data.settings.target) localStorage.setItem(`${uid}_target`, data.settings.target);
                 if(data.settings.isExamMode) isExamMode = data.settings.isExamMode;
             }
+
+            // [PERBAIKAN PENTING] 
+            // Cek Streak di sini, setelah data streak dari server masuk ke cachedData
+            checkStreak(); 
+
         } else {
+            // Jika pengguna baru (data kosong), simpan data default
             cachedData.jadwal = defaultJadwalData;
             saveAllToCloud(uid); 
         }
+        
+        // 4. Update Tampilan (Render)
         jadwalData = cachedData.jadwal;
         renderAll();
     });
@@ -980,7 +999,7 @@ function initApp(uid) {
     loadRandomQuote(); 
     updateTimerDisplay(); 
     injectNewUI(); 
-    checkStreak(uid); 
+  
     
     // 2. Shortcut Keyboard (Ctrl + T/S/D)
     document.addEventListener('keydown', (e) => {
@@ -1103,33 +1122,46 @@ function updateGamificationUI() {
 }
 
 // --- STREAK ---
-function checkStreak(uid) {
-    const localDate = new Date();
-    localDate.setMinutes(localDate.getMinutes() - localDate.getTimezoneOffset());
-    const today = localDate.toISOString().split('T')[0];
+// --- STREAK SYSTEM (FIXED) ---
+function checkStreak() {
+    // 1. Ambil Tanggal Hari Ini (Sesuai Waktu Lokal Device)
+    // Format 'en-CA' menghasilkan YYYY-MM-DD yang konsisten
+    const now = new Date();
+    const today = now.toLocaleDateString('en-CA'); 
 
-    let streak = cachedData.streak || { count: 0, lastLogin: null };
+    // 2. Pastikan data ada
+    if (!cachedData.streak) cachedData.streak = { count: 0, lastLogin: null };
+    let streak = cachedData.streak;
 
+    // 3. Logika Cek Login
     if (streak.lastLogin !== today) {
-        const yesterdayDate = new Date(localDate);
+        // Hitung Tanggal Kemarin
+        const yesterdayDate = new Date(now);
         yesterdayDate.setDate(yesterdayDate.getDate() - 1);
-        const yesterdayStr = yesterdayDate.toISOString().split('T')[0];
+        const yesterdayStr = yesterdayDate.toLocaleDateString('en-CA');
 
         if (streak.lastLogin === yesterdayStr) {
+            // Jika login terakhir adalah kemarin -> LANJUT STREAK
             streak.count++;
         } else {
+            // Jika login terakhir bukan kemarin (terlewat) -> RESET JADI 1
+            // Kecuali jika ini login pertama kali (lastLogin null)
             streak.count = 1;
         }
         
+        // Simpan Data Terbaru
         streak.lastLogin = today;
         saveDB('streak', streak);
         
+        // Berikan Reward (Delay sedikit agar tidak bertumpuk dengan notifikasi login)
         setTimeout(() => {
-            addXP(10);
-            showToast("Login Harian: +10 XP 🔥", "success");
-        }, 1500);
+            addXP(10); 
+            showToast(`🔥 Streak Harian: ${streak.count} Hari! (+10 XP)`, "success");
+            playSuccessSound('coin'); 
+        }, 2500);
     }
     
+    // 4. Update Tampilan Badge
     const streakBadge = document.getElementById('streakCount');
     if(streakBadge) streakBadge.innerText = streak.count;
 }
