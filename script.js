@@ -11,7 +11,8 @@ let cachedData = {
   streak: { count: 0, lastLogin: null },
   focusLogs: {}, 
   scheduleNotes: {}, 
-  unlockedAchievements: []
+  unlockedAchievements: [],
+  budgets: {}
 };
 
 // --- CONFIG LAINNYA ---
@@ -927,6 +928,8 @@ function startFirebaseListener(uid) {
             cachedData.focusLogs = data.focusLogs || {};
             cachedData.scheduleNotes = data.scheduleNotes || {};
             cachedData.unlockedAchievements = data.unlockedAchievements || [];
+            // Di dalam startFirebaseListener, tambahkan baris ini:
+            cachedData.budgets = data.budgets || {};
 
             // 2. Load Jadwal
             if (data.jadwal && data.jadwal.umum) {
@@ -2187,3 +2190,201 @@ window.openAchievementModal = function() {
     }
 }
 
+// --- FITUR BUDGETING (MONE PLUS) ---
+
+// 1. Buka Modal Setting Budget
+window.openBudgetModal = function() {
+    const cats = ['Jajan', 'Transport', 'Belanja', 'Lainnya']; // Kategori Pengeluaran
+    let html = '';
+    
+    // Pastikan data budget ada
+    if (!cachedData.budgets) cachedData.budgets = {};
+
+    cats.forEach(c => {
+        const currentLimit = cachedData.budgets[c] || 0;
+        html += `
+            <div class="form-group" style="margin-bottom:10px;">
+                <label style="font-size:0.85rem; color:var(--text-sub);">${c}</label>
+                <input type="number" id="budget-${c}" value="${currentLimit}" placeholder="0 (Tanpa Batas)" class="sub-input">
+            </div>
+        `;
+    });
+
+    // Kita pakai modal jadwal yg sudah ada tapi ubah isinya (biar hemat kode)
+    // Atau bisa buat modal baru lewat JS
+    const modalContent = `
+        <div id="budgetModal" class="modal-backdrop" style="display:flex;">
+            <div class="modal-content fade-in-up" style="max-width:350px;">
+                <div class="modal-head">
+                    <h3>💰 Atur Anggaran Bulanan</h3>
+                    <button class="close-icon" onclick="document.getElementById('budgetModal').remove()">×</button>
+                </div>
+                <div class="modal-body">
+                    <p style="font-size:0.8rem; color:var(--text-sub); margin-bottom:15px;">Set batas maksimal pengeluaranmu bulan ini.</p>
+                    ${html}
+                </div>
+                <div class="modal-foot">
+                    <button onclick="saveBudgets()" class="btn-primary btn-block">Simpan Anggaran</button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalContent);
+}
+
+// 2. Simpan Data Budget
+window.saveBudgets = function() {
+    const cats = ['Jajan', 'Transport', 'Belanja', 'Lainnya'];
+    if (!cachedData.budgets) cachedData.budgets = {};
+
+    cats.forEach(c => {
+        const val = document.getElementById(`budget-${c}`).value;
+        cachedData.budgets[c] = parseInt(val) || 0;
+    });
+
+    saveDB('budgets', cachedData.budgets); // Simpan ke Firebase
+    document.getElementById('budgetModal').remove();
+    showToast("Anggaran tersimpan! 🎯", "success");
+    renderExpenseChart(cachedData.transactions); // Refresh chart
+}
+
+// 3. Modifikasi Fungsi Chart untuk Menampilkan Budget
+// (GANTIKAN fungsi renderExpenseChart yang lama dengan yang ini)
+function renderExpenseChart(txns) {
+    const container = document.getElementById('expenseChartContainer');
+    let total = 0; let cats = {};
+    
+    // Hitung pengeluaran per kategori
+    txns.forEach(t => { 
+        if(t.type === 'out') { 
+            total += t.amount; 
+            cats[t.category] = (cats[t.category]||0) + t.amount; 
+        }
+    });
+
+    // Tambahkan Tombol "Atur Budget" di atas chart jika belum ada
+    if(!document.getElementById('btnSetBudget')) {
+        const btnHtml = `<button id="btnSetBudget" onclick="openBudgetModal()" class="btn-text-danger" style="width:100%; margin-bottom:10px; border:1px dashed var(--border-color); font-size:0.8rem;"><i class="fas fa-cog"></i> Atur Batas Anggaran</button>`;
+        container.insertAdjacentHTML('beforebegin', btnHtml);
+    }
+
+    if(total === 0) { container.innerHTML = `<div class="empty-message small"><p>Belum ada pengeluaran.</p></div>`; return; }
+    
+    let html = '';
+    const colors = { 'Jajan':'#f97316', 'Transport':'#3b82f6', 'Tabungan':'#10b981', 'Belanja':'#8b5cf6', 'Lainnya':'#6b7280' };
+    
+    // Render Bar Chart + Budget Status
+    Object.keys(cats).forEach(c => {
+        const amount = cats[c];
+        const budget = (cachedData.budgets && cachedData.budgets[c]) ? cachedData.budgets[c] : 0;
+        const pctTotal = Math.round((amount/total)*100);
+        
+        let budgetInfo = '';
+        let barColor = colors[c]||'#ccc';
+        let statusIcon = '';
+
+        // Cek apakah over budget
+        if (budget > 0) {
+            const pctBudget = Math.round((amount / budget) * 100);
+            if (pctBudget >= 100) {
+                barColor = '#ef4444'; // Merah (Bahaya)
+                statusIcon = '🔥 Over!';
+                showToast(`Peringatan: Kategori ${c} sudah boros!`, 'error'); // Notifikasi Toast
+            } else if (pctBudget >= 80) {
+                barColor = '#f59e0b'; // Kuning (Hati-hati)
+                statusIcon = '⚠️';
+            }
+            budgetInfo = `<br><small style="font-size:0.65rem; color:${barColor};">Terpakai: Rp ${amount.toLocaleString('id-ID')} / Rp ${budget.toLocaleString('id-ID')} (${pctBudget}%) ${statusIcon}</small>`;
+        } else {
+            budgetInfo = `<br><small style="font-size:0.65rem; color:var(--text-sub);">Tidak ada batas</small>`;
+        }
+
+        html += `
+        <div class="expense-item" style="margin-bottom:12px;">
+            <div class="expense-label" style="align-items:flex-start;">
+                <span class="dot" style="background:${colors[c]||'#ccc'}; margin-top:5px;"></span>
+                <div style="line-height:1.2;">
+                    ${c}
+                    ${budgetInfo}
+                </div>
+            </div>
+            <div class="expense-value">
+                Rp ${amount.toLocaleString('id-ID')} 
+                <div class="expense-bar-bg" style="width:80px; height:6px; margin-left:auto; margin-top:5px; background:var(--border-color);">
+                    <div class="expense-bar-fill" style="width:${Math.min(100, (budget > 0 ? (amount/budget)*100 : pctTotal))}%; background:${barColor};"></div>
+                </div>
+            </div>
+        </div>`;
+    });
+    container.innerHTML = html;
+}
+// Buka/Tutup Modal
+function toggleTransferModal() {
+    const modal = document.getElementById('transferModal');
+    modal.style.display = (modal.style.display === 'none') ? 'flex' : 'none';
+}
+
+// Proses Transfer
+// GANTI FUNGSI executeTransfer DENGAN INI
+function executeTransfer() {
+    const source = document.getElementById('sourceWallet').value;
+    const target = document.getElementById('targetWallet').value;
+    const amount = parseFloat(document.getElementById('transferAmount').value);
+
+    // 1. Validasi
+    if (source === target) return showToast("Dompet asal dan tujuan sama!", "error");
+    if (!amount || amount <= 0) return showToast("Jumlah tidak valid!", "error");
+
+    // 2. Cek Saldo Pengirim (Hitung dulu saldo saat ini)
+    const txns = cachedData.transactions || [];
+    let currentBalance = 0;
+    txns.forEach(t => {
+        if((t.wallet || 'cash') === source) {
+            if(t.type === 'in') currentBalance += t.amount;
+            else currentBalance -= t.amount;
+        }
+    });
+
+    if (currentBalance < amount) {
+        return showToast(`Saldo ${source.toUpperCase()} tidak cukup! (Sisa: Rp ${currentBalance.toLocaleString()})`, "error");
+    }
+
+    // 3. Eksekusi Transfer (Catat 2 Transaksi: Keluar & Masuk)
+    const timestamp = Date.now();
+    const dateStr = new Date().toISOString().split('T')[0];
+
+    // Transaksi A: Uang Keluar dari Sumber
+    const txnOut = {
+        id: timestamp,
+        desc: `Transfer ke ${target.toUpperCase()}`,
+        amount: amount,
+        type: 'out',
+        wallet: source,
+        category: 'Transfer',
+        date: dateStr
+    };
+
+    // Transaksi B: Uang Masuk ke Tujuan
+    const txnIn = {
+        id: timestamp + 1, // ID beda sedikit biar unik
+        desc: `Transfer dari ${source.toUpperCase()}`,
+        amount: amount,
+        type: 'in',
+        wallet: target,
+        category: 'Transfer',
+        date: dateStr
+    };
+
+    // 4. Simpan ke Array & Database
+    cachedData.transactions.push(txnOut);
+    cachedData.transactions.push(txnIn);
+    
+    saveDB('transactions', cachedData.transactions);
+
+    // 5. Reset & Update UI
+    document.getElementById('transferAmount').value = "";
+    toggleTransferModal();
+    loadTransactions(); // Refresh tampilan saldo
+    playSuccessSound('coin');
+    showToast("Transfer Berhasil!", "success");
+}
