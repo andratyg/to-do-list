@@ -940,3 +940,96 @@ body.dark-mode .ach-item.locked { background: #374151; border-color: #4b5563; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.3); border-radius: 10px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+/* Gaya Tombol Transfer */
+.transfer-btn {
+    background: #f39c12; /* Warna Oranye berbeda dari tombol simpan */
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+/* Gaya Modal/Pop-up */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+/* GANTI BAGIAN INI DI STYLE.CSS */
+
+.modal-box {
+    /* Gunakan variabel tema, JANGAN hardcode warna 'white' */
+    background: var(--card-bg); 
+    color: var(--text-main);
+    
+    padding: 25px;
+    border-radius: 20px; /* Lebih membulat agar modern */
+    width: 90%;
+    max-width: 400px;
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--border-color);
+    position: relative;
+}
+
+/* Pastikan Judul dan Label mengikuti warna teks utama */
+.modal-header h3 {
+    color: var(--text-main);
+    font-weight: 700;
+}
+
+.modal-body label {
+    color: var(--text-sub); /* Warna agak abu agar elegan */
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 5px;
+    display: block;
+}
+
+/* Panah di tengah */
+.transfer-arrow {
+    text-align: center;
+    font-size: 1.5rem;
+    margin: 15px 0;
+    color: var(--primary); /* Warna ungu/biru utama */
+    animation: bounceSlow 2s infinite;
+}
+
+/* Tombol Close (X) */
+.close-btn {
+    color: var(--text-sub);
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: 0.3s;
+}
+.close-btn:hover {
+    color: var(--red);
+    transform: rotate(90deg);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.transfer-arrow {
+    text-align: center;
+    font-size: 20px;
+    margin: 10px 0;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+}
