@@ -33,11 +33,11 @@
                 <div class="login-form">
                     <div class="input-group" style="margin-bottom: 10px;">
                         <i class="fas fa-envelope"></i>
-                        <input type="email" id="loginEmail" placeholder="Email">
+                        <input type="email" id="loginEmail" placeholder="Email" aria-label="Alamat Email">
                     </div>
                     <div class="input-group">
                         <i class="fas fa-lock"></i>
-                        <input type="password" id="loginPass" placeholder="Password">
+                        <input type="password" id="loginPass" placeholder="Password" aria-label="Kata Sandi">
                     </div>
                     <button onclick="handleLogin()" class="btn-primary glow btn-block" style="margin-top: 10px;">
                         Masuk <i class="fas fa-sign-in-alt"></i>
@@ -61,15 +61,15 @@
                 <div class="login-form">
                     <div class="input-group" style="margin-bottom: 10px;">
                         <i class="fas fa-user"></i>
-                        <input type="text" id="regUsername" placeholder="Nama Panggilan Kamu">
+                        <input type="text" id="regUsername" placeholder="Nama Panggilan Kamu" aria-label="Nama Panggilan">
                     </div>
                     <div class="input-group" style="margin-bottom: 10px;">
                         <i class="fas fa-envelope"></i>
-                        <input type="email" id="regEmail" placeholder="Email Aktif">
+                        <input type="email" id="regEmail" placeholder="Email Aktif" aria-label="Email Pendaftaran">
                     </div>
                     <div class="input-group">
                         <i class="fas fa-lock"></i>
-                        <input type="password" id="regPass" placeholder="Password (Min. 6 Karakter)">
+                        <input type="password" id="regPass" placeholder="Password (Min. 6 Karakter)" aria-label="Kata Sandi Pendaftaran">
                     </div>
                     <button onclick="handleRegister()" class="btn-primary glow btn-block" style="margin-top: 20px;">Daftar Akun</button>
                     <p class="auth-switch">Sudah punya akun? <a onclick="switchAuthMode('login')">Login di sini</a></p>
@@ -128,7 +128,7 @@
                     </button>
                     <div class="profile-menu">
                         <span id="backupReminder" class="backup-badge"></span> 
-                        <button class="icon-btn-glass" onclick="toggleSettings()">
+                        <button class="icon-btn-glass" onclick="toggleSettings()" aria-label="Pengaturan">
                             <i class="fas fa-cog"></i>
                         </button>
                         
@@ -145,7 +145,7 @@
                             <div class="dropdown-divider"></div>
                             <button onclick="exportData()"><i class="fas fa-download"></i> Backup</button>
                             <button onclick="document.getElementById('importFile').click()"><i class="fas fa-upload"></i> Restore</button>
-                            <input type="file" id="importFile" hidden onchange="importData(this)">
+                            <input type="file" id="importFile" hidden onchange="importData(this)" aria-label="Upload File Backup">
                             <div class="dropdown-divider"></div>
                             <button onclick="logoutUser()"><i class="fas fa-sign-out-alt"></i> Keluar</button>
                             <button onclick="openClearDataModal()" class="text-danger"><i class="fas fa-trash-alt"></i> Reset</button>
@@ -174,27 +174,27 @@
                             <h2>Jadwal Belajar</h2>
                         </div>
                         <div class="controls">
-                            <select id="weekTypeSelector" onchange="changeWeekType()">
+                            <select id="weekTypeSelector" onchange="changeWeekType()" aria-label="Pilih Tipe Minggu">
                                 <option value="auto">Auto (Minggu Bergantian)</option>
                                 <option value="umum">Minggu Umum (Paksa)</option>
                                 <option value="produktif">Minggu Produktif (Paksa)</option>
                             </select>
                             <div class="nav-pills">
-                                <button onclick="changeDay(-1)"><i class="fas fa-chevron-left"></i></button>
+                                <button onclick="changeDay(-1)" aria-label="Hari Sebelumnya"><i class="fas fa-chevron-left"></i></button>
                                 <span id="activeDayName">SENIN</span>
-                                <button onclick="changeDay(1)"><i class="fas fa-chevron-right"></i></button>
+                                <button onclick="changeDay(1)" aria-label="Hari Selanjutnya"><i class="fas fa-chevron-right"></i></button>
                             </div>
                         </div>
                     </div>
 
                     <div class="filter-controls-advanced">
-                        <select id="scheduleFilterCategory" onchange="renderSchedule()">
+                        <select id="scheduleFilterCategory" onchange="renderSchedule()" aria-label="Filter Kategori Jadwal">
                             <option value="all">Filter Kategori (Semua)</option>
                             <option value="umum">Umum</option>
                             <option value="produktif">Produktif</option>
                             <option value="kokurikuler">Kokurikuler</option>
                         </select>
-                        <select id="scheduleFilterGuru" onchange="renderSchedule()">
+                        <select id="scheduleFilterGuru" onchange="renderSchedule()" aria-label="Filter Guru Jadwal">
                             <option value="all">Filter Guru/Dosen (Semua)</option>
                         </select>
                     </div>
@@ -268,7 +268,7 @@
                     </div>
                     
                     <div class="form-group" style="margin-bottom: 20px;">
-                         <select id="pomodoroTaskSelector" class="sub-input">
+                         <select id="pomodoroTaskSelector" class="sub-input" aria-label="Pilih Tugas untuk Fokus">
                             <option value="">-- Pilih Tugas untuk Fokus --</option>
                          </select>
                     </div>
@@ -336,14 +336,14 @@
 
                     <div class="search-input">
                         <i class="fas fa-search"></i>
-                        <input type="text" id="searchTaskInput" placeholder="Cari tugas..." onkeyup="loadTasks()">
+                        <input type="text" id="searchTaskInput" placeholder="Cari tugas..." onkeyup="loadTasks()" aria-label="Cari Tugas">
                     </div>
 
                     <div class="add-task-form">
-                        <input type="text" id="taskInput" class="main-input" placeholder="Tugas baru...">
+                        <input type="text" id="taskInput" class="main-input" placeholder="Tugas baru..." aria-label="Nama Tugas Baru">
                         <div class="form-row">
-                            <input type="date" id="taskDate" class="sub-input">
-                            <select id="taskPriority" class="sub-input">
+                            <input type="date" id="taskDate" class="sub-input" aria-label="Tanggal Tugas">
+                            <select id="taskPriority" class="sub-input" aria-label="Prioritas Tugas">
                                 <option value="Low">Prioritas Rendah (santai)</option>
                                 <option value="Medium" selected>Prioritas Sedang (cukup penting)</option>
                                 <option value="High">Prioritas Tinggi (sangat penting)</option>
@@ -431,10 +431,11 @@
                     <input type="hidden" id="selectedWallet" value="cash">
 
                     <div class="transaction-box">
-                        <input type="text" id="moneyDesc" placeholder="Keterangan (Cth: Jajan)">
+                       
+                        <input type="text" id="moneyDesc" placeholder="Keterangan (Cth: Jajan)" aria-label="Keterangan Transaksi">
                         <div class="form-row">
-                            <input type="number" id="moneyAmount" placeholder="Rp...">
-                            <select id="txnCategory">
+                            <input type="number" id="moneyAmount" placeholder="Rp..." aria-label="Jumlah Uang">
+                            <select id="txnCategory" aria-label="Kategori Transaksi">
                                 <option value="Jajan">🍔 Jajan</option>
                                 <option value="Transport">🚗 Transport</option>
                                 <option value="Tabungan">💰 Tabungan</option>
@@ -443,19 +444,22 @@
                             </select>
                         </div>
                        <div class="btn-group">
-    <button class="btn-in" onclick="addTransaction('in')"><i class="fas fa-arrow-down"></i> Masuk</button>
-    <button class="btn-out" onclick="addTransaction('out')"><i class="fas fa-arrow-up"></i> Keluar</button>
-</div>
+                            <button class="btn-in" onclick="addTransaction('in')"><i class="fas fa-arrow-down"></i> Masuk</button>
+                            <button class="btn-out" onclick="addTransaction('out')"><i class="fas fa-arrow-up"></i> Keluar</button>
+                        </div>
 
-<button class="action-btn transfer-btn" onclick="toggleTransferModal()" style="width:100%; margin-top:10px; background:var(--orange); color:white; padding:10px; border-radius:10px;">
-    <i class="fas fa-exchange-alt"></i> Transfer Antar Dompet
-</button>
+                        <button class="action-btn transfer-btn" onclick="toggleTransferModal()" style="width:100%; margin-top:10px; background:var(--orange); color:white; padding:10px; border-radius:10px;">
+                            <i class="fas fa-exchange-alt"></i> Transfer Antar Dompet
+                        </button>
+                         <button class="action-btn sub-btn" onclick="openSubModal()" style="width:100%; margin-top:10px; background:var(--purple); color:white; padding:10px; border-radius:10px;">
+                            <i class="fas fa-calendar-check"></i> Kelola Langganan Rutin
+                        </button>
                     </div>
 
                     <div class="history-section">
                         <div class="history-header">
                             <h4>Riwayat</h4>
-                            <select id="historyFilter" onchange="loadTransactions()">
+                            <select id="historyFilter" onchange="loadTransactions()" aria-label="Filter Riwayat Transaksi">
                                 <option value="all">Semua</option>
                                 <option value="in">Masuk</option>
                                 <option value="out">Keluar</option>
@@ -479,7 +483,7 @@
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <label>Pilih Suara Pomodoro Selesai</label>
+                    <label for="pomodoroSoundSelect">Pilih Suara Pomodoro Selesai</label>
                     <select id="pomodoroSoundSelect">
                         <option value="bell">Bel Sekolah (Default)</option>
                         <option value="ding">Ding Jernih</option>
@@ -501,7 +505,7 @@
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <label>Nama Baru</label>
+                    <label for="newUsernameInput">Nama Baru</label>
                     <input type="text" id="newUsernameInput" placeholder="Nama panggilan...">
                 </div>
             </div>
@@ -537,7 +541,7 @@
             <div class="modal-body">
                 <p style="color:var(--red); margin-bottom: 15px;">Tindakan ini permanen. Semua Tugas, Jadwal, Keuangan, dan Pengaturan Anda akan hilang dari browser ini.</p>
                 <div class="form-group">
-                    <label>Ketik kata **HAPUS** untuk melanjutkan:</label>
+                    <label for="clearDataConfirmationInput">Ketik kata **HAPUS** untuk melanjutkan:</label>
                     <input type="text" id="clearDataConfirmationInput" placeholder="Ketik HAPUS">
                 </div>
             </div>
@@ -555,7 +559,7 @@
             </div>
             <div class="modal-body">
                 <p id="noteModalSubtitle" style="font-size:0.85rem; color:var(--text-sub); margin-bottom:10px;">Tulis PR atau catatan penting di sini.</p>
-                <textarea id="noteModalInput" placeholder="Contoh: PR Halaman 52 dikumpulkan besok..."></textarea>
+                <textarea id="noteModalInput" placeholder="Contoh: PR Halaman 52 dikumpulkan besok..." aria-label="Isi Catatan Mapel"></textarea>
                 <input type="hidden" id="noteTargetDay">
                 <input type="hidden" id="noteTargetIndex">
             </div>
@@ -574,15 +578,15 @@
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <label>Mata Pelajaran</label>
+                    <label for="editMapelName">Mata Pelajaran</label>
                     <input type="text" id="editMapelName">
                 </div>
                 <div class="form-group">
-                    <label>Waktu</label>
+                    <label for="editMapelTime">Waktu</label>
                     <input type="text" id="editMapelTime" placeholder="08.00 - 09.20">
                 </div>
                 <div class="form-group">
-                    <label>Kategori</label>
+                    <label for="editMapelType">Kategori</label>
                     <select id="editMapelType">
                         <option value="umum">Umum (Hijau)</option>
                         <option value="produktif">Produktif (Oranye)</option>
@@ -604,14 +608,14 @@
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <label>Pilih Minggu</label>
+                    <label for="addScheduleWeekType">Pilih Minggu</label>
                     <select id="addScheduleWeekType">
                         <option value="umum">Minggu Umum</option>
                         <option value="produktif">Minggu Produktif</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Pilih Hari</label>
+                    <label for="addScheduleDay">Pilih Hari</label>
                     <select id="addScheduleDay">
                         <option value="Senin">Senin</option>
                         <option value="Selasa">Selasa</option>
@@ -623,19 +627,19 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Mata Pelajaran</label>
+                    <label for="addScheduleMapel">Mata Pelajaran</label>
                     <input type="text" id="addScheduleMapel" placeholder="Contoh: Matematika">
                 </div>
                 <div class="form-group">
-                    <label>Nama Guru</label>
+                    <label for="addScheduleGuru">Nama Guru</label>
                     <input type="text" id="addScheduleGuru" placeholder="Contoh: Bpk. Budi">
                 </div>
                 <div class="form-group">
-                    <label>Waktu</label>
+                    <label for="addScheduleTime">Waktu</label>
                     <input type="text" id="addScheduleTime" placeholder="Contoh: 08.00 - 09.20">
                 </div>
                 <div class="form-group">
-                    <label>Kategori (Warna)</label>
+                    <label for="addScheduleType">Kategori (Warna)</label>
                     <select id="addScheduleType">
                         <option value="umum">Umum (Hijau)</option>
                         <option value="produktif">Produktif (Oranye)</option>
@@ -648,9 +652,7 @@
             </div>
         </div>
     </div>
-    <body>
-    ...
-    
+   
    <div id="transferModal" class="modal-overlay" style="display: none;">
     <div class="modal-box">
         <div class="modal-header">
@@ -659,7 +661,7 @@
         </div>
         <div class="modal-body">
             <div class="form-group">
-                <label>Dari Dompet</label>
+                <label for="sourceWallet">Dari Dompet</label>
                 <select id="sourceWallet">
                     <option value="dana">DANA</option>
                     <option value="ovo">OVO</option>
@@ -671,7 +673,7 @@
             <div class="transfer-arrow" style="text-align:center; font-size:1.5rem; margin:10px 0;">⬇️</div>
 
             <div class="form-group">
-                <label>Ke Dompet</label>
+                <label for="targetWallet">Ke Dompet</label>
                 <select id="targetWallet">
                     <option value="cash">TUNAI</option>
                     <option value="dana">DANA</option>
@@ -681,7 +683,7 @@
             </div>
 
             <div class="form-group">
-                <label>Jumlah (Rp)</label>
+                <label for="transferAmount">Jumlah (Rp)</label>
                 <input type="number" id="transferAmount" placeholder="0">
             </div>
 
@@ -690,7 +692,36 @@
     </div>
 </div>
 
-</body>
+<div id="subModal" class="modal-backdrop" style="display: none;">
+    <div class="modal-content fade-in-up">
+        <div class="modal-head">
+            <h3>📅 Langganan & Tagihan</h3>
+            <button class="close-icon" onclick="document.getElementById('subModal').style.display='none'">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="total-fixed-cost">
+                <small>Estimasi Pengeluaran Tetap Bulanan:</small>
+                <h2 id="totalSubCost">Rp 0</h2>
+            </div>
+
+            <div style="background: var(--bg-body); padding: 15px; border-radius: 12px; margin-bottom: 20px;">
+                <label style="font-size:0.8rem; font-weight:700;">Tambah Langganan Baru</label>
+                <div class="form-group" style="margin-top:10px;">
+                    <input type="text" id="subName" placeholder="Nama (Cth: Netflix, Kosan)" aria-label="Nama Langganan">
+                </div>
+                <div class="form-row">
+                    <input type="number" id="subCost" placeholder="Harga (Rp)" aria-label="Harga Langganan">
+                    <input type="number" id="subDate" placeholder="Tgl Tagihan (1-31)" min="1" max="31" aria-label="Tanggal Tagihan">
+                </div>
+                <button onclick="addSubscription()" class="btn-primary btn-block">Simpan</button>
+            </div>
+
+            <label style="font-size:0.8rem; font-weight:700; color:var(--text-sub);">Daftar Aktif:</label>
+            <div id="subList" class="achievement-grid" style="max-height: 250px; margin-top: 10px;">
+                </div>
+        </div>
+    </div>
+</div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
