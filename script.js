@@ -12,6 +12,7 @@ let cachedData = {
   focusLogs: {}, 
   scheduleNotes: {}, 
   unlockedAchievements: [],
+  subscriptions: [], // TAMBAHKAN INI
   budgets: {}
 };
 
@@ -930,6 +931,7 @@ function startFirebaseListener(uid) {
             cachedData.unlockedAchievements = data.unlockedAchievements || [];
             // Di dalam startFirebaseListener, tambahkan baris ini:
             cachedData.budgets = data.budgets || {};
+            cachedData.subscriptions = data.subscriptions || [];
 
             // 2. Load Jadwal
             if (data.jadwal && data.jadwal.umum) {
@@ -1015,6 +1017,7 @@ function initApp(uid) {
 
     // 3. Cek Reminder Jadwal setiap 1 menit
     setInterval(checkReminders, 60000);
+    setTimeout(checkSubscriptionReminders, 3000); // Delay sedikit agar tidak bertumpuk
     
     // 4. Deteksi Pindah Tab (Blur/Focus)
     window.addEventListener('blur', handleTabBlur);
@@ -2387,4 +2390,101 @@ function executeTransfer() {
     loadTransactions(); // Refresh tampilan saldo
     playSuccessSound('coin');
     showToast("Transfer Berhasil!", "success");
+}
+// ==================== SUBSCRIPTION MANAGER ====================
+
+// 1. Buka Modal & Render
+window.openSubModal = function() {
+    renderSubscriptions();
+    document.getElementById('subModal').style.display = 'flex';
+}
+
+// 2. Render Daftar & Hitung Total
+function renderSubscriptions() {
+    const list = document.getElementById('subList');
+    const totalEl = document.getElementById('totalSubCost');
+    const subs = cachedData.subscriptions || [];
+    
+    list.innerHTML = '';
+    let total = 0;
+
+    if (subs.length === 0) {
+        list.innerHTML = '<div class="empty-message small"><p>Belum ada langganan.</p></div>';
+    } else {
+        subs.forEach((sub, index) => {
+            total += parseInt(sub.cost);
+            
+            // Hitung hari menuju tagihan
+            const today = new Date().getDate();
+            let diff = sub.date - today;
+            let statusText = diff === 0 ? "HARI INI!" : diff < 0 ? "Sudah lewat" : `${diff} hari lagi`;
+            if (diff < 0) statusText = `Tgl ${sub.date} depan`;
+
+            const html = `
+                <div class="sub-item">
+                    <div class="sub-info">
+                        <h4>${escapeHtml(sub.name)}</h4>
+                        <small>📅 Tgl Tagihan: ${sub.date} (${statusText})</small>
+                    </div>
+                    <div style="display:flex; align-items:center;">
+                        <div class="sub-cost">
+                            <b>Rp ${parseInt(sub.cost).toLocaleString('id-ID')}</b>
+                        </div>
+                        <button class="btn-del-sub" onclick="deleteSubscription(${index})"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+            `;
+            list.innerHTML += html;
+        });
+    }
+    
+    totalEl.innerText = "Rp " + total.toLocaleString('id-ID');
+}
+
+// 3. Tambah Langganan
+window.addSubscription = function() {
+    const name = document.getElementById('subName').value;
+    const cost = parseInt(document.getElementById('subCost').value);
+    const date = parseInt(document.getElementById('subDate').value);
+
+    if (!name || !cost || !date) return showToast("Lengkapi semua data!", "error");
+    if (date < 1 || date > 31) return showToast("Tanggal harus 1-31", "error");
+    // Di dalam function addSubscription()
+if (cost <= 0) return showToast("Harga tidak boleh nol atau negatif!", "error");
+
+    if (!cachedData.subscriptions) cachedData.subscriptions = [];
+    
+    cachedData.subscriptions.push({ name, cost, date });
+    saveDB('subscriptions', cachedData.subscriptions);
+    
+    document.getElementById('subName').value = '';
+    document.getElementById('subCost').value = '';
+    document.getElementById('subDate').value = '';
+    
+    showToast("Langganan disimpan!", "success");
+    renderSubscriptions();
+}
+
+// 4. Hapus Langganan
+window.deleteSubscription = function(index) {
+    if(confirm("Hapus langganan ini?")) {
+        cachedData.subscriptions.splice(index, 1);
+        saveDB('subscriptions', cachedData.subscriptions);
+        renderSubscriptions();
+        showToast("Dihapus.", "info");
+    }
+}
+
+// 5. Cek Pengingat Otomatis (Panggil fungsi ini di initApp)
+function checkSubscriptionReminders() {
+    const subs = cachedData.subscriptions || [];
+    const today = new Date().getDate();
+
+    subs.forEach(sub => {
+        // Ingatkan jika tagihan jatuh tempo dalam 3 hari, 1 hari, atau Hari Ini
+        const diff = sub.date - today;
+        if (diff === 3) showToast(`🎗️ Siapkan dana: ${sub.name} bayar 3 hari lagi.`, "info");
+        if (diff === 1) showToast(`⏰ Besok bayar tagihan ${sub.name}!`, "info");
+        if (diff === 0) showToast(`💸 HARI INI: Bayar tagihan ${sub.name}!`, "error");
+    });
 }
