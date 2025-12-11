@@ -1033,3 +1033,73 @@ body.dark-mode .ach-item.locked { background: #374151; border-color: #4b5563; }
     font-size: 24px;
     cursor: pointer;
 }
+/* --- FITUR SUBSCRIPTION --- */
+.sub-btn:hover {
+    filter: brightness(1.1);
+    transform: translateY(-2px);
+}
+
+.total-fixed-cost {
+    text-align: center;
+    background: linear-gradient(135deg, var(--purple), var(--primary));
+    padding: 20px;
+    border-radius: 15px;
+    color: white;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow-md);
+}
+
+.total-fixed-cost h2 {
+    font-size: 1.8rem;
+    margin-top: 5px;
+}
+
+.sub-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--bg-body);
+    padding: 12px 15px;
+    border-radius: 12px;
+    border-left: 4px solid var(--purple);
+    margin-bottom: 8px;
+}
+
+.sub-info h4 {
+    font-size: 0.9rem;
+    color: var(--text-main);
+    margin-bottom: 2px;
+}
+
+.sub-info small {
+    font-size: 0.75rem;
+    color: var(--text-sub);
+}
+
+.sub-cost {
+    text-align: right;
+}
+
+.sub-cost b {
+    display: block;
+    color: var(--text-main);
+    font-size: 0.9rem;
+}
+
+.btn-del-sub {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--red);
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 10px;
+    transition: 0.2s;
+}
+
+.btn-del-sub:hover {
+    background: var(--red);
+    color: white;
+}
