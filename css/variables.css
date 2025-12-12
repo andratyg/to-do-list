@@ -1,0 +1,52 @@
+/* --- CONFIG & VARIABLES --- */
+:root {
+    /* Color Palette - Modern & Clean */
+    --primary: #6366f1;       
+    --primary-dark: #4f46e5;
+    --secondary: #a5b4fc;
+    
+    --bg-body: #f3f4f6;
+    --card-bg: #ffffff;
+    
+    --text-main: #1f2937;
+    --text-sub: #6b7280;
+    --border-color: #e5e7eb;
+    
+    /* Status Colors */
+    --green: #10b981;
+    --red: #ef4444;
+    --blue: #3b82f6;
+    --orange: #f97316;
+    --purple: #8b5cf6;
+
+    /* Mode Colors */
+    --work-mode: var(--primary);
+    --break-mode: var(--green);
+
+    /* Wallet Brand Colors */
+    --dana: #118EE9;
+    --ovo: #4C3494;
+    --gopay: #00AA13;
+    --cash: #4b5563;
+    
+    /* Effects */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --radius: 16px;
+}
+
+body.dark-mode {
+    --bg-body: #111827;
+    --card-bg: #1f2937;
+    --text-main: #f3f4f6;
+    --text-sub: #9ca3af;
+    --border-color: #374151;
+    --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+    color-scheme: dark;
+}
+
+body.dark-mode select {
+    background-color: var(--card-bg);
+    color: var(--text-main);
+}

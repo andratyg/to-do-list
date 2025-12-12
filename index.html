@@ -6,19 +6,29 @@
     <title>Student Workspace Pro</title>
     
     <meta http-equiv="Content-Security-Policy" content="
-        default-src 'self' https://*.firebaseio.com https://*.firebaseapp.com https://www.youtube.com;
-        script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://apis.google.com https://*.firebasejs.com https://*.firebaseapp.com https://*.firebasedatabase.app;
-        style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com;
-        font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com;
-        img-src 'self' data: https://www.gstatic.com https://lh3.googleusercontent.com https://i.ytimg.com;
-        connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://*.firebaseio.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://www.gstatic.com;
-        frame-src https://*.firebaseapp.com https://accounts.google.com https://*.firebasedatabase.app https://www.youtube.com;
+    default-src 'self' https://*.firebaseio.com https://*.firebaseapp.com https://www.youtube.com;
+    script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://apis.google.com https://*.firebasejs.com https://*.firebaseapp.com https://*.firebasedatabase.app https://cdn.jsdelivr.net;
+    style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com;
+    font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com;
+    img-src 'self' data: https://www.gstatic.com https://lh3.googleusercontent.com https://i.ytimg.com;
+    connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://*.firebaseio.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://www.gstatic.com https://cdn.jsdelivr.net;
+    frame-src https://*.firebaseapp.com https://accounts.google.com https://*.firebasedatabase.app https://www.youtube.com;
     ">
 
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css">
-     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚀</text></svg>">
+    
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/header.css">
+    <link rel="stylesheet" href="css/auth.css">
+    <link rel="stylesheet" href="css/schedule.css">
+    <link rel="stylesheet" href="css/tasks.css">
+    <link rel="stylesheet" href="css/pomodoro.css">
+    <link rel="stylesheet" href="css/finance.css">
+    
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚀</text></svg>">
 </head>
 <body>
 
@@ -34,11 +44,11 @@
                 <div class="login-form">
                     <div class="input-group" style="margin-bottom: 10px;">
                         <i class="fas fa-envelope"></i>
-                        <input type="email" id="loginEmail" placeholder="Email">
+                        <input type="email" id="loginEmail" placeholder="Email" aria-label="Alamat Email">
                     </div>
                     <div class="input-group">
                         <i class="fas fa-lock"></i>
-                        <input type="password" id="loginPass" placeholder="Password">
+                        <input type="password" id="loginPass" placeholder="Password" aria-label="Kata Sandi">
                     </div>
                     <button onclick="handleLogin()" class="btn-primary glow btn-block" style="margin-top: 10px;">
                         Masuk <i class="fas fa-sign-in-alt"></i>
@@ -62,15 +72,15 @@
                 <div class="login-form">
                     <div class="input-group" style="margin-bottom: 10px;">
                         <i class="fas fa-user"></i>
-                        <input type="text" id="regUsername" placeholder="Nama Panggilan Kamu">
+                        <input type="text" id="regUsername" placeholder="Nama Panggilan Kamu" aria-label="Nama Panggilan">
                     </div>
                     <div class="input-group" style="margin-bottom: 10px;">
                         <i class="fas fa-envelope"></i>
-                        <input type="email" id="regEmail" placeholder="Email Aktif">
+                        <input type="email" id="regEmail" placeholder="Email Aktif" aria-label="Email Pendaftaran">
                     </div>
                     <div class="input-group">
                         <i class="fas fa-lock"></i>
-                        <input type="password" id="regPass" placeholder="Password (Min. 6 Karakter)">
+                        <input type="password" id="regPass" placeholder="Password (Min. 6 Karakter)" aria-label="Kata Sandi Pendaftaran">
                     </div>
                     <button onclick="handleRegister()" class="btn-primary glow btn-block" style="margin-top: 20px;">Daftar Akun</button>
                     <p class="auth-switch">Sudah punya akun? <a onclick="switchAuthMode('login')">Login di sini</a></p>
@@ -81,66 +91,89 @@
 
     <div class="main-container" id="mainContent" style="display: none;">
         
-        <header class="glass-panel fade-in">
-            <div class="header-left">
-                <h1 id="greeting">Halo, User! 👋</h1>
-                <div class="xp-container">
-                    <div class="level-badge">Lvl <span id="userLevel">1</span></div>
-                    <div class="xp-bar-bg">
-                        <div class="xp-bar-fill" id="xpBarFill" style="width: 0%;"></div>
+        <header class="header-modern fade-in">
+            <div class="header-profile-section">
+                <div class="avatar-container" onclick="toggleSettings()">
+                    <div class="avatar-hexagon">
+                        <i class="fas fa-user-astronaut"></i>
                     </div>
-                    <small id="xpText" style="color:var(--text-sub); font-size:0.7rem; font-weight:600;">0 / 100 XP</small>
+                    <div class="level-badge-floating">Lvl <span id="userLevel">1</span></div>
                 </div>
-                <p id="headerDate" style="margin-bottom: 0; font-size: 0.85rem; color: var(--text-sub);"></p>
+                <div class="text-info">
+                    <p id="headerDate" class="mini-date"></p>
+                    <h1 id="greeting">Halo, User! 👋</h1>
+                    <div class="status-pill"><span class="dot-online"></span> <span id="loginStatusText">Online</span></div>
+                </div>
             </div>
-            
-            <div class="header-center">
-                <div class="live-clock">
+        
+            <div class="header-stats-section">
+                <div class="xp-box">
+                    <div class="xp-info">
+                    <span id="userRank" class="xp-label" style="color:var(--primary); font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">Murid Baru 🌱</span>
+    <span id="xpText" class="xp-val" style="font-size:0.75rem;">0 / 100 XP</span>
+                    </div>
+                    <div class="xp-track">
+                        <div class="xp-fill" id="xpBarFill" style="width: 0%;">
+                            <div class="xp-glow"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="streak-box" title="Login Berturut-turut">
+                    <i class="fas fa-fire flame-anim"></i>
+                    <div class="streak-info">
+                        <span id="streakCount" class="streak-num">0</span>
+                        <span class="streak-label">Streak</span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="header-action-section">
+                <div class="digital-clock">
                     <span id="clockTime">00:00</span>
                 </div>
-            </div>
-
-            <div class="header-right">
-                <div class="streak-badge" title="Login Harian Berturut-turut">
-                    <i class="fas fa-fire"></i> <span id="streakCount">0</span> Hari
-                </div>
-
-                <button class="icon-btn" onclick="toggleDarkMode()" title="Ganti Tema">
-                    <i class="fas fa-moon" id="themeIcon"></i>
-                </button>
-                <div class="profile-menu">
-                    <span id="backupReminder" class="backup-badge"></span> 
-                    <button class="profile-btn" onclick="toggleSettings()">
-                        <div class="avatar-ring"><i class="fas fa-user"></i></div>
-                        <span class="profile-name">Akun</span>
+                
+                <div class="action-buttons">
+                    <button class="icon-btn-glass" onclick="toggleDarkMode()" title="Ganti Tema">
+                        <i class="fas fa-moon" id="themeIcon"></i>
                     </button>
-                    <div class="dropdown-menu" id="settingsDropdown">
-                        <div class="dropdown-header">
-                            <span id="displayUsername">User</span>
-                            <small id="loginStatusText">Online</small>
+                    <div class="profile-menu">
+                        <span id="backupReminder" class="backup-badge"></span> 
+                        <button class="icon-btn-glass" onclick="toggleSettings()" aria-label="Pengaturan">
+                            <i class="fas fa-cog"></i>
+                        </button>
+                        
+                        <div class="dropdown-menu" id="settingsDropdown">
+                            <div class="dropdown-header">
+                                <span id="displayUsername">User</span>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <button onclick="editUsername()"><i class="fas fa-user-edit"></i> Ganti Nama</button>
+                            <button onclick="openAchievementModal()"><i class="fas fa-trophy"></i> Pencapaian</button>
+                            
+                            <button onclick="toggleExamMode()"><i class="fas fa-graduation-cap"></i> Mode Ujian</button>
+                            <button onclick="showSoundSettings()"><i class="fas fa-volume-up"></i> Suara</button>
+                            <div class="dropdown-divider"></div>
+                            <button onclick="exportData()"><i class="fas fa-download"></i> Backup</button>
+                            <button onclick="document.getElementById('importFile').click()"><i class="fas fa-upload"></i> Restore</button>
+                            <input type="file" id="importFile" hidden onchange="importData(this)" aria-label="Upload File Backup">
+                            <div class="dropdown-divider"></div>
+                            <button onclick="logoutUser()"><i class="fas fa-sign-out-alt"></i> Keluar</button>
+                            <button onclick="openClearDataModal()" class="text-danger"><i class="fas fa-trash-alt"></i> Reset</button>
                         </div>
-                        <div class="dropdown-divider"></div>
-                        <button onclick="editUsername()"><i class="fas fa-user-edit"></i> Ganti Nama</button>
-                        <button onclick="toggleExamMode()"><i class="fas fa-graduation-cap"></i> Mode Ujian</button>
-                        <button onclick="showSoundSettings()"><i class="fas fa-volume-up"></i> Pengaturan Suara</button>
-                        <div class="dropdown-divider"></div>
-                        <button onclick="exportData()"><i class="fas fa-download"></i> Backup Data</button>
-                        <button onclick="document.getElementById('importFile').click()"><i class="fas fa-upload"></i> Restore Data</button>
-                        <input type="file" id="importFile" hidden onchange="importData(this)">
-                        <div class="dropdown-divider"></div>
-                        <button onclick="logoutUser()"><i class="fas fa-sign-out-alt"></i> Keluar</button>
-                        <button onclick="openClearDataModal()" class="text-danger"><i class="fas fa-trash-alt"></i> Hapus Data</button>
                     </div>
                 </div>
             </div>
         </header>
 
-        <div class="quote-banner fade-in-up">
-            <div class="quote-content">
-                <div class="quote-badge">✨ KATA-KATA HARI INI ✨</div>
-                <p id="motivationQuote" class="new-quote-text">"Memuat motivasi..."</p>
+        <div class="quote-modern fade-in-up">
+            <div class="quote-icon"><i class="fas fa-quote-left"></i></div>
+            <div class="quote-text-wrapper">
+                <p id="motivationQuote" class="quote-text">"Memuat motivasi..."</p>
             </div>
+            <div class="quote-deco">✨</div>
         </div>
+
         <div class="dashboard-grid fade-in-up">
             
             <div class="left-column">
@@ -152,27 +185,27 @@
                             <h2>Jadwal Belajar</h2>
                         </div>
                         <div class="controls">
-                            <select id="weekTypeSelector" onchange="changeWeekType()">
+                            <select id="weekTypeSelector" onchange="changeWeekType()" aria-label="Pilih Tipe Minggu">
                                 <option value="auto">Auto (Minggu Bergantian)</option>
                                 <option value="umum">Minggu Umum (Paksa)</option>
                                 <option value="produktif">Minggu Produktif (Paksa)</option>
                             </select>
                             <div class="nav-pills">
-                                <button onclick="changeDay(-1)"><i class="fas fa-chevron-left"></i></button>
+                                <button onclick="changeDay(-1)" aria-label="Hari Sebelumnya"><i class="fas fa-chevron-left"></i></button>
                                 <span id="activeDayName">SENIN</span>
-                                <button onclick="changeDay(1)"><i class="fas fa-chevron-right"></i></button>
+                                <button onclick="changeDay(1)" aria-label="Hari Selanjutnya"><i class="fas fa-chevron-right"></i></button>
                             </div>
                         </div>
                     </div>
 
                     <div class="filter-controls-advanced">
-                        <select id="scheduleFilterCategory" onchange="renderSchedule()">
+                        <select id="scheduleFilterCategory" onchange="renderSchedule()" aria-label="Filter Kategori Jadwal">
                             <option value="all">Filter Kategori (Semua)</option>
                             <option value="umum">Umum</option>
                             <option value="produktif">Produktif</option>
                             <option value="kokurikuler">Kokurikuler</option>
                         </select>
-                        <select id="scheduleFilterGuru" onchange="renderSchedule()">
+                        <select id="scheduleFilterGuru" onchange="renderSchedule()" aria-label="Filter Guru Jadwal">
                             <option value="all">Filter Guru/Dosen (Semua)</option>
                         </select>
                     </div>
@@ -246,7 +279,7 @@
                     </div>
                     
                     <div class="form-group" style="margin-bottom: 20px;">
-                         <select id="pomodoroTaskSelector" class="sub-input">
+                         <select id="pomodoroTaskSelector" class="sub-input" aria-label="Pilih Tugas untuk Fokus">
                             <option value="">-- Pilih Tugas untuk Fokus --</option>
                          </select>
                     </div>
@@ -314,14 +347,14 @@
 
                     <div class="search-input">
                         <i class="fas fa-search"></i>
-                        <input type="text" id="searchTaskInput" placeholder="Cari tugas..." onkeyup="loadTasks()">
+                        <input type="text" id="searchTaskInput" placeholder="Cari tugas..." onkeyup="loadTasks()" aria-label="Cari Tugas">
                     </div>
 
                     <div class="add-task-form">
-                        <input type="text" id="taskInput" class="main-input" placeholder="Tugas baru...">
+                        <input type="text" id="taskInput" class="main-input" placeholder="Tugas baru..." aria-label="Nama Tugas Baru">
                         <div class="form-row">
-                            <input type="date" id="taskDate" class="sub-input">
-                            <select id="taskPriority" class="sub-input">
+                            <input type="date" id="taskDate" class="sub-input" aria-label="Tanggal Tugas">
+                            <select id="taskPriority" class="sub-input" aria-label="Prioritas Tugas">
                                 <option value="Low">Prioritas Rendah (santai)</option>
                                 <option value="Medium" selected>Prioritas Sedang (cukup penting)</option>
                                 <option value="High">Prioritas Tinggi (sangat penting)</option>
@@ -409,10 +442,11 @@
                     <input type="hidden" id="selectedWallet" value="cash">
 
                     <div class="transaction-box">
-                        <input type="text" id="moneyDesc" placeholder="Keterangan (Cth: Jajan)">
+                       
+                        <input type="text" id="moneyDesc" placeholder="Keterangan (Cth: Jajan)" aria-label="Keterangan Transaksi">
                         <div class="form-row">
-                            <input type="number" id="moneyAmount" placeholder="Rp...">
-                            <select id="txnCategory">
+                            <input type="number" id="moneyAmount" placeholder="Rp..." aria-label="Jumlah Uang">
+                            <select id="txnCategory" aria-label="Kategori Transaksi">
                                 <option value="Jajan">🍔 Jajan</option>
                                 <option value="Transport">🚗 Transport</option>
                                 <option value="Tabungan">💰 Tabungan</option>
@@ -420,16 +454,23 @@
                                 <option value="Lainnya">✨ Lainnya</option>
                             </select>
                         </div>
-                        <div class="btn-group">
+                       <div class="btn-group">
                             <button class="btn-in" onclick="addTransaction('in')"><i class="fas fa-arrow-down"></i> Masuk</button>
                             <button class="btn-out" onclick="addTransaction('out')"><i class="fas fa-arrow-up"></i> Keluar</button>
                         </div>
+
+                        <button class="action-btn transfer-btn" onclick="toggleTransferModal()" style="width:100%; margin-top:10px; background:var(--orange); color:white; padding:10px; border-radius:10px;">
+                            <i class="fas fa-exchange-alt"></i> Transfer Antar Dompet
+                        </button>
+                         <button class="action-btn sub-btn" onclick="openSubModal()" style="width:100%; margin-top:10px; background:var(--purple); color:white; padding:10px; border-radius:10px;">
+                            <i class="fas fa-calendar-check"></i> Kelola Langganan Rutin
+                        </button>
                     </div>
 
                     <div class="history-section">
                         <div class="history-header">
                             <h4>Riwayat</h4>
-                            <select id="historyFilter" onchange="loadTransactions()">
+                            <select id="historyFilter" onchange="loadTransactions()" aria-label="Filter Riwayat Transaksi">
                                 <option value="all">Semua</option>
                                 <option value="in">Masuk</option>
                                 <option value="out">Keluar</option>
@@ -453,7 +494,7 @@
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <label>Pilih Suara Pomodoro Selesai</label>
+                    <label for="pomodoroSoundSelect">Pilih Suara Pomodoro Selesai</label>
                     <select id="pomodoroSoundSelect">
                         <option value="bell">Bel Sekolah (Default)</option>
                         <option value="ding">Ding Jernih</option>
@@ -475,7 +516,7 @@
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <label>Nama Baru</label>
+                    <label for="newUsernameInput">Nama Baru</label>
                     <input type="text" id="newUsernameInput" placeholder="Nama panggilan...">
                 </div>
             </div>
@@ -484,6 +525,24 @@
             </div>
         </div>
     </div>
+    
+    <div id="achievementModal" class="modal-backdrop" style="display: none;">
+        <div class="modal-content fade-in-up" style="max-width: 450px;">
+            <div class="modal-head">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <h3 style="margin:0;">🏆 Pencapaian Saya</h3>
+                    <span id="achievelmentCountBadge" style="background:var(--primary); color:white; padding:2px 8px; border-radius:10px; font-size:0.75rem; font-weight:700;">0/6</span>
+                </div>
+                <button class="close-icon" onclick="document.getElementById('achievementModal').style.display='none'">×</button>
+            </div>
+            <div class="modal-body">
+                <p style="font-size:0.85rem; color:var(--text-sub); margin-bottom:15px;">Selesaikan misi untuk membuka piala!</p>
+                <div id="achievementList" class="achievement-grid">
+                    </div>
+            </div>
+        </div>
+    </div>
+
     <div id="clearDataModal" class="modal-backdrop" style="display: none;">
         <div class="modal-content fade-in-up" style="max-width: 400px;">
             <div class="modal-head">
@@ -493,7 +552,7 @@
             <div class="modal-body">
                 <p style="color:var(--red); margin-bottom: 15px;">Tindakan ini permanen. Semua Tugas, Jadwal, Keuangan, dan Pengaturan Anda akan hilang dari browser ini.</p>
                 <div class="form-group">
-                    <label>Ketik kata **HAPUS** untuk melanjutkan:</label>
+                    <label for="clearDataConfirmationInput">Ketik kata **HAPUS** untuk melanjutkan:</label>
                     <input type="text" id="clearDataConfirmationInput" placeholder="Ketik HAPUS">
                 </div>
             </div>
@@ -511,7 +570,7 @@
             </div>
             <div class="modal-body">
                 <p id="noteModalSubtitle" style="font-size:0.85rem; color:var(--text-sub); margin-bottom:10px;">Tulis PR atau catatan penting di sini.</p>
-                <textarea id="noteModalInput" placeholder="Contoh: PR Halaman 52 dikumpulkan besok..."></textarea>
+                <textarea id="noteModalInput" placeholder="Contoh: PR Halaman 52 dikumpulkan besok..." aria-label="Isi Catatan Mapel"></textarea>
                 <input type="hidden" id="noteTargetDay">
                 <input type="hidden" id="noteTargetIndex">
             </div>
@@ -530,15 +589,15 @@
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <label>Mata Pelajaran</label>
+                    <label for="editMapelName">Mata Pelajaran</label>
                     <input type="text" id="editMapelName">
                 </div>
                 <div class="form-group">
-                    <label>Waktu</label>
+                    <label for="editMapelTime">Waktu</label>
                     <input type="text" id="editMapelTime" placeholder="08.00 - 09.20">
                 </div>
                 <div class="form-group">
-                    <label>Kategori</label>
+                    <label for="editMapelType">Kategori</label>
                     <select id="editMapelType">
                         <option value="umum">Umum (Hijau)</option>
                         <option value="produktif">Produktif (Oranye)</option>
@@ -560,14 +619,14 @@
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <label>Pilih Minggu</label>
+                    <label for="addScheduleWeekType">Pilih Minggu</label>
                     <select id="addScheduleWeekType">
                         <option value="umum">Minggu Umum</option>
                         <option value="produktif">Minggu Produktif</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Pilih Hari</label>
+                    <label for="addScheduleDay">Pilih Hari</label>
                     <select id="addScheduleDay">
                         <option value="Senin">Senin</option>
                         <option value="Selasa">Selasa</option>
@@ -579,19 +638,19 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Mata Pelajaran</label>
+                    <label for="addScheduleMapel">Mata Pelajaran</label>
                     <input type="text" id="addScheduleMapel" placeholder="Contoh: Matematika">
                 </div>
                 <div class="form-group">
-                    <label>Nama Guru</label>
+                    <label for="addScheduleGuru">Nama Guru</label>
                     <input type="text" id="addScheduleGuru" placeholder="Contoh: Bpk. Budi">
                 </div>
                 <div class="form-group">
-                    <label>Waktu</label>
+                    <label for="addScheduleTime">Waktu</label>
                     <input type="text" id="addScheduleTime" placeholder="Contoh: 08.00 - 09.20">
                 </div>
                 <div class="form-group">
-                    <label>Kategori (Warna)</label>
+                    <label for="addScheduleType">Kategori (Warna)</label>
                     <select id="addScheduleType">
                         <option value="umum">Umum (Hijau)</option>
                         <option value="produktif">Produktif (Oranye)</option>
@@ -604,6 +663,76 @@
             </div>
         </div>
     </div>
+   
+   <div id="transferModal" class="modal-overlay" style="display: none;">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3>Transfer Saldo</h3>
+            <button onclick="toggleTransferModal()" class="close-btn">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="sourceWallet">Dari Dompet</label>
+                <select id="sourceWallet">
+                    <option value="dana">DANA</option>
+                    <option value="ovo">OVO</option>
+                    <option value="gopay">GOPAY</option>
+                    <option value="cash">TUNAI</option>
+                </select>
+            </div>
+            
+            <div class="transfer-arrow" style="text-align:center; font-size:1.5rem; margin:10px 0;">⬇️</div>
+
+            <div class="form-group">
+                <label for="targetWallet">Ke Dompet</label>
+                <select id="targetWallet">
+                    <option value="cash">TUNAI</option>
+                    <option value="dana">DANA</option>
+                    <option value="ovo">OVO</option>
+                    <option value="gopay">GOPAY</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="transferAmount">Jumlah (Rp)</label>
+                <input type="number" id="transferAmount" placeholder="0">
+            </div>
+
+            <button onclick="executeTransfer()" class="save-btn btn-primary btn-block">Konfirmasi Transfer</button>
+        </div>
+    </div>
+</div>
+
+<div id="subModal" class="modal-backdrop" style="display: none;">
+    <div class="modal-content fade-in-up">
+        <div class="modal-head">
+            <h3>📅 Langganan & Tagihan</h3>
+            <button class="close-icon" onclick="document.getElementById('subModal').style.display='none'">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="total-fixed-cost">
+                <small>Estimasi Pengeluaran Tetap Bulanan:</small>
+                <h2 id="totalSubCost">Rp 0</h2>
+            </div>
+
+            <div style="background: var(--bg-body); padding: 15px; border-radius: 12px; margin-bottom: 20px;">
+                <label style="font-size:0.8rem; font-weight:700;">Tambah Langganan Baru</label>
+                <div class="form-group" style="margin-top:10px;">
+                    <input type="text" id="subName" placeholder="Nama (Cth: Netflix, Kosan)" aria-label="Nama Langganan">
+                </div>
+                <div class="form-row">
+                    <input type="number" id="subCost" placeholder="Harga (Rp)" aria-label="Harga Langganan">
+                    <input type="number" id="subDate" placeholder="Tgl Tagihan (1-31)" min="1" max="31" aria-label="Tanggal Tagihan">
+                </div>
+                <button onclick="addSubscription()" class="btn-primary btn-block">Simpan</button>
+            </div>
+
+            <label style="font-size:0.8rem; font-weight:700; color:var(--text-sub);">Daftar Aktif:</label>
+            <div id="subList" class="achievement-grid" style="max-height: 250px; margin-top: 10px;">
+                </div>
+        </div>
+    </div>
+</div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -642,8 +771,8 @@
 
         console.log("Sistem Login & Database Siap!");
     </script>
-    
-    <script src="script.js" defer></script>
-
+   
+    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+    <script type="module" src="js/main.js"></script>
 </body>
 </html>

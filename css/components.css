@@ -1,0 +1,70 @@
+/* --- MODAL --- */
+.modal-backdrop { 
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    width: 100%; height: 100%; 
+    background: rgba(0,0,0,0.5); 
+    backdrop-filter: blur(8px); 
+    z-index: 99999 !important; 
+    display: flex; justify-content: center; align-items: center; padding: 20px; 
+}
+.modal-content, .modal-box { 
+    background: var(--card-bg); width: 100%; max-width: 450px; 
+    border-radius: 20px; padding: 25px; box-shadow: var(--shadow-lg); 
+    border: 1px solid var(--border-color); color: var(--text-main); position: relative;
+}
+.modal-head, .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.modal-head h3, .modal-header h3 { color: var(--text-main); font-weight: 700; margin: 0;}
+.close-icon, .close-btn { background: none; border: none; font-size: 1.5rem; color: var(--text-sub); cursor: pointer; transition: 0.3s; }
+.close-icon:hover, .close-btn:hover { color: var(--red); transform: rotate(90deg); }
+.modal-body textarea { height: 150px; resize: vertical; }
+.modal-body .form-group { margin-bottom: 15px; }
+.modal-body label { color: var(--text-sub); font-size: 0.85rem; font-weight: 600; margin-bottom: 5px; display: block; }
+.modal-foot { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+
+/* --- TOAST NOTIFICATION --- */
+#toastBox { position: fixed; bottom: 30px; right: 30px; z-index: 100000 !important; display: flex; flex-direction: column; gap: 10px; align-items: flex-end; }
+.toast { background: var(--card-bg); color: var(--text-main); padding: 12px 20px; border-radius: 10px; box-shadow: var(--shadow-lg); display: flex; align-items: center; gap: 10px; border-left: 4px solid; animation: slideInRight 0.4s ease; min-width: 250px; }
+.toast.error { border-color: var(--red); }
+.toast.success { border-color: var(--green); } 
+.toast.info { border-color: var(--blue); }
+
+/* --- QUOTE CARD --- */
+.quote-modern {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 16px; padding: 15px 25px; display: flex; align-items: center; gap: 15px;
+    color: white; box-shadow: 0 10px 20px -5px rgba(118, 75, 162, 0.4); margin-bottom: 30px;
+    position: relative; overflow: hidden;
+}
+.quote-modern::before {
+    content: ''; position: absolute; top: -50%; right: -10%; width: 150px; height: 150px;
+    background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%); border-radius: 50%;
+}
+.quote-icon { font-size: 1.2rem; background: rgba(255,255,255,0.2); width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 50%; flex-shrink: 0; }
+.quote-text-wrapper { flex: 1; }
+.quote-text { font-style: italic; font-weight: 500; font-size: 0.95rem; margin: 0; line-height: 1.4; }
+.quote-deco { font-size: 1.5rem; animation: spin 5s linear infinite; }
+@keyframes spin { 100% { transform: rotate(360deg); } }
+
+/* --- MUSIC CARD --- */
+.music-player-wrapper iframe { border-radius: 12px; }
+
+/* --- EMPTY STATE --- */
+.empty-message { text-align: center; padding: 30px 10px; color: var(--text-sub); }
+.empty-message i { font-size: 2.5rem; margin-bottom: 10px; opacity: 0.3; display: block; }
+.empty-message p { font-size: 0.9rem; font-weight: 500; }
+
+/* --- URGENT LIST --- */
+.urgent-list { list-style: none; padding: 0; }
+.urgent-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #fef2f2; border: 1px solid #fee2e2; border-radius: 10px; margin-bottom: 10px; color: var(--red); }
+.urgent-item span { font-weight: 600; font-size: 0.9rem; }
+.urgent-days { background: var(--red); color: white; padding: 4px 10px; border-radius: 50px; font-size: 0.75rem; font-weight: 700; }
+
+/* --- DROPDOWN MENU --- */
+.profile-menu { position: relative; }
+.dropdown-menu { position: absolute; right: 0; top: 60px; width: 220px; background: var(--card-bg); border-radius: 15px; padding: 15px; box-shadow: var(--shadow-lg); border: 1px solid var(--border-color); display: none; z-index: 100; animation: slideDown 0.2s ease; }
+.dropdown-menu.active { display: block; }
+.dropdown-header { text-align: center; margin-bottom: 10px; }
+.dropdown-header span { font-weight: 700; display: block; font-size: 1.1rem; }
+.dropdown-divider { height: 1px; background: var(--border-color); margin: 10px 0; }
+.dropdown-menu button { width: 100%; text-align: left; background: none; padding: 10px; border-radius: 8px; color: var(--text-main); font-size: 0.9rem; }
+.dropdown-menu button:hover { background: var(--bg-body); }
