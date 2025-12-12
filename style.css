@@ -1102,4 +1102,8 @@ body.dark-mode .ach-item.locked { background: #374151; border-color: #4b5563; }
 .btn-del-sub:hover {
     background: var(--red);
     color: white;
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> a4d30f16ebf635fb2fbcb3fe6a171821aee76160
