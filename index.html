@@ -615,11 +615,26 @@
                 <h2>Keuangan</h2>
               </div>
               <div class="balance-display">
-                <small>Total Aset</small>
+                <div
+                  style="
+                    display: flex;
+                    align-items: center;
+                    justify-content: flex-end;
+                    gap: 5px;
+                  "
+                >
+                  <small>Total Aset</small>
+                  <button
+                    onclick="toggleBalanceVisibility()"
+                    class="btn-eye-toggle"
+                    title="Sembunyikan/Lihat Saldo"
+                  >
+                    <i id="eyeIcon" class="fas fa-eye"></i>
+                  </button>
+                </div>
                 <h3 id="totalBalance">Rp 0</h3>
               </div>
             </div>
-
             <div class="target-widget" onclick="editTarget()">
               <div class="target-header">
                 <span id="targetName">🎯 Set Target</span>
@@ -1240,6 +1255,6 @@
     </script>
 
     <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
-   <script  src="script.js"></script>
+    <script src="script.js"></script>
   </body>
 </html>

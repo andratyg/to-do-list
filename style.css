@@ -1104,3 +1104,26 @@ body.dark-mode .ach-item.locked { background: #374151; border-color: #4b5563; }
     color: white;
 
 }
+/* --- SENSOR SALDO (PRIVACY MODE) --- */
+.balance-blur {
+    filter: blur(6px);
+    user-select: none; /* Supaya teks tidak bisa diblok/copy */
+    cursor: default;
+    transition: filter 0.3s ease;
+}
+
+.btn-eye-toggle {
+    background: none;
+    border: none;
+    color: var(--text-sub);
+    font-size: 0.9rem;
+    cursor: pointer;
+    padding: 5px;
+    margin-left: 5px;
+    transition: 0.2s;
+}
+
+.btn-eye-toggle:hover {
+    color: var(--primary);
+    transform: scale(1.1);
+}
