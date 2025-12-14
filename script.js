@@ -5,6 +5,7 @@ let currentUser = null; // UID User
 let cachedData = {
   tasks: [],
   transactions: [],
+  stickyNote: "",
   jadwal: null,
   settings: {},
   gamification: { xp: 0, level: 1 },
@@ -1206,6 +1207,9 @@ function startFirebaseListener(uid) {
       // Di dalam startFirebaseListener, tambahkan baris ini:
       cachedData.budgets = data.budgets || {};
       cachedData.subscriptions = data.subscriptions || [];
+      // [BARU] Load Sticky Note
+cachedData.stickyNote = data.stickyNote || "";
+document.getElementById("globalStickyNote").value = cachedData.stickyNote;
 
       // 2. Load Jadwal
       if (data.jadwal && data.jadwal.umum) {
@@ -1287,6 +1291,7 @@ function getDB(key) {
 function initApp(uid) {
   // 1. Inisialisasi Fitur Dasar
   startClock();
+  initWeather();
   updateGreeting();
   updateHeaderDate();
   loadScheduleFilters();
@@ -3906,3 +3911,102 @@ function checkSubscriptionReminders() {
       showToast(`💸 HARI INI: Bayar tagihan ${sub.name}!`, "error");
   });
 }
+// ==================== FITUR BARU: STICKY NOTE & WEATHER ====================
+
+// --- 1. LOGIC STICKY NOTE (Auto Save) ---
+let stickyTimeout;
+
+window.handleStickyInput = function() {
+    const status = document.getElementById("noteSaveStatus");
+    status.innerText = "Mengetik...";
+    
+    // Debounce: Tunggu user berhenti mengetik 1 detik baru simpan
+    clearTimeout(stickyTimeout);
+    stickyTimeout = setTimeout(() => {
+        const val = document.getElementById("globalStickyNote").value;
+        cachedData.stickyNote = val;
+        
+        // Simpan ke Firebase (key baru: stickyNote)
+        if (window.auth.currentUser) {
+            const uid = window.auth.currentUser.uid;
+            window.dbSet(window.dbRef(window.db, `users/${uid}/stickyNote`), val)
+                .then(() => {
+                    status.innerText = "Tersimpan";
+                })
+                .catch(() => {
+                    status.innerText = "Gagal Simpan";
+                });
+        }
+    }, 1000); // Delay 1 detik
+};
+
+// --- 2. LOGIC WEATHER (Open-Meteo API - No Key Required) ---
+function initWeather() {
+    if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+                getWeatherData(lat, lon);
+            },
+            (error) => {
+                console.log("Lokasi ditolak/error, pakai default (Jakarta)");
+                getWeatherData(-6.2088, 106.8456); // Default Jakarta
+            }
+        );
+    } else {
+        getWeatherData(-6.2088, 106.8456);
+    }
+}
+
+async function getWeatherData(lat, lon) {
+    try {
+        // API Open-Meteo (Gratis)
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`;
+        const res = await fetch(url);
+        const data = await res.json();
+        
+        if (data.current_weather) {
+            const temp = Math.round(data.current_weather.temperature);
+            const code = data.current_weather.weathercode;
+            
+            // Mapping Kode Cuaca ke Icon FontAwesome
+            let iconClass = "fas fa-cloud";
+            if (code === 0) iconClass = "fas fa-sun"; // Cerah
+            else if (code >= 1 && code <= 3) iconClass = "fas fa-cloud-sun"; // Berawan
+            else if (code >= 45 && code <= 48) iconClass = "fas fa-smog"; // Kabut
+            else if (code >= 51 && code <= 67) iconClass = "fas fa-cloud-rain"; // Hujan
+            else if (code >= 95) iconClass = "fas fa-bolt"; // Badai
+            
+            // Update UI
+            document.getElementById("weatherTemp").innerText = `${temp}°C`;
+            document.getElementById("weatherIcon").className = iconClass;
+            document.getElementById("weatherWidget").style.display = "flex";
+        }
+    } catch (err) {
+        console.error("Gagal ambil cuaca:", err);
+    }
+}
+// --- FITUR: TOGGLE STICKY WIDGET ---
+window.toggleStickyWidget = function() {
+    const content = document.getElementById("stickyContent");
+    const icon = document.getElementById("stickyToggleIcon");
+    
+    // Toggle class untuk animasi tinggi
+    content.classList.toggle("collapsed");
+    
+    // Ubah ikon panah
+    if (content.classList.contains("collapsed")) {
+        icon.className = "fas fa-chevron-up";
+    } else {
+        icon.className = "fas fa-chevron-down";
+    }
+};
+
+// Opsional: Klik header untuk toggle juga
+document.querySelector(".widget-header-float").addEventListener("click", function(e) {
+    // Cegah toggle jika yang diklik adalah tombol/icon di dalamnya (biar tidak double trigger)
+    if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'I') {
+        window.toggleStickyWidget();
+    }
+});

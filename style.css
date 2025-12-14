@@ -405,11 +405,76 @@ body.dark-mode .xp-track { background: rgba(255,255,255,0.1); }
 /* --- 6. JADWAL (LIVE STATUS BARU) --- */
 .filter-controls-advanced { display: flex; gap: 10px; margin-bottom: 15px; }
 .filter-controls-advanced select { flex: 1; font-size: 0.85rem; padding: 8px 10px; }
-.nav-pills { background: var(--bg-body); padding: 4px; border-radius: 50px; display: flex; align-items: center; }
-.nav-pills button { width: 30px; height: 30px; border-radius: 50%; background: var(--card-bg); color: var(--text-main); display: flex; justify-content: center; align-items: center; box-shadow: var(--shadow-sm); }
-.nav-pills button:hover { background: var(--primary); color: white; }
-#activeDayName { font-weight: 700; color: var(--primary); padding: 0 15px; font-size: 0.9rem; }
+/* --- PERBAIKAN NAVIGASI HARI (AGAR RAPI & PENDEK) --- */
+.nav-pills {
+    background: var(--bg-body); /* Warna background */
+    padding: 4px 8px;           /* Jarak dalam yang lebih tipis */
+    border-radius: 50px;        /* Membuat kapsul bulat */
+    
+    /* INI KUNCINYA AGAR TIDAK PANJANG */
+    display: inline-flex;       /* Mengikuti lebar konten, bukan lebar layar */
+    width: fit-content;         /* Lebar pas sesuai isi */
+    min-width: 140px;           /* Lebar minimal agar tidak terlalu kecil */
+    
+    align-items: center;
+    justify-content: space-between; /* Jarak merata antara panah dan teks */
+    border: 1px solid var(--border-color); /* Tambahan border tipis biar elegan */
+    box-shadow: var(--shadow-sm);
+    margin-left: auto;          /* Opsional: Geser ke kanan jika di desktop */
+}
 
+/* Tombol Panah Kiri/Kanan */
+.nav-pills button {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--card-bg); /* Warna tombol */
+    color: var(--text-main);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: 0.2s;
+}
+
+.nav-pills button:hover {
+    background: var(--primary);
+    color: white;
+    transform: scale(1.1);
+}
+
+/* Teks Nama Hari (JUMAT, dsb) */
+#activeDayName {
+    font-weight: 800;
+    color: var(--primary);
+    padding: 0 10px;
+    font-size: 0.85rem;
+    text-align: center;
+    flex: 1; /* Mengisi ruang di tengah */
+    letter-spacing: 1px;
+}
+/* Mengatur container tombol agar sejajar */
+.controls {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end; /* Rata kanan */
+    gap: 10px; /* Jarak antara dropdown dan panah hari */
+    flex-wrap: wrap; /* Turun ke bawah kalau layar HP sempit */
+}
+
+/* Khusus tampilan HP (Layar kecil) */
+@media (max-width: 600px) {
+    .controls {
+        justify-content: center; /* Rata tengah di HP */
+        margin-top: 10px;
+        width: 100%;
+    }
+    
+    .nav-pills {
+        width: 100%; /* Di HP boleh agak panjang biar mudah dipencet */
+        justify-content: space-between;
+    }
+}
 /* --- WIDGET STATUS HIDUP --- */
 .live-status-widget {
     background: linear-gradient(90deg, #4f46e5, #8b5cf6, #ec4899);
@@ -1126,4 +1191,116 @@ body.dark-mode .ach-item.locked { background: #374151; border-color: #4b5563; }
 .btn-eye-toggle:hover {
     color: var(--primary);
     transform: scale(1.1);
+}
+/* --- FITUR BARU: WEATHER & STICKY NOTE --- */
+
+/* 1. Weather Widget */
+.weather-widget {
+    background: var(--bg-body);
+    padding: 8px 15px;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    color: var(--text-main);
+    box-shadow: inset 2px 2px 5px rgba(0,0,0,0.05);
+    transition: 0.3s;
+}
+.weather-widget i { font-size: 1.2rem; color: var(--blue); }
+.weather-widget:hover { transform: translateY(-2px); background: var(--card-bg); }
+
+/* 2. Sticky Note Card */
+.sticky-card {
+    background: #fefce8; /* Warna kuning muda khas sticky note */
+    border: 1px solid #fde047;
+}
+body.dark-mode .sticky-card {
+    background: #422006; /* Coklat gelap untuk dark mode */
+    border-color: #713f12;
+}
+
+#globalStickyNote {
+    width: 100%;
+    height: 120px;
+    background: transparent;
+    border: none;
+    resize: none;
+    font-family: 'Poppins', sans-serif; /* Atau font tulisan tangan jika ada */
+    font-size: 0.9rem;
+    color: var(--text-main);
+    outline: none;
+    line-height: 1.5;
+}
+#globalStickyNote::placeholder { color: rgba(0,0,0,0.3); }
+body.dark-mode #globalStickyNote::placeholder { color: rgba(255,255,255,0.3); }
+/* --- WIDGET CATATAN MELAYANG (FLOATING) --- */
+.floating-widget {
+    position: fixed;
+    bottom: 20px;
+    left: 240px; /* Digeser ke kanan agar tidak menumpuk dengan Lo-Fi Radio */
+    width: 220px;
+    background: var(--card-bg);
+    border-radius: 15px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    border: 1px solid var(--border-color);
+    z-index: 999;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    overflow: hidden;
+}
+
+/* Header Widget */
+.widget-header-float {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    background: rgba(0,0,0,0.02);
+    border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
+}
+
+/* Area Textarea */
+.widget-content {
+    padding: 0;
+    height: 150px; /* Tinggi saat terbuka */
+    transition: height 0.3s ease;
+}
+
+.widget-content.collapsed {
+    height: 0; /* Tinggi saat tertutup */
+}
+
+/* Styling Textarea di dalam widget */
+#globalStickyNote {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: #fefce8; /* Warna kuning muda */
+    padding: 12px;
+    resize: none;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    color: #422006;
+    border-radius: 0 0 15px 15px;
+}
+#globalStickyNote:focus {
+    box-shadow: none;
+    outline: none;
+}
+
+/* Dark Mode Adjustment */
+body.dark-mode #globalStickyNote {
+    background: #2b2b2b;
+    color: #e5e5e5;
+}
+
+/* Responsif untuk HP */
+@media (max-width: 768px) {
+    .floating-widget {
+        left: 20px;
+        bottom: 90px; /* Naik ke atas Lo-Fi Radio jika di HP */
+        width: 200px;
+    }
 }
