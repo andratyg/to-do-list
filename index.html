@@ -410,9 +410,59 @@
         </div>
       </div>
     </div>
+    <div class="card mood-card" style="margin-top: 20px;">
+    <div class="card-header" style="margin-bottom: 15px;">
+        <div class="title-with-icon">
+            <div class="icon-box" style="background: #ec4899; color: white;">
+                <i class="fas fa-smile-beam"></i>
+            </div>
+            <h2>Gimana Perasaanmu Hari Ini?</h2>
+        </div>
+    </div>
+    
+    <div id="moodSelector" class="mood-selector">
+        <button onclick="logMood('happy')" class="mood-btn happy" title="Senang">😄</button>
+        <button onclick="logMood('excited')" class="mood-btn excited" title="Semangat">🔥</button>
+        <button onclick="logMood('confident')" class="mood-btn confident" title="Pede">😎</button>
+        <button onclick="logMood('grateful')" class="mood-btn grateful" title="Bersyukur">🙏</button>
+        <button onclick="logMood('relaxed')" class="mood-btn relaxed" title="Santai">😌</button>
+        
+        <button onclick="logMood('bored')" class="mood-btn bored" title="Bosan">😐</button>
+        <button onclick="logMood('confused')" class="mood-btn confused" title="Bingung">😵‍💫</button>
+        
+        <button onclick="logMood('tired')" class="mood-btn tired" title="Capek">😫</button>
+        <button onclick="logMood('sad')" class="mood-btn sad" title="Sedih">😢</button>
+        <button onclick="logMood('anxious')" class="mood-btn anxious" title="Cemas">😰</button>
+        <button onclick="logMood('sick')" class="mood-btn sick" title="Sakit">😷</button>
+        <button onclick="logMood('angry')" class="mood-btn angry" title="Marah">😡</button>
+    </div>
+
+    <div id="moodResult" style="display:none; text-align:center; margin-top:15px; padding: 15px; background: var(--bg-body); border-radius: 12px;">
+        <p style="font-size:1.1rem; margin-bottom: 5px;">Mood kamu hari ini:</p>
+        <h3 id="todayMoodText" style="font-size: 1.5rem; color: var(--primary);"></h3>
+        <button onclick="resetMood()" style="font-size:0.8rem; color:var(--text-sub); background:none; text-decoration:underline; margin-top:10px;">Ganti Mood</button>
+    </div>
+</div>
 
   </div> 
   <div class="sidebar-column">
+
+
+<div class="card countdown-card" style="margin-bottom: 20px;">
+    <div class="card-header">
+        <div class="title-with-icon">
+            <div class="icon-box" style="background: #ef4444; color: white;">
+                <i class="fas fa-hourglass-half"></i>
+            </div>
+            <h2>Hitung Mundur</h2>
+        </div>
+        <button onclick="openCountdownModal()" style="font-size:0.8rem; color:var(--primary); background:none;">
+            <i class="fas fa-plus"></i>
+        </button>
+    </div>
+    <div id="countdownList" class="countdown-list">
+        </div>
+</div>
     
     <div class="card sticky-card">
         <div class="card-header" style="margin-bottom: 10px;">
@@ -1051,7 +1101,27 @@
               oninput="handleStickyInput()"></textarea>
   </div>
 </div>
-
+<div id="countdownModal" class="modal-backdrop" style="display: none;">
+    <div class="modal-content fade-in-up" style="max-width: 350px;">
+        <div class="modal-head">
+            <h3>⏳ Event Baru</h3>
+            <button class="close-icon" onclick="document.getElementById('countdownModal').style.display='none'">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label>Nama Event (Contoh: UAS, UTBK)</label>
+                <input type="text" id="cdTitle" placeholder="Nama Event">
+            </div>
+            <div class="form-group">
+                <label>Tanggal Pelaksanaan</label>
+                <input type="date" id="cdDate">
+            </div>
+        </div>
+        <div class="modal-foot">
+            <button onclick="addCountdown()" class="btn-primary">Simpan</button>
+        </div>
+    </div>
+</div>
     <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
       import {

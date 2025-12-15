@@ -1204,6 +1204,8 @@ function startFirebaseListener(uid) {
       cachedData.focusLogs = data.focusLogs || {};
       cachedData.scheduleNotes = data.scheduleNotes || {};
       cachedData.unlockedAchievements = data.unlockedAchievements || [];
+      cachedData.moodLogs = data.moodLogs || {};
+cachedData.examCountdowns = data.examCountdowns || [];
       // Di dalam startFirebaseListener, tambahkan baris ini:
       cachedData.budgets = data.budgets || {};
       cachedData.subscriptions = data.subscriptions || [];
@@ -1300,9 +1302,18 @@ function initApp(uid) {
   updateTimerDisplay();
   injectNewUI();
 
-  // 2. Shortcut Keyboard (Ctrl + T/S/D)
+  // 2. Shortcut Keyboard (Ctrl + T/S/D/A)
   document.addEventListener("keydown", (e) => {
     if (e.ctrlKey || e.metaKey) {
+      
+      // --- TAMBAHKAN BAGIAN INI (ANTI CTRL+A) ---
+      if (e.key === "a" || e.key === "A") {
+        e.preventDefault(); // Mencegah blok teks
+        showToast("🚫 Select All dimatikan!", "error");
+        return;
+      }
+      // ------------------------------------------
+
       if (e.key === "t") {
         e.preventDefault();
         document.getElementById("taskInput").focus();
@@ -4001,3 +4012,147 @@ document.querySelector(".widget-header-float").addEventListener("click", functio
         window.toggleStickyWidget();
     }
 });
+
+// ==================== FITUR BARU: EXAM COUNTDOWN ====================
+
+function openCountdownModal() {
+    document.getElementById('countdownModal').style.display = 'flex';
+}
+
+function addCountdown() {
+    const title = document.getElementById('cdTitle').value;
+    const date = document.getElementById('cdDate').value;
+
+    if(!title || !date) return showToast("Isi semua data!", "error");
+
+    const newEvent = { id: Date.now(), title, date };
+    if(!cachedData.examCountdowns) cachedData.examCountdowns = [];
+    cachedData.examCountdowns.push(newEvent);
+
+    saveDB("examCountdowns", cachedData.examCountdowns);
+    document.getElementById('countdownModal').style.display = 'none';
+    document.getElementById('cdTitle').value = "";
+    document.getElementById('cdDate').value = "";
+    renderCountdowns();
+    showToast("Event disimpan!", "success");
+}
+
+function renderCountdowns() {
+    const list = document.getElementById("countdownList");
+    if(!list) return;
+    list.innerHTML = "";
+    
+    const events = cachedData.examCountdowns || [];
+    if (events.length === 0) {
+        list.innerHTML = '<div class="empty-message small"><p>Belum ada jadwal ujian.</p></div>';
+        return;
+    }
+
+    // Urutkan dari yang terdekat
+    events.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    events.forEach(ev => {
+        // Gunakan fungsi getDaysRemaining yang sudah ada di script.js lama
+        const diff = getDaysRemaining(ev.date); 
+        let daysText = diff;
+        let label = "Hari Lagi";
+        let colorStyle = "border-left-color: var(--primary)";
+
+        if (diff < 0) { daysText = "Selesai"; label = ""; colorStyle = "border-left-color: var(--text-sub); opacity:0.6;"; }
+        else if (diff === 0) { daysText = "HARI INI"; label = "Semangat!"; colorStyle = "border-left-color: var(--red)"; }
+        else if (diff <= 7) { colorStyle = "border-left-color: var(--orange)"; }
+
+        const html = `
+            <div class="countdown-item" style="${colorStyle}">
+                <div class="cd-info">
+                    <h4>${escapeHtml(ev.title)}</h4>
+                    <small>${new Date(ev.date).toLocaleDateString('id-ID')}</small>
+                </div>
+                <div style="display:flex; align-items:center;">
+                    <div class="cd-days">
+                        <b>${daysText}</b>
+                        <span>${label}</span>
+                    </div>
+                    <button class="btn-del-cd" onclick="deleteCountdown(${ev.id})"><i class="fas fa-trash"></i></button>
+                </div>
+            </div>
+        `;
+        list.innerHTML += html;
+    });
+}
+
+window.deleteCountdown = function(id) {
+    if(confirm("Hapus event ini?")) {
+        cachedData.examCountdowns = cachedData.examCountdowns.filter(x => x.id !== id);
+        saveDB("examCountdowns", cachedData.examCountdowns);
+        renderCountdowns();
+    }
+};
+
+// ==================== FITUR BARU: MOOD TRACKER ====================
+
+function logMood(mood) {
+    const today = new Date().toISOString().split('T')[0];
+    if(!cachedData.moodLogs) cachedData.moodLogs = {};
+    
+    // Cek apakah hari ini sudah isi mood
+    if(cachedData.moodLogs[today]) {
+        // Jika mau overwrite tanpa nambah XP, langsung save aja
+    } else {
+        // Jika baru pertama kali hari ini, kasih XP bonus
+        addXP(5); 
+        showToast("Mood tercatat! (+5 XP)", "success");
+        playSuccessSound("coin");
+    }
+
+    cachedData.moodLogs[today] = mood;
+    saveDB("moodLogs", cachedData.moodLogs);
+    renderMoodWidget();
+}
+
+function renderMoodWidget() {
+    const selector = document.getElementById("moodSelector");
+    const result = document.getElementById("moodResult");
+    const text = document.getElementById("todayMoodText");
+    
+    if(!selector || !result) return; 
+
+    const today = new Date().toISOString().split('T')[0];
+    const todayMood = cachedData.moodLogs ? cachedData.moodLogs[today] : null;
+
+    if(todayMood) {
+        selector.style.display = "none";
+        result.style.display = "block";
+        
+        // Mapping Data Mood
+        const moods = {
+            'happy':     { emoji: "😄", label: "Senang" },
+            'excited':   { emoji: "🔥", label: "Semangat Membara" },
+            'confident': { emoji: "😎", label: "Pede Abis" },
+            'grateful':  { emoji: "🙏", label: "Bersyukur" },
+            'relaxed':   { emoji: "😌", label: "Santai / Chill" },
+            'bored':     { emoji: "😐", label: "Bosan / Gabut" },
+            'confused':  { emoji: "😵‍💫", label: "Bingung" },
+            'tired':     { emoji: "😫", label: "Capek Banget" },
+            'sad':       { emoji: "😢", label: "Sedih / Galau" },
+            'anxious':   { emoji: "😰", label: "Cemas / Deg-degan" },
+            'sick':      { emoji: "😷", label: "Sakit / Tidak Fit" },
+            'angry':     { emoji: "😡", label: "Marah / Emosi" }
+        };
+
+        const m = moods[todayMood] || { emoji: "❓", label: "Mood Misterius" };
+        text.innerText = `${m.emoji} ${m.label}`;
+    } else {
+        selector.style.display = "flex";
+        result.style.display = "none";
+    }
+}
+
+function resetMood() {
+    if(confirm("Ganti mood hari ini?")) {
+        const today = new Date().toISOString().split('T')[0];
+        delete cachedData.moodLogs[today];
+        saveDB("moodLogs", cachedData.moodLogs);
+        renderMoodWidget();
+    }
+}
