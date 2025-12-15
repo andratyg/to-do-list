@@ -1,4 +1,28 @@
 // ==================== SYSTEM & CONFIG ====================
+// --- SISTEM KONFIRMASI MODERN ---
+let confirmCallback = null;
+
+function showCustomConfirm(message, callback) {
+    document.getElementById('confirmMessage').innerText = message;
+    document.getElementById('customConfirmModal').style.display = 'flex';
+    confirmCallback = callback;
+    
+    // Setup tombol 'Ya'
+    const btnYes = document.getElementById('btnConfirmAction');
+    btnYes.onclick = function() {
+        if (confirmCallback) confirmCallback();
+        closeCustomConfirm();
+    };
+}
+
+function closeCustomConfirm() {
+    document.getElementById('customConfirmModal').style.display = 'none';
+    confirmCallback = null;
+}
+
+// Expose ke global agar bisa dipanggil di HTML/onclick
+window.showCustomConfirm = showCustomConfirm;
+window.closeCustomConfirm = closeCustomConfirm;
 let currentUser = null; // UID User
 
 // Wadah Data Lokal
@@ -1528,9 +1552,11 @@ function renderFocusChart() {
   html += "</div>";
   chart.innerHTML = html;
 }
-
 function renderAll() {
-  document.getElementById("weekTypeSelector").value = currentWeekType;
+  // 1. Update UI yang sudah ada
+  const weekSelector = document.getElementById("weekTypeSelector");
+  if (weekSelector) weekSelector.value = currentWeekType;
+  
   checkExamMode();
   renderSchedule();
   loadTasks();
@@ -1540,12 +1566,16 @@ function renderAll() {
   updateGamificationUI();
   renderFocusChart();
 
+  // 2. [PERBAIKAN] Panggil fungsi ini agar Widget BARU muncul saat refresh
+  if (typeof renderCountdowns === "function") renderCountdowns(); 
+  if (typeof renderMoodWidget === "function") renderMoodWidget(); 
+
+  // 3. Update Streak
   if (document.getElementById("streakCount")) {
     document.getElementById("streakCount").innerText =
       cachedData.streak.count || 0;
   }
 }
-
 // --- MODE FOKUS ---
 function setFocusType(type) {
   if (!isPaused) return showToast("Jeda timer dulu untuk ganti mode!", "error");
@@ -4080,13 +4110,14 @@ function renderCountdowns() {
         list.innerHTML += html;
     });
 }
-
 window.deleteCountdown = function(id) {
-    if(confirm("Hapus event ini?")) {
+    showCustomConfirm("Hapus event hitung mundur ini?", () => {
+        // Logika penghapusan pindah ke sini
         cachedData.examCountdowns = cachedData.examCountdowns.filter(x => x.id !== id);
         saveDB("examCountdowns", cachedData.examCountdowns);
         renderCountdowns();
-    }
+        showToast("Event berhasil dihapus", "success");
+    });
 };
 
 // ==================== FITUR BARU: MOOD TRACKER ====================

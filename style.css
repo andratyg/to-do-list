@@ -1375,3 +1375,11 @@ body.dark-mode #globalStickyNote {
 .cd-days span { font-size: 0.6rem; color: var(--text-sub); text-transform: uppercase; }
 .btn-del-cd { background:none; color:var(--text-sub); font-size:0.8rem; margin-left:10px; cursor: pointer; }
 .btn-del-cd:hover { color:var(--red); }
+/* Tambahan untuk Custom Confirm Modal */
+#customConfirmModal .modal-body {
+    padding-bottom: 0;
+}
+#customConfirmModal h3 {
+    font-size: 1.2rem;
+    font-weight: 700;
+}

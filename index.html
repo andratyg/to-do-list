@@ -1122,6 +1122,21 @@
         </div>
     </div>
 </div>
+<div id="customConfirmModal" class="modal-backdrop" style="display: none;">
+    <div class="modal-content fade-in-up" style="max-width: 350px; text-align: center;">
+        <div class="modal-body">
+            <div style="background: rgba(239, 68, 68, 0.1); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px;">
+                <i class="fas fa-exclamation-triangle" style="font-size: 1.8rem; color: var(--red);"></i>
+            </div>
+            <h3 style="margin-bottom: 10px; color: var(--text-main);">Apakah Anda Yakin?</h3>
+            <p id="confirmMessage" style="color: var(--text-sub); font-size: 0.9rem; margin-bottom: 20px;">Tindakan ini tidak dapat dibatalkan.</p>
+        </div>
+        <div class="modal-foot" style="justify-content: center; gap: 15px;">
+            <button onclick="closeCustomConfirm(false)" class="btn-text-danger" style="background: var(--bg-body); color: var(--text-sub); border: 1px solid var(--border-color); padding: 10px 20px; border-radius: 10px;">Batal</button>
+            <button id="btnConfirmAction" class="btn-primary" style="background: var(--red); border: none; padding: 10px 20px; border-radius: 10px;">Ya, Hapus</button>
+        </div>
+    </div>
+</div>
     <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
       import {
