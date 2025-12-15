@@ -1,4 +1,4 @@
-// ==================== SYSTEM & CONFIG ====================
+// ==================== SYSTEM & CONFIG ===================
 // --- SISTEM KONFIRMASI MODERN ---
 let confirmCallback = null;
 
@@ -1109,35 +1109,54 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function initAuthListener() {
-  setTimeout(() => {
-    if (!window.authListener) return;
+    // Cek setiap 100ms apakah Firebase sudah siap (maksimal tunggu 10 detik)
+    let attempts = 0;
+    const checkFirebase = setInterval(() => {
+        attempts++;
+        
+        // Cek ketersediaan authListener dan auth dari module Firebase
+        if (window.authListener && window.auth) {
+            clearInterval(checkFirebase); // Stop checking karena sudah siap
 
-    window.authListener(window.auth, (user) => {
-      if (user) {
-        let rawName = user.displayName || user.email.split("@")[0];
-        const displayName = rawName
-          .replace(/[0-9]/g, "")
-          .replace(/^\s+|\s+$/g, "");
+            // Jalankan listener status autentikasi
+            window.authListener(window.auth, (user) => {
+                if (user) {
+                    // --- LOGIKA SAAT LOGIN BERHASIL ---
+                    let rawName = user.displayName || user.email.split("@")[0];
+                    const displayName = rawName
+                        .replace(/[0-9]/g, "")
+                        .replace(/^\s+|\s+$/g, "");
 
-        currentUser = displayName;
-        const uid = user.uid;
+                    currentUser = displayName;
+                    const uid = user.uid;
 
-        document.getElementById("loginOverlay").style.display = "none";
-        document.getElementById("mainContent").style.display = "block";
+                    // Update UI: Sembunyikan login overlay, tampilkan konten utama
+                    document.getElementById("loginOverlay").style.display = "none";
+                    document.getElementById("mainContent").style.display = "block";
 
-        document.getElementById("displayUsername").innerText = displayName;
-        updateGreeting();
-        document.getElementById("loginStatusText").innerText = "Online";
+                    // Update Info User di Header
+                    document.getElementById("displayUsername").innerText = displayName;
+                    updateGreeting();
+                    document.getElementById("loginStatusText").innerText = "Online";
 
-        startFirebaseListener(uid);
-        initApp(uid);
-      } else {
-        currentUser = null;
-        document.getElementById("loginOverlay").style.display = "flex";
-        document.getElementById("mainContent").style.display = "none";
-      }
-    });
-  }, 1000);
+                    // Mulai Listener Data Realtime Firebase & Inisialisasi Fitur
+                    startFirebaseListener(uid);
+                    initApp(uid);
+                } else {
+                    // --- LOGIKA SAAT LOGOUT / BELUM LOGIN ---
+                    currentUser = null;
+                    document.getElementById("loginOverlay").style.display = "flex";
+                    document.getElementById("mainContent").style.display = "none";
+                }
+            });
+
+        } else if (attempts > 100) { // Timeout setelah 100x coba (10 detik)
+            clearInterval(checkFirebase);
+            console.error("Firebase gagal dimuat (koneksi lambat).");
+            const errorMsg = document.getElementById("authErrorMsg");
+            if (errorMsg) errorMsg.innerText = "Koneksi lambat atau gagal memuat. Coba refresh halaman.";
+        }
+    }, 100); // Interval pengecekan 100ms
 }
 
 window.switchAuthMode = function (mode) {
@@ -1184,9 +1203,10 @@ window.handleRegister = function () {
     })
     .catch((e) => alert(e.message));
 };
-window.logoutUser = function () {
-  if (confirm("Keluar?"))
-    window.authSignOut(window.auth).then(() => location.reload());
+window.logoutUser = function() {
+    showCustomConfirm("Apakah Anda yakin ingin keluar?", () => {
+        window.authSignOut(window.auth).then(() => location.reload());
+    });
 };
 window.editUsername = function () {
   const u = window.auth.currentUser;
@@ -1325,32 +1345,37 @@ function initApp(uid) {
   loadRandomQuote();
   updateTimerDisplay();
   injectNewUI();
-
-  // 2. Shortcut Keyboard (Ctrl + T/S/D/A)
-  document.addEventListener("keydown", (e) => {
-    if (e.ctrlKey || e.metaKey) {
-      
-      // --- TAMBAHKAN BAGIAN INI (ANTI CTRL+A) ---
-      if (e.key === "a" || e.key === "A") {
-        e.preventDefault(); // Mencegah blok teks
+}
+// 2. Shortcut Keyboard (Ctrl + T/S/D/A)
+  document.addEventListener("keydown", (e) => { // ✅ BENAR: Kurung tutup dihapus di sini
+    // Di dalam event listener keydown...
+    if ((e.key === "a" || e.key === "A") && (e.ctrlKey || e.metaKey)) { // Cek Ctrl+A
+        // [FIX] Cek apakah user sedang mengetik di Input atau Textarea
+        const target = e.target.tagName.toLowerCase();
+        if (target === "input" || target === "textarea") {
+            return; // JANGAN blokir jika sedang mengetik
+        }
+        
+        // Blokir hanya jika TIDAK sedang mengetik
+        e.preventDefault();
         showToast("🚫 Select All dimatikan!", "error");
         return;
-      }
-      // ------------------------------------------
-
-      if (e.key === "t") {
-        e.preventDefault();
-        document.getElementById("taskInput").focus();
-      } else if (e.key === "s") {
-        e.preventDefault();
-        document.getElementById("startPauseBtn").click();
-      } else if (e.key === "d") {
-        e.preventDefault();
-        toggleDarkMode();
-      }
     }
-  });
+    // ------------------------------------------
 
+    // Shortcut lain (Ctrl + T/S/D) biasanya butuh e.ctrlKey, pastikan logika Anda benar
+    // Jika shortcut di bawah ini TIDAK menggunakan Ctrl, biarkan seperti ini:
+    if (e.key === "t" && e.ctrlKey) { // Sebaiknya pakai Ctrl+T agar tidak terpencet saat ngetik biasa
+      e.preventDefault();
+      document.getElementById("taskInput").focus();
+    } else if (e.key === "s" && e.ctrlKey) { // Ctrl+S
+      e.preventDefault();
+      document.getElementById("startPauseBtn").click();
+    } else if (e.key === "d" && e.ctrlKey) { // Ctrl+D
+      e.preventDefault();
+      toggleDarkMode();
+    }
+  }); // ✅ BENAR: Kurung tutup penutup ada di sini
   // 3. Cek Reminder Jadwal setiap 1 menit
   setInterval(checkReminders, 60000);
   setTimeout(checkSubscriptionReminders, 3000); // Delay sedikit agar tidak bertumpuk
@@ -1369,7 +1394,7 @@ function initApp(uid) {
       playSuccessSound("coin");
     }
   });
-}
+
 function injectNewUI() {
   // Inject XP container removed - handled by main HTML structure now
   if (!document.getElementById("musicWidget")) {
@@ -2083,17 +2108,16 @@ window.saveNoteFromModal = function () {
   renderSchedule();
   showToast("Catatan Mapel Disimpan!", "success");
 };
-
-window.deleteNote = function () {
-  if (!currentNoteTarget) return;
-  if (confirm("Hapus catatan ini?")) {
-    delete cachedData.scheduleNotes[currentNoteTarget];
-    saveDB("scheduleNotes", cachedData.scheduleNotes);
-    document.getElementById("noteModalInput").value = "";
-    closeNoteModal();
-    renderSchedule();
-    showToast("Catatan dihapus.", "info");
-  }
+window.deleteNote = function() {
+    if (!currentNoteTarget) return;
+    showCustomConfirm("Hapus catatan mata pelajaran ini?", () => {
+        delete cachedData.scheduleNotes[currentNoteTarget];
+        saveDB("scheduleNotes", cachedData.scheduleNotes);
+        document.getElementById("noteModalInput").value = "";
+        closeNoteModal();
+        renderSchedule();
+        showToast("Catatan dihapus.", "info");
+    });
 };
 window.closeNoteModal = function () {
   document.getElementById("noteModal").style.display = "none";
@@ -2320,18 +2344,22 @@ function toggleTask(id) {
     saveDB("tasks", tasks);
     loadTasks();
   }
-}
-function deleteTask(id) {
-  if (confirm("Hapus?")) {
-    const tasks = cachedData.tasks.filter((x) => x.id !== id);
-    saveDB("tasks", tasks);
-    loadTasks();
-  }
-}
-function clearCompletedTasks() {
-  const tasks = cachedData.tasks.filter((t) => !t.completed);
-  if (confirm("Hapus semua yang selesai?")) saveDB("tasks", tasks);
-}
+}window.deleteTask = function(id) {
+    showCustomConfirm("Hapus tugas ini secara permanen?", () => {
+        const tasks = cachedData.tasks.filter((x) => x.id !== id);
+        saveDB("tasks", tasks);
+        loadTasks();
+        showToast("Tugas dihapus", "success");
+    });
+};
+window.clearCompletedTasks = function() {
+    showCustomConfirm("Bersihkan semua tugas yang sudah selesai?", () => {
+        const tasks = cachedData.tasks.filter((t) => !t.completed);
+        saveDB("tasks", tasks);
+        loadTasks();
+        showToast("Tugas selesai dibersihkan", "success");
+    });
+};
 
 function addTransaction(type) {
   const desc = escapeHtml(document.getElementById("moneyDesc").value);
@@ -2447,13 +2475,14 @@ function applyBalancePrivacy() {
     }
   });
 }
-function delTxn(id) {
-  if (confirm("Hapus?")) {
-    const t = cachedData.transactions.filter((x) => x.id !== id);
-    saveDB("transactions", t);
-    loadTransactions();
-  }
-}
+window.delTxn = function(id) {
+    showCustomConfirm("Hapus riwayat transaksi ini? Saldo akan dikembalikan.", () => {
+        const t = cachedData.transactions.filter((x) => x.id !== id);
+        saveDB("transactions", t);
+        loadTransactions();
+        showToast("Transaksi dihapus", "success");
+    });
+};
 window.exportFinanceReport = function () {
   const txns = cachedData.transactions || [];
   if (txns.length === 0) return showToast("Belum ada data keuangan!", "error");
@@ -2819,24 +2848,22 @@ window.saveNewSchedule = function () {
   document.getElementById("addScheduleModal").style.display = "none";
   showToast("Jadwal Baru!", "success");
 };
-window.deleteSchedule = function () {
-  if (!currentScheduleEdit) return;
-  if (confirm("Hapus mapel ini?")) {
-    const { day, idx } = currentScheduleEdit;
-    let displayType =
-      currentWeekType === "auto"
-        ? getWeekNumber(new Date()) % 2 !== 0
-          ? "umum"
-          : "produktif"
-        : currentWeekType;
-    if (jadwalData[displayType] && jadwalData[displayType][day]) {
-      jadwalData[displayType][day].splice(idx, 1);
-      saveDB("jadwalData", jadwalData);
-      renderSchedule();
-      closeScheduleEditModal();
-      showToast("Jadwal berhasil dihapus!", "success");
-    }
-  }
+window.deleteSchedule = function() {
+    if (!currentScheduleEdit) return;
+    showCustomConfirm("Hapus jadwal mata pelajaran ini?", () => {
+        const { day, idx } = currentScheduleEdit;
+        let displayType = currentWeekType === "auto" 
+            ? getWeekNumber(new Date()) % 2 !== 0 ? "umum" : "produktif" 
+            : currentWeekType;
+            
+        if (jadwalData[displayType] && jadwalData[displayType][day]) {
+            jadwalData[displayType][day].splice(idx, 1);
+            saveDB("jadwalData", jadwalData);
+            renderSchedule();
+            closeScheduleEditModal();
+            showToast("Jadwal berhasil dihapus!", "success");
+        }
+    });
 };
 
 // ==================== Z. ACHIEVEMENT SYSTEM (OPTIMIZED) ====================
@@ -3549,7 +3576,7 @@ function checkAchievements() {
 
 window.openAchievementModal = function () {
   const listContainer = document.getElementById("achievementList");
-  const badge = document.getElementById("achievelmentCountBadge");
+  const badge = document.getElementById("achievementCountBadge");
 
   if (!cachedData.unlockedAchievements) cachedData.unlockedAchievements = [];
 
@@ -3901,7 +3928,6 @@ window.addSubscription = function () {
   if (!name || !cost || !date)
     return showToast("Lengkapi semua data!", "error");
   if (date < 1 || date > 31) return showToast("Tanggal harus 1-31", "error");
-  // Di dalam function addSubscription()
   if (cost <= 0)
     return showToast("Harga tidak boleh nol atau negatif!", "error");
 
@@ -3919,13 +3945,13 @@ window.addSubscription = function () {
 };
 
 // 4. Hapus Langganan
-window.deleteSubscription = function (index) {
-  if (confirm("Hapus langganan ini?")) {
-    cachedData.subscriptions.splice(index, 1);
-    saveDB("subscriptions", cachedData.subscriptions);
-    renderSubscriptions();
-    showToast("Dihapus.", "info");
-  }
+window.deleteSubscription = function(index) {
+    showCustomConfirm("Berhenti berlangganan dan hapus dari daftar?", () => {
+        cachedData.subscriptions.splice(index, 1);
+        saveDB("subscriptions", cachedData.subscriptions);
+        renderSubscriptions();
+        showToast("Langganan dihapus.", "info");
+    });
 };
 
 // 5. Cek Pengingat Otomatis (Panggil fungsi ini di initApp)
@@ -4112,11 +4138,10 @@ function renderCountdowns() {
 }
 window.deleteCountdown = function(id) {
     showCustomConfirm("Hapus event hitung mundur ini?", () => {
-        // Logika penghapusan pindah ke sini
         cachedData.examCountdowns = cachedData.examCountdowns.filter(x => x.id !== id);
         saveDB("examCountdowns", cachedData.examCountdowns);
         renderCountdowns();
-        showToast("Event berhasil dihapus", "success");
+        showToast("Event dihapus", "success");
     });
 };
 
@@ -4179,11 +4204,13 @@ function renderMoodWidget() {
     }
 }
 
+
+// ... kode lainnya ...
 function resetMood() {
-    if(confirm("Ganti mood hari ini?")) {
+    showCustomConfirm("Ganti mood hari ini? Data lama akan tertimpa.", () => {
         const today = new Date().toISOString().split('T')[0];
         delete cachedData.moodLogs[today];
         saveDB("moodLogs", cachedData.moodLogs);
         renderMoodWidget();
-    }
+    });
 }

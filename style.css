@@ -1383,3 +1383,15 @@ body.dark-mode #globalStickyNote {
     font-size: 1.2rem;
     font-weight: 700;
 }
+/* --- STYLE MODAL KONFIRMASI --- */
+#customConfirmModal .modal-content {
+    border: 1px solid var(--border-color);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+#customConfirmModal h3 {
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+#customConfirmModal .btn-primary:hover {
+    background-color: #dc2626; /* Merah lebih gelap saat hover */
+}
