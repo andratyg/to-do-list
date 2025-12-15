@@ -2427,30 +2427,37 @@ window.exportFinanceReport = function () {
 
   // --- 1. SIAPKAN DATA ---
   let wallets = { dana: 0, ovo: 0, gopay: 0, cash: 0, lainnya: 0 };
+  let categoryStats = {}; // [BARU] Variabel untuk menampung total per kategori
   let totalMasuk = 0;
   let totalKeluar = 0;
 
-  // Kita buat array data untuk tabel Excel
-  // Baris 1: Judul
+  // Header Style untuk Excel
+  const styleTitle = {
+    font: { bold: true, sz: 14, color: { rgb: "FFFFFF" } },
+    fill: { fgColor: { rgb: "4F46E5" } },
+    alignment: { horizontal: "center" },
+  };
+  const styleSubHeader = {
+    font: { bold: true },
+    fill: { fgColor: { rgb: "E5E7EB" } },
+  };
+  const styleHeaderCol = {
+    font: { bold: true, color: { rgb: "FFFFFF" } },
+    fill: { fgColor: { rgb: "6B7280" } },
+    alignment: { horizontal: "center" },
+  };
+
+  // Baris Awal Excel
   let dataRows = [
-    [
-      {
-        v: "LAPORAN KEUANGAN: " + userName.toUpperCase(),
-        s: {
-          font: { bold: true, sz: 14, color: { rgb: "FFFFFF" } },
-          fill: { fgColor: { rgb: "4F46E5" } },
-          alignment: { horizontal: "center" },
-        },
-      },
-    ],
+    [{ v: "LAPORAN KEUANGAN: " + userName.toUpperCase(), s: styleTitle }],
     [{ v: "Tanggal: " + dateStr, s: { alignment: { horizontal: "center" } } }],
-    [], // Baris kosong
+    [], // Spasi
   ];
 
-  // Proses Transaksi untuk Ringkasan
+  // --- 2. HITUNG RINGKASAN & KATEGORI ---
   txns.forEach((t) => {
     let w = t.wallet ? t.wallet.toLowerCase() : "lainnya";
-    if (!wallets.hasOwnProperty(w)) w = "lainnya"; // Safety check
+    if (!wallets.hasOwnProperty(w)) w = "lainnya";
 
     if (t.type === "in") {
       wallets[w] += t.amount;
@@ -2458,83 +2465,77 @@ window.exportFinanceReport = function () {
     } else {
       wallets[w] -= t.amount;
       totalKeluar += t.amount;
+      
+      // [BARU] Hitung Total Per Kategori (Hanya Pengeluaran)
+      let cat = t.category || "Tanpa Kategori";
+      categoryStats[cat] = (categoryStats[cat] || 0) + t.amount;
     }
   });
 
-  // Baris Ringkasan
-  const styleSubHeader = {
-    font: { bold: true },
-    fill: { fgColor: { rgb: "E5E7EB" } },
-  };
+  // Masukkan Ringkasan Saldo ke Tabel
   dataRows.push([{ v: "RINGKASAN SALDO", s: styleSubHeader }]);
-  dataRows.push([
-    "Total Pemasukan",
-    { v: totalMasuk, t: "n", z: '"Rp" #,##0' },
-  ]);
-  dataRows.push([
-    "Total Pengeluaran",
-    { v: totalKeluar, t: "n", z: '"Rp" #,##0' },
-  ]);
+  dataRows.push(["Total Pemasukan", { v: totalMasuk, t: "n", z: '"Rp" #,##0' }]);
+  dataRows.push(["Total Pengeluaran", { v: totalKeluar, t: "n", z: '"Rp" #,##0' }]);
   dataRows.push([
     "Saldo Bersih",
     {
       v: totalMasuk - totalKeluar,
       t: "n",
       z: '"Rp" #,##0',
-      s: { font: { bold: true } },
+      s: { font: { bold: true, color: { rgb: totalMasuk >= totalKeluar ? "10B981" : "EF4444" } } },
     },
   ]);
   dataRows.push([]); // Spasi
 
-  // Baris Rincian Per Dompet
-  const walletKeys = ["cash", "dana", "ovo", "gopay"];
-  const styleHeaderCol = {
-    font: { bold: true, color: { rgb: "FFFFFF" } },
-    fill: { fgColor: { rgb: "6B7280" } },
-    alignment: { horizontal: "center" },
-  };
+  // [BARU] Masukkan Ringkasan Kategori ke Tabel
+  if (Object.keys(categoryStats).length > 0) {
+    dataRows.push([{ v: "RINCIAN PENGELUARAN PER KATEGORI", s: styleSubHeader }]);
+    
+    // Urutkan dari pengeluaran terbesar
+    Object.keys(categoryStats)
+      .sort((a, b) => categoryStats[b] - categoryStats[a])
+      .forEach((cat) => {
+        dataRows.push([
+          cat,
+          { v: categoryStats[cat], t: "n", z: '"Rp" #,##0' }
+        ]);
+      });
+    dataRows.push([]); // Spasi
+  }
 
+  // --- 3. RINCIAN TRANSAKSI PER DOMPET ---
+  const walletKeys = ["cash", "dana", "ovo", "gopay"];
+  
   walletKeys.forEach((w) => {
-    // Ambil transaksi khusus dompet ini
-    const wTxns = txns.filter(
-      (t) => (t.wallet || "lainnya").toLowerCase() === w
-    );
+    const wTxns = txns.filter((t) => (t.wallet || "lainnya").toLowerCase() === w);
 
     if (wTxns.length > 0) {
-      // Header Dompet
       dataRows.push([
         {
-          v: `DOMPET: ${w.toUpperCase()} (Saldo: Rp ${wallets[w].toLocaleString(
-            "id-ID"
-          )})`,
+          v: `DOMPET: ${w.toUpperCase()} (Sisa Saldo: Rp ${wallets[w].toLocaleString("id-ID")})`,
           s: { font: { bold: true, color: { rgb: "4F46E5" } } },
         },
       ]);
 
-      // Header Kolom Tabel
       dataRows.push([
         { v: "No", s: styleHeaderCol },
         { v: "Tanggal", s: styleHeaderCol },
         { v: "Keterangan", s: styleHeaderCol },
-        { v: "Kategori", s: styleHeaderCol },
+        { v: "Kategori", s: styleHeaderCol }, // Kolom Kategori sudah ada
         { v: "Tipe", s: styleHeaderCol },
         { v: "Jumlah", s: styleHeaderCol },
       ]);
 
-      // Data Transaksi
       wTxns.reverse().forEach((t, idx) => {
         const isMasuk = t.type === "in";
-        const color = isMasuk ? "10B981" : "EF4444"; // Hijau / Merah
+        const color = isMasuk ? "10B981" : "EF4444"; 
 
         dataRows.push([
           { v: idx + 1, s: { alignment: { horizontal: "center" } } },
           { v: t.date, s: { alignment: { horizontal: "center" } } },
           { v: t.desc },
-          { v: t.category },
-          {
-            v: isMasuk ? "Masuk" : "Keluar",
-            s: { alignment: { horizontal: "center" } },
-          },
+          { v: t.category }, // Kategori otomatis muncul sesuai input baru
+          { v: isMasuk ? "Masuk" : "Keluar", s: { alignment: { horizontal: "center" } } },
           {
             v: t.amount,
             t: "n",
@@ -2543,59 +2544,28 @@ window.exportFinanceReport = function () {
           },
         ]);
       });
-      dataRows.push([]); // Spasi antar dompet
+      dataRows.push([]); 
     }
   });
 
-  // --- 2. BUAT WORKBOOK ---
-  // Menggunakan library XLSX yang baru ditambahkan
+  // --- 4. GENERATE FILE EXCEL ---
   const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.aoa_to_sheet(dataRows);
 
-  // Atur Lebar Kolom (Optional biar rapi)
-  ws["!cols"] = [
-    { wch: 5 }, // No
-    { wch: 12 }, // Tanggal
-    { wch: 25 }, // Keterangan
-    { wch: 15 }, // Kategori
-    { wch: 10 }, // Tipe
-    { wch: 15 }, // Jumlah
-  ];
-
-  // Merge Cells untuk Judul Utama (Gabung 6 kolom)
+  ws["!cols"] = [{ wch: 5 }, { wch: 12 }, { wch: 25 }, { wch: 15 }, { wch: 10 }, { wch: 15 }];
   ws["!merges"] = [
-    { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }, // Judul
-    { s: { r: 1, c: 0 }, e: { r: 1, c: 5 } }, // Tanggal
-    { s: { r: 3, c: 0 }, e: { r: 3, c: 5 } }, // Header Ringkasan
+    { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }, 
+    { s: { r: 1, c: 0 }, e: { r: 1, c: 5 } }, 
   ];
 
   XLSX.utils.book_append_sheet(wb, ws, "Laporan Keuangan");
 
-  // --- 3. DOWNLOAD FILE .XLSX ---
-  // Nama file asli Excel modern
-  const fileName = `Laporan_${userName.replace(/\s+/g, "_")}_${
-    new Date().toISOString().split("T")[0]
-  }.xlsx`;
-
-  // Download!
+  const fileName = `Laporan_${userName.replace(/\s+/g, "_")}_${new Date().toISOString().split("T")[0]}.xlsx`;
   XLSX.writeFile(wb, fileName);
 
-  showToast("Laporan Excel Berhasil Didownload! 📊", "success");
+  showToast("Laporan Excel Diperbarui & Didownload! 📊", "success");
   playSuccessSound("ding");
 };
-
-function editTarget() {
-  const uid = window.auth.currentUser.uid;
-  const val = prompt(
-    "Target Tabungan (Rp):",
-    localStorage.getItem(`${uid}_target`) || 0
-  );
-  if (val && !isNaN(val)) {
-    localStorage.setItem(`${uid}_target`, val);
-    saveSetting("target", val);
-    loadTarget();
-  }
-}
 function loadTarget() {
   const uid = window.auth.currentUser ? window.auth.currentUser.uid : null;
   if (!uid) return;
@@ -3584,7 +3554,19 @@ window.openAchievementModal = function () {
 
 // 1. Buka Modal Setting Budget
 window.openBudgetModal = function () {
-  const cats = ["Jajan", "Transport", "Belanja", "Lainnya"]; // Kategori Pengeluaran
+  const cats = ["Jajan", 
+  "Transport", 
+  "Belanja", 
+  "Sedekah", 
+  "Tagihan", 
+  "Laundry", 
+  "Skincare", 
+  "Nongkrong", 
+  "Kondangan", 
+  "Parkir", 
+  "Hiburan", 
+  "Cicilan", 
+  "Lainnya"]; // Kategori Pengeluaran
   let html = "";
 
   // Pastikan data budget ada
@@ -3664,11 +3646,20 @@ function renderExpenseChart(txns) {
 
   let html = "";
   const colors = {
-    Jajan: "#f97316",
-    Transport: "#3b82f6",
-    Tabungan: "#10b981",
-    Belanja: "#8b5cf6",
-    Lainnya: "#6b7280",
+   Jajan: "#f97316",       // Oranye
+    Transport: "#3b82f6",   // Biru
+    Belanja: "#8b5cf6",     // Ungu
+    Tabungan: "#10b981",    // Hijau
+    Sedekah: "#14b8a6",     // Teal (Hijau Laut)
+    Tagihan: "#eab308",     // Kuning Gelap
+    Laundry: "#06b6d4",     // Cyan
+    Skincare: "#ec4899",    // Pink
+    Nongkrong: "#854d0e",   // Coklat Kopi
+    Kondangan: "#db2777",   // Pink Tua
+    Parkir: "#64748b",      // Abu-abu
+    Hiburan: "#6366f1",     // Indigo
+    Cicilan: "#ef4444",     // Merah (Warning)
+    Lainnya: "#6b7280",     // Abu-abu Tua
   };
 
   // Render Bar Chart + Budget Status

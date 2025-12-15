@@ -577,13 +577,22 @@
         <input type="text" id="moneyDesc" placeholder="Keterangan (Cth: Jajan)" aria-label="Keterangan Transaksi" />
         <div class="form-row">
           <input type="number" id="moneyAmount" placeholder="Rp..." aria-label="Jumlah Uang" />
-          <select id="txnCategory" aria-label="Kategori Transaksi">
-            <option value="Jajan">🍔 Jajan</option>
-            <option value="Transport">🚗 Transport</option>
-            <option value="Tabungan">💰 Tabungan</option>
-            <option value="Belanja">🛍️ Belanja</option>
-            <option value="Lainnya">✨ Lainnya</option>
-          </select>
+         <select id="txnCategory" aria-label="Kategori Transaksi">
+  <option value="Jajan">🍔 Jajan / Makan</option>
+  <option value="Transport">🚗 Transport / Bensin</option>
+  <option value="Belanja">🛍️ Belanja Bulanan</option>
+  <option value="Sedekah">🤝 Sedekah / Donasi</option>
+  <option value="Tagihan">⚡ Pulsa / Token Listrik</option>
+  <option value="Laundry">🧺 Laundry</option>
+  <option value="Skincare">💅 Skincare / Grooming</option>
+  <option value="Nongkrong">☕ Nongkrong / Kopi</option>
+  <option value="Kondangan">💌 Kondangan / Kado</option>
+  <option value="Parkir">🅿️ Parkir / Pak Ogah</option>
+  <option value="Hiburan">🎮 Game / Hiburan</option>
+  <option value="Cicilan">💸 Cicilan / Paylater</option>
+  <option value="Tabungan">💰 Tabungan</option>
+  <option value="Lainnya">✨ Lainnya</option>
+</select>
         </div>
         <div class="btn-group">
           <button class="btn-in" onclick="addTransaction('in')">
