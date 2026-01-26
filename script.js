@@ -1442,8 +1442,6 @@ function initApp(uid) {
   loadRandomQuote();
   updateTimerDisplay();
   injectNewUI();
-  setTimeout(fetchLiveGoldPrice, 2000); 
-
 }
 // 2. Shortcut Keyboard (Ctrl + T/S/D/A)
   document.addEventListener("keydown", (e) => { // ✅ BENAR: Kurung tutup dihapus di sini
@@ -1684,7 +1682,6 @@ function renderAll() {
   checkExamMode();
   renderSchedule();
   loadTasks();
-  initGold(); // <--- TAMBAHKAN BARIS IN
   loadTransactions();
   loadTarget();
   loadPomodoroTasks();
@@ -3722,46 +3719,39 @@ window.openAchievementModal = function () {
 
 // 1. Buka Modal Setting Budget
 window.openBudgetModal = function () {
-  const cats = ["Jajan", 
-  "Transport", 
-  "Belanja", 
-  "Sedekah", 
-  "Tagihan", 
-  "Laundry", 
-  "Skincare", 
-  "Nongkrong", 
-  "Kondangan", 
-  "Parkir", 
-  "Hiburan", 
-  "Cicilan", 
-  "Lainnya"]; // Kategori Pengeluaran
+  const cats = [
+    "Jajan", "Transport", "Belanja", "Sedekah", "Tagihan", 
+    "Laundry", "Skincare", "Nongkrong", "Kondangan", 
+    "Parkir", "Hiburan", "Cicilan", "Lainnya"
+  ];
+  
   let html = "";
 
-  // Pastikan data budget ada
   if (!cachedData.budgets) cachedData.budgets = {};
 
   cats.forEach((c) => {
     const currentLimit = cachedData.budgets[c] || 0;
     html += `
-            <div class="form-group" style="margin-bottom:10px;">
-                <label style="font-size:0.85rem; color:var(--text-sub);">${c}</label>
-                <input type="number" id="budget-${c}" value="${currentLimit}" placeholder="0 (Tanpa Batas)" class="sub-input">
+            <div class="form-group" style="margin-bottom:0;">
+                <label style="font-size:0.8rem; color:var(--text-sub); font-weight:600;">${c}</label>
+                <input type="number" id="budget-${c}" value="${currentLimit}" placeholder="0" class="sub-input" style="padding:8px;">
             </div>
         `;
   });
 
-  // Kita pakai modal jadwal yg sudah ada tapi ubah isinya (biar hemat kode)
-  // Atau bisa buat modal baru lewat JS
   const modalContent = `
         <div id="budgetModal" class="modal-backdrop" style="display:flex;">
-            <div class="modal-content fade-in-up" style="max-width:350px;">
-                <div class="modal-head">
-                    <h3>💰 Atur Anggaran Bulanan</h3>
+            <div class="modal-content fade-in-up" style="max-width:500px;"> <div class="modal-head">
+                    <h3>💰 Atur Anggaran</h3>
                     <button class="close-icon" onclick="document.getElementById('budgetModal').remove()">×</button>
                 </div>
-                <div class="modal-body">
-                    <p style="font-size:0.8rem; color:var(--text-sub); margin-bottom:15px;">Set batas maksimal pengeluaranmu bulan ini.</p>
-                    ${html}
+                <div class="modal-body" style="padding-top:0;">
+                    <p style="font-size:0.8rem; color:var(--text-sub); margin-bottom:15px;">Tentukan batas maksimal (Rp) per kategori:</p>
+                    
+                    <div class="budget-grid-container">
+                        ${html}
+                    </div>
+                    
                 </div>
                 <div class="modal-foot">
                     <button onclick="saveBudgets()" class="btn-primary btn-block">Simpan Anggaran</button>
@@ -3771,6 +3761,10 @@ window.openBudgetModal = function () {
     `;
   document.body.insertAdjacentHTML("beforeend", modalContent);
 };
+  // Kita pakai modal jadwal yg sudah ada tapi ubah isinya (biar hemat kode)
+  // Atau bisa buat modal baru lewat JS
+ 
+ 
 
 // 2. Simpan Data Budget
 window.saveBudgets = function () {
@@ -4162,12 +4156,14 @@ window.toggleStickyWidget = function() {
 };
 
 // Opsional: Klik header untuk toggle juga
-document.querySelector(".widget-header-float").addEventListener("click", function(e) {
-    // Cegah toggle jika yang diklik adalah tombol/icon di dalamnya (biar tidak double trigger)
-    if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'I') {
-        window.toggleStickyWidget();
-    }
-});
+const stickyHeader = document.querySelector(".widget-header-float");
+if (stickyHeader) {
+    stickyHeader.addEventListener("click", function(e) {
+        if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'I') {
+            window.toggleStickyWidget();
+        }
+    });
+}
 
 // ==================== FITUR BARU: EXAM COUNTDOWN ====================
 
@@ -4314,166 +4310,9 @@ function resetMood() {
         renderMoodWidget();
     });
 }
-// ==================== FITUR EMAS (REAL TIME COINGECKO) ====================
-function initGold() {
-    if (!cachedData.gold) {
-        cachedData.gold = { 
-            totalGrams: 0, 
-            avgBuyPrice: 0, 
-            currentMarketPrice: 1350000, // Harga default sementara
-            lastFetch: null 
-        };
-    }
-    // Render dulu data yang tersimpan
-    renderGoldWidget();
-    
-}
 
-// FUNGSI API REAL TIME (PAX GOLD / 31.1035)
 
-window.fetchLiveGoldPrice = async function() {
-    const btn = document.getElementById("btnRefreshGold");
-    const input = document.getElementById("marketPriceInput");
-    
-    // Efek Loading
-    if(btn) btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-    if(input) input.style.opacity = "0.5";
 
-    try {
-        console.log("Mencoba update harga emas (via AllOrigins)...");
-        
-        // TIMEOUT DIPERPANJANG JADI 30 DETIK (Biar gak gampang putus)
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 30000); 
-
-        // URL Target CoinGecko
-        const targetUrl = "https://api.coingecko.com/api/v3/simple/price?ids=pax-gold&vs_currencies=idr";
-        
-        // Gunakan Proxy AllOrigins
-        const proxyUrl = "https://api.allorigins.win/get?url=" + encodeURIComponent(targetUrl);
-
-        const response = await fetch(proxyUrl, {
-            signal: controller.signal
-        });
-        clearTimeout(timeoutId);
-
-        if (!response.ok) throw new Error(`Server Error: ${response.status}`);
-
-        // Tahap 1: Ambil data dari Proxy
-        const wrapper = await response.json();
-        
-        // Tahap 2: Buka bungkus "contents"
-        const data = JSON.parse(wrapper.contents);
-        
-        if(data && data['pax-gold'] && data['pax-gold']['idr']) {
-            const pricePerOunce = data['pax-gold']['idr'];
-            // 1 Troy Ounce = 31.1035 Gram
-            const pricePerGram = Math.floor(pricePerOunce / 31.1035);
-
-            // Update Data Sukses
-            if(!cachedData.gold) cachedData.gold = {}; 
-            
-            cachedData.gold.currentMarketPrice = pricePerGram;
-            cachedData.gold.lastFetch = new Date().toLocaleTimeString("id-ID");
-            saveDB("gold", cachedData.gold);
-            
-            showToast(`Harga Update: Rp ${pricePerGram.toLocaleString()}`, "success");
-            playSuccessSound("coin");
-        } else {
-            throw new Error("Data API kosong/rusak");
-        }
-
-    } catch (err) {
-        console.error("Gagal Update Emas:", err);
-        let msg = "Gagal koneksi. Cek internet.";
-        
-        if (err.message.includes("429")) msg = "⛔ Terlalu sering refresh!";
-        else if (err.name === 'AbortError') msg = "⏱️ Koneksi lambat (Timeout). Coba lagi.";
-        
-        showToast(msg, "error");
-
-    } finally {
-        // Matikan Efek Loading
-        if(btn) btn.innerHTML = '<i class="fas fa-sync-alt"></i>';
-        if(input) input.style.opacity = "1";
-        renderGoldWidget();
-    }
-};
-window.openGoldModal = function() { document.getElementById("goldModal").style.display = "flex"; }
-
-window.saveGoldTransaction = function() {
-    const type = document.getElementById("goldTxType").value;
-    const weight = parseFloat(document.getElementById("goldTxWeight").value);
-    const price = parseInt(document.getElementById("goldTxPrice").value);
-
-    if (!weight || weight <= 0 || !price || price <= 0) return showToast("Data tidak valid!", "error");
-
-    let gold = cachedData.gold;
-    if (type === "buy") {
-        const oldVal = gold.totalGrams * gold.avgBuyPrice;
-        const newVal = weight * price;
-        gold.totalGrams += weight;
-        gold.avgBuyPrice = (oldVal + newVal) / gold.totalGrams;
-        
-        // Update harga pasar manual sesuai harga beli terakhir (opsional)
-        gold.currentMarketPrice = price; 
-        
-        showToast(`Beli ${weight}gr Emas sukses!`, "success");
-        playSuccessSound("coin");
-    } else {
-        if (weight > gold.totalGrams) return showToast("Emas tidak cukup!", "error");
-        gold.totalGrams -= weight;
-        showToast(`Jual ${weight}gr Emas sukses!`, "info");
-        playSuccessSound("ding");
-    }
-    saveDB("gold", gold);
-    document.getElementById("goldModal").style.display = "none";
-    document.getElementById("goldTxWeight").value = "";
-    document.getElementById("goldTxPrice").value = "";
-    renderGoldWidget();
-}
-
-window.updateMarketPrice = function(val) {
-    if(!val) return;
-    cachedData.gold.currentMarketPrice = parseInt(val);
-    saveDB("gold", cachedData.gold);
-    renderGoldWidget();
-}
-
-function renderGoldWidget() {
-    const gold = cachedData.gold;
-    if(!gold) return;
-    
-    const market = gold.currentMarketPrice || 0;
-    const totalVal = gold.totalGrams * market;
-    const modal = gold.totalGrams * gold.avgBuyPrice;
-    const profit = totalVal - modal;
-    let pct = modal > 0 ? ((profit / modal) * 100) : 0;
-
-    // Update UI
-    document.getElementById("goldWeight").innerText = gold.totalGrams.toFixed(2);
-    document.getElementById("goldAvgPrice").innerText = Math.round(gold.avgBuyPrice).toLocaleString("id-ID");
-    document.getElementById("goldTotalValue").innerText = "Rp " + Math.round(totalVal).toLocaleString("id-ID");
-    
-    // Update Input Harga Pasar
-    const inputMarket = document.getElementById("marketPriceInput");
-    if(inputMarket) inputMarket.value = market;
-
-    // Update Last Fetch Label
-    const lblUpdate = document.getElementById("goldLastUpdate");
-    if(lblUpdate) lblUpdate.innerText = "Update: " + (gold.lastFetch || "Belum");
-
-    // Warna Profit/Loss
-    const box = document.getElementById("goldTrendBox");
-    document.getElementById("goldProfitPercent").innerText = (profit >= 0 ? "+" : "") + pct.toFixed(1) + "%";
-    document.getElementById("goldProfitValue").innerText = "Rp " + Math.round(profit).toLocaleString("id-ID");
-    
-    if (profit >= 0) {
-        box.style.background = "rgba(16, 185, 129, 0.1)"; box.style.color = "var(--green)";
-    } else {
-        box.style.background = "rgba(239, 68, 68, 0.1)"; box.style.color = "var(--red)";
-    }
-}
 // --- SIDEBAR LOGIC ---
 window.toggleSidebar = function() {
     const sidebar = document.getElementById("mainSidebar");
