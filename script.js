@@ -1104,24 +1104,33 @@ const funWords = [
 ];
 // ==================== B. AUTHENTICATION LOGIC ====================
 
+// ==================== B. AUTHENTICATION LOGIC (DIPERBAIKI) ====================
+
 document.addEventListener("DOMContentLoaded", () => {
-  initAuthListener();
+    // Coba inisialisasi auth segera setelah DOM siap
+    initAuthListener();
 });
 
 function initAuthListener() {
-    // Cek setiap 100ms apakah Firebase sudah siap (maksimal tunggu 10 detik)
-    let attempts = 0;
+    // Gunakan interval untuk memastikan Firebase SDK sudah termuat sepenuhnya
+    // Terkadang koneksi lambat membuat window.auth belum tersedia instan
     const checkFirebase = setInterval(() => {
-        attempts++;
-        
-        // Cek ketersediaan authListener dan auth dari module Firebase
-        if (window.authListener && window.auth) {
-            clearInterval(checkFirebase); // Stop checking karena sudah siap
+        // Cek apakah objek auth dari module Firebase sudah tersedia di window
+        if (window.auth && window.authListener) {
+            clearInterval(checkFirebase); // Stop checking
 
-            // Jalankan listener status autentikasi
+            // --- PENTING: SET PERSISTENCE ---
+            // Secara default Firebase Web SDK menggunakan LOCAL persistence, 
+            // tapi kita pastikan lagi di sini agar sesi tidak hilang saat refresh.
+            // (Biasanya sudah otomatis, tapi ini untuk memastikan)
+            
+            // Jalankan listener utama status autentikasi
             window.authListener(window.auth, (user) => {
                 if (user) {
-                    // --- LOGIKA SAAT LOGIN BERHASIL ---
+                  
+                    // === USER SUDAH LOGIN (SESI TERSIMPAN) ===
+                    console.log("User terdeteksi:", user.email);
+
                     let rawName = user.displayName || user.email.split("@")[0];
                     const displayName = rawName
                         .replace(/[0-9]/g, "")
@@ -1130,33 +1139,58 @@ function initAuthListener() {
                     currentUser = displayName;
                     const uid = user.uid;
 
-                    // Update UI: Sembunyikan login overlay, tampilkan konten utama
-                    document.getElementById("loginOverlay").style.display = "none";
-                    document.getElementById("mainContent").style.display = "block";
+                    // Update UI: Sembunyikan login, tampilkan konten
+                    const loginOverlay = document.getElementById("loginOverlay");
+                    const mainContent = document.getElementById("mainContent");
+                    
+                    if(loginOverlay) loginOverlay.style.display = "none";
+                    if(mainContent) mainContent.style.display = "block";
 
-                    // Update Info User di Header
-                    document.getElementById("displayUsername").innerText = displayName;
+                    // Update Header Info
+                    const displayUserEl = document.getElementById("displayUsername");
+                    const statusTextEl = document.getElementById("loginStatusText");
+                    
+                    if(displayUserEl) displayUserEl.innerText = displayName;
+                    if(statusTextEl) statusTextEl.innerText = "Online";
+                    // Di dalam initAuthListener, blok if (user) { ... }
+
+// --- UPDATE SIDEBAR INFO ---
+const sbUser = document.getElementById("sidebarUsername");
+const sbEmail = document.getElementById("sidebarEmail");
+
+if (sbUser) sbUser.innerText = displayName; // Nama
+if (sbEmail && user.email) sbEmail.innerText = user.email; // Email
+                    
                     updateGreeting();
-                    document.getElementById("loginStatusText").innerText = "Online";
 
-                    // Mulai Listener Data Realtime Firebase & Inisialisasi Fitur
+                    // Load Data Realtime
                     startFirebaseListener(uid);
                     initApp(uid);
+
+                    // [TAMBAHAN: SIMPAN NAMA USER UNTUK ADMIN]
+                    if (window.dbUpdate && window.db && window.dbRef) {
+                        window.dbUpdate(window.dbRef(window.db, `users/${uid}`), {
+                            username: displayName,
+                            email: user.email,
+                            lastSeen: new Date().toLocaleString()
+                        }).catch(err => console.log("Update Profil Skip:", err));
+                    }
+
                 } else {
-                    // --- LOGIKA SAAT LOGOUT / BELUM LOGIN ---
+                    // === USER BELUM LOGIN / LOGOUT ===
+                    console.log("Tidak ada user login.");
                     currentUser = null;
-                    document.getElementById("loginOverlay").style.display = "flex";
-                    document.getElementById("mainContent").style.display = "none";
+                    
+                    const loginOverlay = document.getElementById("loginOverlay");
+                    const mainContent = document.getElementById("mainContent");
+
+                    if(loginOverlay) loginOverlay.style.display = "flex";
+                    if(mainContent) mainContent.style.display = "none";
                 }
             });
 
-        } else if (attempts > 100) { // Timeout setelah 100x coba (10 detik)
-            clearInterval(checkFirebase);
-            console.error("Firebase gagal dimuat (koneksi lambat).");
-            const errorMsg = document.getElementById("authErrorMsg");
-            if (errorMsg) errorMsg.innerText = "Koneksi lambat atau gagal memuat. Coba refresh halaman.";
         }
-    }, 100); // Interval pengecekan 100ms
+    }, 100); // Cek setiap 100ms
 }
 
 window.switchAuthMode = function (mode) {
@@ -1286,6 +1320,69 @@ document.getElementById("globalStickyNote").value = cachedData.stickyNote;
     // 4. Update Tampilan (Render)
     jadwalData = cachedData.jadwal;
     renderAll();
+    // --- TAMBAHAN: DENGARKAN PENGUMUMAN ADMIN ---
+// --- NOTIFIKASI RUNNING TEXT (UPDATE INI) ---
+// DI FILE: script.js (User)
+
+// --- NOTIFIKASI RUNNING TEXT (LOGIKA BARU DENGAN JADWAL) ---
+const systemRef = window.dbRef(window.db, 'system/announcement');
+
+window.dbOnValue(systemRef, (snapshot) => {
+    const data = snapshot.val();
+    const widget = document.getElementById("broadcastWidget");
+    const textEl = document.getElementById("broadcastText");
+
+    // Safety check
+    if (!widget || !textEl) return;
+
+    // Logika Validasi Waktu
+    const now = Date.now();
+    let showAnnouncement = false;
+
+    if (data) {
+        if (data.startTime && data.endTime) {
+            // [LOGIKA BARU] Cek Range Waktu (Jadwal)
+            // Tampil hanya jika: Sekarang >= Mulai DAN Sekarang <= Selesai
+            if (now >= data.startTime && now <= data.endTime) {
+                showAnnouncement = true;
+            }
+        } else if (data.timestamp) {
+            // [LOGIKA LAMA/FALLBACK] Cek 24 Jam dari timestamp
+            if (now - data.timestamp < 86400000) {
+                showAnnouncement = true;
+            }
+        }
+    }
+
+    // Tampilkan atau Sembunyikan
+    if (showAnnouncement) {
+        widget.style.display = "flex";
+        
+        // Format Teks
+        textEl.innerText = `${data.title.toUpperCase()}  —  ${data.message}    *** `;
+        
+        // Reset animasi biar mulus
+        textEl.style.animation = 'none';
+        textEl.offsetHeight; 
+        
+        // Atur kecepatan
+        const duration = Math.max(10, textEl.innerText.length / 5); 
+        textEl.style.animation = `marquee ${duration}s linear infinite`;
+        
+        // Bunyi ting hanya jika widget baru muncul (opsional)
+        if(widget.style.display === 'none') playSuccessSound("bell");
+        
+    } else {
+        widget.style.display = "none";
+    }
+});
+
+// Fungsi Tutup Notifikasi Manual (Taruh di luar startFirebaseListener atau di global)
+window.closeBroadcast = function() {
+    const widget = document.getElementById("broadcastWidget");
+    if(widget) widget.style.display = "none";
+};
+
   });
 }
 
@@ -1345,6 +1442,8 @@ function initApp(uid) {
   loadRandomQuote();
   updateTimerDisplay();
   injectNewUI();
+  setTimeout(fetchLiveGoldPrice, 2000); 
+
 }
 // 2. Shortcut Keyboard (Ctrl + T/S/D/A)
   document.addEventListener("keydown", (e) => { // ✅ BENAR: Kurung tutup dihapus di sini
@@ -1585,6 +1684,7 @@ function renderAll() {
   checkExamMode();
   renderSchedule();
   loadTasks();
+  initGold(); // <--- TAMBAHKAN BARIS IN
   loadTransactions();
   loadTarget();
   loadPomodoroTasks();
@@ -4214,3 +4314,183 @@ function resetMood() {
         renderMoodWidget();
     });
 }
+// ==================== FITUR EMAS (REAL TIME COINGECKO) ====================
+function initGold() {
+    if (!cachedData.gold) {
+        cachedData.gold = { 
+            totalGrams: 0, 
+            avgBuyPrice: 0, 
+            currentMarketPrice: 1350000, // Harga default sementara
+            lastFetch: null 
+        };
+    }
+    // Render dulu data yang tersimpan
+    renderGoldWidget();
+    
+}
+
+// FUNGSI API REAL TIME (PAX GOLD / 31.1035)
+
+window.fetchLiveGoldPrice = async function() {
+    const btn = document.getElementById("btnRefreshGold");
+    const input = document.getElementById("marketPriceInput");
+    
+    // Efek Loading
+    if(btn) btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    if(input) input.style.opacity = "0.5";
+
+    try {
+        console.log("Mencoba update harga emas (via AllOrigins)...");
+        
+        // TIMEOUT DIPERPANJANG JADI 30 DETIK (Biar gak gampang putus)
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000); 
+
+        // URL Target CoinGecko
+        const targetUrl = "https://api.coingecko.com/api/v3/simple/price?ids=pax-gold&vs_currencies=idr";
+        
+        // Gunakan Proxy AllOrigins
+        const proxyUrl = "https://api.allorigins.win/get?url=" + encodeURIComponent(targetUrl);
+
+        const response = await fetch(proxyUrl, {
+            signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+
+        if (!response.ok) throw new Error(`Server Error: ${response.status}`);
+
+        // Tahap 1: Ambil data dari Proxy
+        const wrapper = await response.json();
+        
+        // Tahap 2: Buka bungkus "contents"
+        const data = JSON.parse(wrapper.contents);
+        
+        if(data && data['pax-gold'] && data['pax-gold']['idr']) {
+            const pricePerOunce = data['pax-gold']['idr'];
+            // 1 Troy Ounce = 31.1035 Gram
+            const pricePerGram = Math.floor(pricePerOunce / 31.1035);
+
+            // Update Data Sukses
+            if(!cachedData.gold) cachedData.gold = {}; 
+            
+            cachedData.gold.currentMarketPrice = pricePerGram;
+            cachedData.gold.lastFetch = new Date().toLocaleTimeString("id-ID");
+            saveDB("gold", cachedData.gold);
+            
+            showToast(`Harga Update: Rp ${pricePerGram.toLocaleString()}`, "success");
+            playSuccessSound("coin");
+        } else {
+            throw new Error("Data API kosong/rusak");
+        }
+
+    } catch (err) {
+        console.error("Gagal Update Emas:", err);
+        let msg = "Gagal koneksi. Cek internet.";
+        
+        if (err.message.includes("429")) msg = "⛔ Terlalu sering refresh!";
+        else if (err.name === 'AbortError') msg = "⏱️ Koneksi lambat (Timeout). Coba lagi.";
+        
+        showToast(msg, "error");
+
+    } finally {
+        // Matikan Efek Loading
+        if(btn) btn.innerHTML = '<i class="fas fa-sync-alt"></i>';
+        if(input) input.style.opacity = "1";
+        renderGoldWidget();
+    }
+};
+window.openGoldModal = function() { document.getElementById("goldModal").style.display = "flex"; }
+
+window.saveGoldTransaction = function() {
+    const type = document.getElementById("goldTxType").value;
+    const weight = parseFloat(document.getElementById("goldTxWeight").value);
+    const price = parseInt(document.getElementById("goldTxPrice").value);
+
+    if (!weight || weight <= 0 || !price || price <= 0) return showToast("Data tidak valid!", "error");
+
+    let gold = cachedData.gold;
+    if (type === "buy") {
+        const oldVal = gold.totalGrams * gold.avgBuyPrice;
+        const newVal = weight * price;
+        gold.totalGrams += weight;
+        gold.avgBuyPrice = (oldVal + newVal) / gold.totalGrams;
+        
+        // Update harga pasar manual sesuai harga beli terakhir (opsional)
+        gold.currentMarketPrice = price; 
+        
+        showToast(`Beli ${weight}gr Emas sukses!`, "success");
+        playSuccessSound("coin");
+    } else {
+        if (weight > gold.totalGrams) return showToast("Emas tidak cukup!", "error");
+        gold.totalGrams -= weight;
+        showToast(`Jual ${weight}gr Emas sukses!`, "info");
+        playSuccessSound("ding");
+    }
+    saveDB("gold", gold);
+    document.getElementById("goldModal").style.display = "none";
+    document.getElementById("goldTxWeight").value = "";
+    document.getElementById("goldTxPrice").value = "";
+    renderGoldWidget();
+}
+
+window.updateMarketPrice = function(val) {
+    if(!val) return;
+    cachedData.gold.currentMarketPrice = parseInt(val);
+    saveDB("gold", cachedData.gold);
+    renderGoldWidget();
+}
+
+function renderGoldWidget() {
+    const gold = cachedData.gold;
+    if(!gold) return;
+    
+    const market = gold.currentMarketPrice || 0;
+    const totalVal = gold.totalGrams * market;
+    const modal = gold.totalGrams * gold.avgBuyPrice;
+    const profit = totalVal - modal;
+    let pct = modal > 0 ? ((profit / modal) * 100) : 0;
+
+    // Update UI
+    document.getElementById("goldWeight").innerText = gold.totalGrams.toFixed(2);
+    document.getElementById("goldAvgPrice").innerText = Math.round(gold.avgBuyPrice).toLocaleString("id-ID");
+    document.getElementById("goldTotalValue").innerText = "Rp " + Math.round(totalVal).toLocaleString("id-ID");
+    
+    // Update Input Harga Pasar
+    const inputMarket = document.getElementById("marketPriceInput");
+    if(inputMarket) inputMarket.value = market;
+
+    // Update Last Fetch Label
+    const lblUpdate = document.getElementById("goldLastUpdate");
+    if(lblUpdate) lblUpdate.innerText = "Update: " + (gold.lastFetch || "Belum");
+
+    // Warna Profit/Loss
+    const box = document.getElementById("goldTrendBox");
+    document.getElementById("goldProfitPercent").innerText = (profit >= 0 ? "+" : "") + pct.toFixed(1) + "%";
+    document.getElementById("goldProfitValue").innerText = "Rp " + Math.round(profit).toLocaleString("id-ID");
+    
+    if (profit >= 0) {
+        box.style.background = "rgba(16, 185, 129, 0.1)"; box.style.color = "var(--green)";
+    } else {
+        box.style.background = "rgba(239, 68, 68, 0.1)"; box.style.color = "var(--red)";
+    }
+}
+// --- SIDEBAR LOGIC ---
+window.toggleSidebar = function() {
+    const sidebar = document.getElementById("mainSidebar");
+    const backdrop = document.getElementById("sidebarBackdrop");
+    
+    if (sidebar && backdrop) {
+        sidebar.classList.toggle("active");
+        backdrop.classList.toggle("active");
+    }
+};
+
+// Tutup sidebar otomatis saat salah satu menu diklik (agar rapi)
+document.addEventListener("click", function(e) {
+    if (e.target.closest('.sidebar-menu-item')) {
+        // Cek apakah itu bukan trigger file upload (Restore)
+        if (!e.target.closest('[onclick*="importFile"]')) {
+             window.toggleSidebar();
+        }
+    }
+});
