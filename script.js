@@ -1440,6 +1440,7 @@ function initApp(uid) {
   loadRandomQuote();
   updateTimerDisplay();
   injectNewUI();
+  listenGlobalConfig();
 }
 // 2. Shortcut Keyboard (Ctrl + T/S/D/A)
 document.addEventListener("keydown", (e) => {
@@ -4510,3 +4511,157 @@ window.handleChatEnter = function(e) {
 // PANGGIL FUNGSI INI AGAR CHAT JALAN
 // Tambahkan baris ini di dalam fungsi initApp() yang sudah ada di atas
 // initChatListener();
+// --- LISTEN GLOBAL CONFIG DARI ADMIN ---
+function listenGlobalConfig() {
+    const configRef = window.dbRef(window.db, 'system/config');
+    
+    window.dbOnValue(configRef, (snapshot) => {
+        const config = snapshot.val();
+        if (config) {
+            // 1. Cek Mode Ujian Global
+            if (config.examMode === true) {
+                if (!isExamMode) {
+                    isExamMode = true;
+                    checkExamMode(); // Update UI
+                    showToast("⚠️ MODE UJIAN DIMULAI OLEH ADMIN!", "error");
+                    playSuccessSound("bell");
+                }
+            } else {
+                // Jika admin mematikan, kembalikan ke settingan user
+                // (Opsional: atau biarkan user mematikan sendiri)
+                if (isExamMode && config.examMode === false) {
+                     // Kita tidak otomatis mematikan biar user yang kontrol, 
+                     // atau bisa dipaksa mati dengan baris di bawah:
+                     // isExamMode = false; checkExamMode();
+                }
+            }
+
+            // 2. Cek Maintenance Mode
+            if (config.maintenance === true) {
+                document.body.innerHTML = `
+                    <div style="height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; background:#0f172a; color:white; text-align:center;">
+                        <i class="fas fa-tools" style="font-size:3rem; margin-bottom:20px; color:#f59e0b;"></i>
+                        <h1>Sedang Maintenance</h1>
+                        <p>Aplikasi sedang diperbaiki. Silakan kembali nanti.</p>
+                    </div>
+                `;
+            }
+        }
+    });
+}
+
+// PANGGIL FUNGSI INI DI DALAM initApp
+// Cari function initApp(uid) dan tambahkan listenGlobalConfig();
+// ==================== FITUR SOSIAL & RAPOR ====================
+
+// 1. GLOBAL LEADERBOARD
+window.openLeaderboardModal = function() {
+    document.getElementById("leaderboardModal").style.display = "flex";
+    const list = document.getElementById("leaderboardList");
+    list.innerHTML = '<div style="text-align:center; padding:20px;">Mengambil data ranking...</div>';
+
+    // Ambil semua data user dari Firebase (Read-only)
+    window.dbOnValue(window.dbRef(window.db, 'users'), (snapshot) => {
+        const users = snapshot.val();
+        if (!users) {
+            list.innerHTML = '<div style="text-align:center;">Belum ada data user.</div>';
+            return;
+        }
+
+        // Convert ke Array & Sort by XP Tertinggi
+        const sortedUsers = Object.values(users)
+            .map(u => ({
+                name: u.username || "User Misterius",
+                xp: u.gamification?.xp || 0,
+                level: u.gamification?.level || 1,
+                badge: getLevelTitle(u.gamification?.level || 1)
+            }))
+            .sort((a, b) => b.xp - a.xp)
+            .slice(0, 10); // Ambil Top 10
+
+        // Render HTML
+        list.innerHTML = "";
+        sortedUsers.forEach((u, index) => {
+            let rankColor = "#6b7280"; // Default abu
+            let icon = "";
+
+            if (index === 0) { rankColor = "#FFD700"; icon = "👑"; } // Emas
+            else if (index === 1) { rankColor = "#C0C0C0"; icon = "🥈"; } // Perak
+            else if (index === 2) { rankColor = "#CD7F32"; icon = "🥉"; } // Perunggu
+
+            list.innerHTML += `
+                <div class="ach-item unlocked" style="border-left: 4px solid ${rankColor};">
+                  <div class="ach-icon" style="background: ${rankColor}; color: #fff; font-size: 1rem; width: 40px; height: 40px;">
+                    <b>#${index + 1}</b>
+                  </div>
+                  <div class="ach-info">
+                    <h4 style="margin-bottom:0;">${escapeHtml(u.name)} ${icon}</h4>
+                    <small style="color:var(--text-sub);">${u.badge}</small>
+                  </div>
+                  <div style="text-align:right;">
+                    <b style="color:var(--primary); font-size:1rem;">${u.xp} XP</b><br>
+                    <span class="badge badge-lvl" style="font-size:0.7rem;">Lvl ${u.level}</span>
+                  </div>
+                </div>
+            `;
+        });
+    }, { onlyOnce: true });
+};
+
+// 2. RAPOR BULANAN (RECAP)
+window.openMonthlyRecap = function() {
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+    const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+
+    // PERBAIKAN: Menggunakan Backtick (`) bukan kutip biasa (')
+    document.getElementById("recapMonth").innerText = `Rapor ${monthNames[currentMonth]} ${currentYear}`;
+
+    // Hitung Tugas Selesai Bulan Ini
+    const tasksDone = cachedData.tasks.filter(t => {
+        const d = new Date(t.date);
+        return t.completed && d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+    }).length;
+
+    // Hitung Fokus Jam Bulan Ini
+    let totalFocusMinutes = 0;
+    if (cachedData.focusLogs) {
+        Object.keys(cachedData.focusLogs).forEach(dateStr => {
+            const d = new Date(dateStr);
+            if (d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
+                totalFocusMinutes += cachedData.focusLogs[dateStr];
+            }
+        });
+    }
+    const focusHours = (totalFocusMinutes / 60).toFixed(1);
+
+    // Hitung Uang Ditabung (Kategori: Tabungan)
+    let totalSaved = 0;
+    if (cachedData.transactions) {
+        cachedData.transactions.forEach(t => {
+            const d = new Date(t.date);
+            if (d.getMonth() === currentMonth && d.getFullYear() === currentYear && t.category === "Tabungan" && t.type === "in") {
+                totalSaved += t.amount;
+            }
+        });
+    }
+
+    // Update UI Modal (PERBAIKAN: Menggunakan Backtick)
+    document.getElementById("recapTasks").innerText = tasksDone;
+    document.getElementById("recapFocus").innerText = `${focusHours} Jam`;
+    document.getElementById("recapSaved").innerText = `Rp ${totalSaved.toLocaleString('id-ID')}`;
+    document.getElementById("recapStreak").innerText = `${cachedData.streak?.count || 0} Hari`;
+
+    // Pesan Motivasi Personal
+    const msgEl = document.getElementById("recapMessage");
+    if (tasksDone > 20 && parseFloat(focusHours) > 10) {
+        msgEl.innerText = "🔥 GILA! Kamu produktif banget bulan ini. Pertahankan King/Queen!";
+    } else if (tasksDone > 5) {
+        msgEl.innerText = "✨ Progres yang bagus. Bulan depan gas lagi ya!";
+    } else {
+        msgEl.innerText = "💤 Masih pemanasan ya? Yuk bulan depan lebih serius!";
+    }
+
+    document.getElementById("recapModal").style.display = "flex";
+};

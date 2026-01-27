@@ -1591,6 +1591,21 @@
             <span>Mode Fokus</span>
           </div>
         </div>
+        <div class="sidebar-group">
+      <small>Komunitas & Laporan</small>
+      <div class="sidebar-menu-item" onclick="openLeaderboardModal()">
+        <div class="menu-icon" style="background: rgba(255, 215, 0, 0.1); color: #ffd700;">
+          <i class="fas fa-trophy"></i>
+        </div>
+        <span>Top 10 Leaderboard</span>
+      </div>
+      <div class="sidebar-menu-item" onclick="openMonthlyRecap()">
+        <div class="menu-icon" style="background: rgba(16, 185, 129, 0.1); color: #10b981;">
+          <i class="fas fa-chart-line"></i>
+        </div>
+        <span>Rapor Bulanan</span>
+      </div>
+    </div>
 
         <div class="sidebar-group">
           <small>Aksi Cepat</small>
@@ -1677,6 +1692,61 @@
       class="sidebar-backdrop"
       onclick="toggleSidebar()"
     ></div>
+    <div id="leaderboardModal" class="modal-backdrop" style="display: none">
+  <div class="modal-content fade-in-up" style="max-width: 450px">
+    <div class="modal-head">
+      <h3>🏆 Top 10 Siswa Terbaik</h3>
+      <button class="close-icon" onclick="document.getElementById('leaderboardModal').style.display='none'">×</button>
+    </div>
+    <div class="modal-body">
+      <div id="leaderboardList" class="achievement-grid" style="max-height: 400px; overflow-y: auto;">
+        <p style="text-align:center;">Memuat data...</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="recapModal" class="modal-backdrop" style="display: none">
+  <div class="modal-content fade-in-up" style="max-width: 500px">
+    <div class="modal-head">
+      <h3>📊 Rapor Bulanan Kamu</h3>
+      <button class="close-icon" onclick="document.getElementById('recapModal').style.display='none'">×</button>
+    </div>
+    <div class="modal-body">
+      <div id="recapContent" style="text-align: center;">
+        <h2 id="recapMonth" style="margin-bottom: 20px; color: var(--primary);">Bulan Ini</h2>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+          <div class="card" style="padding: 15px; background: rgba(99, 102, 241, 0.1); border: 1px solid var(--primary);">
+            <i class="fas fa-check-circle" style="font-size: 2rem; color: var(--primary); margin-bottom: 10px;"></i>
+            <h3 id="recapTasks">0</h3>
+            <small>Tugas Selesai</small>
+          </div>
+          <div class="card" style="padding: 15px; background: rgba(239, 68, 68, 0.1); border: 1px solid var(--red);">
+            <i class="fas fa-clock" style="font-size: 2rem; color: var(--red); margin-bottom: 10px;"></i>
+            <h3 id="recapFocus">0 Jam</h3>
+            <small>Total Fokus</small>
+          </div>
+          <div class="card" style="padding: 15px; background: rgba(16, 185, 129, 0.1); border: 1px solid var(--green);">
+            <i class="fas fa-wallet" style="font-size: 2rem; color: var(--green); margin-bottom: 10px;"></i>
+            <h3 id="recapSaved">Rp 0</h3>
+            <small>Uang Ditabung</small>
+          </div>
+          <div class="card" style="padding: 15px; background: rgba(245, 158, 11, 0.1); border: 1px solid var(--orange);">
+            <i class="fas fa-fire" style="font-size: 2rem; color: var(--orange); margin-bottom: 10px;"></i>
+            <h3 id="recapStreak">0 Hari</h3>
+            <small>Streak Tertinggi</small>
+          </div>
+        </div>
+
+        <p id="recapMessage" style="font-style: italic; color: var(--text-sub);">"Tetap semangat!"</p>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button onclick="window.print()" class="btn-primary"><i class="fas fa-print"></i> Cetak / Simpan PDF</button>
+    </div>
+  </div>
+</div>
 
     <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
