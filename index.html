@@ -13,7 +13,7 @@
         style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com;
         font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com;
         img-src 'self' data: https://www.gstatic.com https://lh3.googleusercontent.com https://i.ytimg.com;
-        connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://*.firebaseio.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://www.gstatic.com https://cdn.jsdelivr.net https://api.open-meteo.com https://api.coingecko.com https://api.allorigins.win;
+        connect-src 'self' https://www.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://*.firebaseio.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://www.gstatic.com https://cdn.jsdelivr.net https://api.open-meteo.com https://api.coingecko.com https://api.allorigins.win;
         frame-src https://*.firebaseapp.com https://accounts.google.com https://*.firebasedatabase.app https://www.youtube.com;
     "
     />
@@ -587,14 +587,9 @@
                 </div>
                 <h2>Hitung Mundur</h2>
               </div>
-              <button
-                onclick="openCountdownModal()"
-                style="
-                  font-size: 0.8rem;
-                  color: var(--primary);
-                  background: none;
-                "
-              >
+             <button onclick="openCountdownModal()" class="btn-add-circle" title="Tambah Event Baru">
+  <i class="fas fa-plus"></i>
+</button>
                 <i class="fas fa-plus"></i>
               </button>
             </div>
@@ -1591,6 +1586,12 @@
             <span>Mode Fokus</span>
           </div>
         </div>
+<div class="sidebar-menu-item" onclick="openCalendarModal()">
+            <div class="menu-icon" style="background: rgba(236, 72, 153, 0.1); color: #ec4899;">
+              <i class="fas fa-calendar-alt"></i>
+            </div>
+            <span>Kalender Bulanan</span>
+          </div>
         <div class="sidebar-group">
       <small>Komunitas & Laporan</small>
       <div class="sidebar-menu-item" onclick="openLeaderboardModal()">
@@ -1661,16 +1662,24 @@
             <div class="menu-icon"><i class="fas fa-download"></i></div>
             <span>Backup Data</span>
           </div>
+          <div class="sidebar-menu-item" onclick="document.getElementById('importFile').click()">
+            <div class="menu-icon"><i class="fas fa-upload"></i></div>
+            <span>Restore Data</span>
+          </div>
+          <input type="file" id="importFile" style="display: none;" onchange="importData(this)">
+  
           <div
             class="sidebar-menu-item text-danger"
             onclick="openClearDataModal()"
           >
+          
             <div
               class="menu-icon"
               style="background: rgba(239, 68, 68, 0.1); color: var(--red)"
             >
               <i class="fas fa-trash"></i>
             </div>
+            
             <span>Reset Aplikasi</span>
           </div>
         </div>
@@ -1748,6 +1757,83 @@
   </div>
 </div>
 
+
+      
+        </div>
+      </div>
+    </div>
+    <div id="calAddModal" class="modal-backdrop" style="display: none">
+      <div class="modal-content fade-in-up" style="max-width: 350px">
+        <div class="modal-head">
+          <h3>➕ Acara Baru</h3>
+          <button class="close-icon" onclick="document.getElementById('calAddModal').style.display='none'">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Nama Acara</label>
+            <input type="text" id="calEventTitle" placeholder="Contoh: Futsal, Ultah..." />
+          </div>
+          <div class="form-group">
+            <label>Tanggal</label>
+            <input type="date" id="calEventDate" />
+          </div>
+          <div class="form-group">
+            <label>Waktu (Opsional)</label>
+            <input type="time" id="calEventTime" />
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button onclick="saveManualEvent()" class="btn-primary btn-block">Simpan Acara</button>
+        </div>
+      </div>
+    </div>
+    <div id="calendarModal" class="modal-backdrop" style="display: none">
+      <div class="modal-content fade-in-up" style="max-width: 500px">
+        <div class="modal-head" style="display:flex; justify-content:space-between; align-items:center;">
+          <div style="display:flex; align-items:center; gap:10px;">
+              <h3>📅 Kalender</h3>
+              
+              <div class="calendar-legend-container">
+                  <i class="fas fa-question-circle legend-icon"></i>
+                  <div class="legend-tooltip">
+                      <div class="legend-item"><span class="dot-marker dot-event"></span> Ujian/Event</div>
+                      <div class="legend-item"><span class="dot-marker dot-task"></span> Tugas Biasa</div>
+                      <div class="legend-item"><span class="dot-marker dot-urgent"></span> Tugas Mepet (&lt;3 Hari)</div>
+                      <div class="legend-item"><span class="dot-marker dot-google"></span> Google Calendar</div>
+                      <div class="legend-item"><span class="dot-marker dot-custom"></span> Acara Manual</div>
+                  </div>
+              </div>
+          </div>
+
+          <div style="display:flex; gap:8px;">
+              <button onclick="syncGoogleCalendar()" class="btn-google-sync" title="Sync"><i class="fab fa-google"></i></button>
+              <button onclick="openCalAddModal()" class="btn-cal-add" title="Tambah"><i class="fas fa-plus"></i></button>
+              <button class="close-icon" onclick="document.getElementById('calendarModal').style.display='none'">×</button>
+          </div>
+        </div>
+
+        <div class="modal-body">
+          <div class="calendar-controls">
+            <button onclick="changeCalendarMonth(-1)"><i class="fas fa-chevron-left"></i></button>
+            <h4 id="calMonthYear">Januari 2026</h4>
+            <button onclick="changeCalendarMonth(1)"><i class="fas fa-chevron-right"></i></button>
+          </div>
+
+          <div class="calendar-grid-header">
+            <div>Min</div><div>Sen</div><div>Sel</div><div>Rab</div><div>Kam</div><div>Jum</div><div>Sab</div>
+          </div>
+          <div id="calendarDays" class="calendar-days"></div>
+
+          <div id="calendarDetailBox" style="margin-top: 15px; padding: 15px; border-top: 1px solid var(--border-color); display:none;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                <h5 id="calSelectedDate" style="color:var(--primary); margin:0;">Detail</h5>
+                <button onclick="document.getElementById('calendarDetailBox').style.display='none'" style="border:none; background:none; cursor:pointer;">×</button>
+            </div>
+            <ul id="calEventList" class="task-list" style="max-height: 150px; overflow-y: auto;"></ul>
+          </div>
+        </div>
+      </div>
+    </div>
     <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
      import { 

@@ -142,6 +142,7 @@ select:focus {
   backdrop-filter: blur(8px);
   /* [FIX] Z-Index tinggi agar di atas header */
   z-index: 99999 !important;
+  backdrop-filter: blur(5px); /* Opsional: biar background nge-blur */
 
   display: flex;
   justify-content: center;
@@ -2941,3 +2942,287 @@ body.dark-mode #globalStickyNote {
     display: flex; align-items: center; justify-content: center;
 }
 .btn-send:hover { background: var(--primary-dark); }
+/* ==================== MODERN CALENDAR UI ==================== */
+
+/* 1. Modal Wrapper */
+#calendarModal .modal-content {
+  border-radius: 24px; /* Sudut lebih bulat */
+  padding: 25px;
+  background: var(--card-bg);
+  box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+  border: 1px solid var(--border-color);
+  max-width: 480px; /* Ukuran pas tidak terlalu lebar */
+}
+
+/* 2. Header Modal (Judul & Tombol) */
+#calendarModal .modal-head {
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+#calendarModal .modal-head h3 {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--text-main);
+  letter-spacing: -0.5px;
+}
+
+/* 3. Kontrol Bulan (Panah Kiri/Kanan) */
+.calendar-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  background: var(--bg-body);
+  padding: 8px 12px;
+  border-radius: 16px; /* Pill shape */
+  border: 1px solid var(--border-color);
+}
+
+.calendar-controls h4 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--primary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 0;
+}
+
+.calendar-controls button {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--card-bg);
+  color: var(--text-sub);
+  border: 1px solid var(--border-color);
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-sm);
+}
+
+.calendar-controls button:hover {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+  transform: scale(1.1);
+}
+
+/* 4. Grid Hari (Sen, Sel, Rab...) */
+.calendar-grid-header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.calendar-grid-header div {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-sub);
+  text-transform: uppercase;
+}
+
+/* 5. Grid Tanggal (Angka) */
+.calendar-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px; /* Jarak antar kotak tanggal */
+}
+
+.cal-date {
+  aspect-ratio: 1 / 1; /* Biar kotak presisi persegi */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center; /* Angka di tengah */
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-main);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  background: transparent;
+  border: 1px solid transparent;
+}
+
+/* Hover Effect */
+.cal-date:not(.empty):hover {
+  background: var(--bg-body);
+  border-color: var(--primary);
+  color: var(--primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+/* Hari Ini (Today) */
+.cal-date.today {
+  background: var(--primary);
+  color: white;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+  border: none;
+}
+.cal-date.today:hover {
+  background: var(--primary-dark);
+  transform: scale(1.05);
+}
+
+/* Tanggal Kosong */
+.cal-date.empty {
+  cursor: default;
+}
+
+/* 6. Indikator Titik (Event Dots) */
+.cal-dots {
+  display: flex;
+  gap: 3px;
+  position: absolute;
+  bottom: 6px; /* Posisi di bawah angka */
+}
+
+.dot-marker {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+}
+
+.dot-task { background-color: var(--blue); box-shadow: 0 0 5px var(--blue); }
+.dot-event { background-color: var(--red); box-shadow: 0 0 5px var(--red); }
+.dot-custom { background-color: #8b5cf6; box-shadow: 0 0 5px #8b5cf6; } /* Ungu */
+.dot-google { background-color: #10b981; box-shadow: 0 0 5px #10b981; } /* Hijau */
+
+/* Khusus Hari Ini, titiknya jadi putih biar kelihatan */
+.cal-date.today .dot-marker {
+  background-color: white;
+  box-shadow: none;
+  opacity: 0.8;
+}
+
+/* 7. Detail Popup (Yang muncul di bawah saat diklik) */
+#calendarDetailBox {
+  background: var(--bg-body);
+  border-radius: 16px;
+  padding: 15px;
+  margin-top: 20px;
+  border: 1px solid var(--border-color);
+  animation: slideDown 0.3s ease;
+  position: relative;
+}
+
+#calendarDetailBox h5 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--primary);
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 10px;
+}
+
+#calEventList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+#calEventList li {
+  padding: 8px 10px;
+  background: var(--card-bg);
+  border-radius: 8px;
+  margin-bottom: 6px;
+  font-size: 0.85rem;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Warna border kiri list item sesuai tipe */
+#calEventList li[style*="var(--blue)"] { border-left: 3px solid var(--blue) !important; }
+#calEventList li[style*="var(--red)"] { border-left: 3px solid var(--red) !important; }
+#calEventList li[style*="#34A853"] { border-left: 3px solid #10b981 !important; } /* Google Hijau */
+
+/* Style Tombol Add & Sync di Header */
+.btn-cal-add, .btn-google-sync {
+  transition: transform 0.2s;
+}
+.btn-cal-add:hover, .btn-google-sync:hover {
+  transform: translateY(-2px);
+}
+/* --- STYLE BARU: LEGEND & URGENT --- */
+
+/* 1. Warna Urgent (Oranye) */
+.dot-urgent { 
+    background-color: #f97316; /* Orange */
+    box-shadow: 0 0 5px #f97316;
+}
+
+/* 2. Style Tanda Tanya (Legend) */
+.calendar-legend-container {
+    position: relative;
+    cursor: help;
+}
+.legend-icon {
+    color: var(--text-sub);
+    font-size: 1.1rem;
+    transition: 0.2s;
+}
+.legend-icon:hover {
+    color: var(--primary);
+}
+
+/* 3. Tooltip Penjelasan (Muncul saat Hover) */
+.legend-tooltip {
+    display: none; /* Sembunyi dulu */
+    position: absolute;
+    top: 25px;
+    left: 0;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    padding: 10px;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    width: 200px;
+    z-index: 100;
+}
+.calendar-legend-container:hover .legend-tooltip {
+    display: block; /* Muncul pas hover */
+    animation: fadeIn 0.2s ease;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    margin-bottom: 6px;
+    color: var(--text-main);
+}
+/* --- TOMBOL TAMBAH (MODERN STYLE) --- */
+.btn-add-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.1); /* Merah transparan (sesuai tema countdown) */
+  color: var(--red);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.btn-add-circle:hover {
+  background: var(--red);
+  color: white;
+  transform: scale(1.15) rotate(90deg); /* Efek memutar sedikit saat hover */
+  box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3);
+}
+
+.btn-add-circle i {
+  font-size: 0.9rem;
+  margin-top: 1px; /* Koreksi optik biar pas di tengah */
+}

@@ -1265,6 +1265,7 @@ window.saveUsername = function () {
 function startFirebaseListener(uid) {
   // Cek apakah database sudah siap
   if (!window.db || !window.dbOnValue) return;
+  
 
   const userPath = "users/" + uid;
 
@@ -1274,6 +1275,11 @@ function startFirebaseListener(uid) {
 
     if (data) {
       // 1. Load Data Utama
+      // ... data lainnya ...
+  
+      
+      // TAMBAHKAN BARIS INI:
+      cachedData.calendarEvents = data.calendarEvents || []; // Data acara manual
       cachedData.tasks = data.tasks || [];
       cachedData.transactions = data.transactions || [];
       cachedData.gamification = data.gamification || { xp: 0, level: 1 };
@@ -1381,6 +1387,7 @@ function startFirebaseListener(uid) {
       if (widget) widget.style.display = "none";
     };
   });
+  
 }
 
 function saveDB(key, data) {
@@ -1691,6 +1698,10 @@ function renderAll() {
   loadPomodoroTasks();
   updateGamificationUI();
   renderFocusChart();
+  renderCalendar();
+
+
+
 
   // 2. [PERBAIKAN] Panggil fungsi ini agar Widget BARU muncul saat refresh
   if (typeof renderCountdowns === "function") renderCountdowns();
@@ -4665,3 +4676,265 @@ window.openMonthlyRecap = function() {
 
     document.getElementById("recapModal").style.display = "flex";
 };
+// --- KODE YANG HILANG (PASTE DI ATAS RENDER KALENDER) ---
+
+let currentCalDate = new Date(); // Variabel tanggal (Wajib ada!)
+let googleEventsCache = [];      // <--- TAMBAHKAN BARIS INI (Wajib!)
+
+window.openCalendarModal = function() {
+    renderCalendar(); // Gambar kalender
+    document.getElementById("calendarModal").style.display = "flex";
+    document.getElementById("calendarDetailBox").style.display = "none";
+};
+
+window.changeCalendarMonth = function(n) {
+    currentCalDate.setMonth(currentCalDate.getMonth() + n);
+    renderCalendar(); // Refresh kalender
+    document.getElementById("calendarDetailBox").style.display = "none";
+};
+
+// ---------------------------------------------------------
+
+// ==================== UPDATE RENDER KALENDER (FINAL) ====================
+
+window.renderCalendar = function() {
+    const year = currentCalDate.getFullYear();
+    const month = currentCalDate.getMonth();
+    
+    // Update Header
+    const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+    if(document.getElementById("calMonthYear")) {
+        document.getElementById("calMonthYear").innerText = `${monthNames[month]} ${year}`;
+    }
+    
+    const firstDay = new Date(year, month, 1).getDay(); 
+    const lastDate = new Date(year, month + 1, 0).getDate(); 
+    
+    const grid = document.getElementById("calendarDays");
+    if (!grid) return;
+    grid.innerHTML = "";
+    
+    // Padding Awal Bulan
+    for (let i = 0; i < firstDay; i++) {
+        grid.innerHTML += `<div class="cal-date empty"></div>`;
+    }
+    
+    const today = new Date();
+    const todayStr = today.toLocaleDateString('en-CA');
+    
+    for (let d = 1; d <= lastDate; d++) {
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        
+        // --- FILTER DATA & LOGIC URGENT ---
+        
+        let tasksOnDate = [];
+        let urgentTasks = [];
+
+        if (cachedData.tasks) {
+            cachedData.tasks.forEach(t => {
+                if (t.date === dateStr && !t.completed) {
+                    // Cek selisih hari buat nentuin Urgent/Enggak
+                    const taskDate = new Date(t.date);
+                    const diffTime = taskDate - today;
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+                    
+                    if (diffDays >= 0 && diffDays <= 3) {
+                        urgentTasks.push(t); // Masuk kategori Urgent (Oranye)
+                    } else {
+                        tasksOnDate.push(t); // Tugas Biasa (Biru)
+                    }
+                }
+            });
+        }
+
+        const examsOnDate = cachedData.examCountdowns ? cachedData.examCountdowns.filter(e => e.date === dateStr) : [];
+        const customsOnDate = cachedData.calendarEvents ? cachedData.calendarEvents.filter(e => e.date === dateStr) : [];
+        const gEventsOnDate = googleEventsCache ? googleEventsCache.filter(g => {
+            const gDate = g.start.date || (g.start.dateTime ? g.start.dateTime.split('T')[0] : '');
+            return gDate === dateStr;
+        }) : [];
+
+        // --- RENDER DOTS ---
+        let dotsHTML = '<div class="cal-dots">';
+        
+        if (examsOnDate.length > 0) dotsHTML += `<div class="dot-marker dot-event" title="Ujian"></div>`; // Merah
+        if (urgentTasks.length > 0) dotsHTML += `<div class="dot-marker dot-urgent" title="Deadline Mepet!"></div>`; // Oranye (BARU)
+        if (tasksOnDate.length > 0) dotsHTML += `<div class="dot-marker dot-task" title="Tugas"></div>`; // Biru
+        if (customsOnDate.length > 0) dotsHTML += `<div class="dot-marker dot-custom" title="Acara"></div>`; // Ungu
+        if (gEventsOnDate.length > 0) dotsHTML += `<div class="dot-marker dot-google" title="G-Cal"></div>`; // Hijau
+        
+        dotsHTML += '</div>';
+        
+        const isToday = (dateStr === todayStr) ? "today" : "";
+        
+        grid.innerHTML += `
+            <div class="cal-date ${isToday}" onclick="showDateDetails('${dateStr}')">
+                <span>${d}</span>
+                ${dotsHTML}
+            </div>
+        `;
+    }
+};
+
+// Pastikan fungsi buka modal ada (restore fungsi ini)
+window.openCalendarModal = function() {
+    renderCalendar();
+    document.getElementById("calendarModal").style.display = "flex";
+    document.getElementById("calendarDetailBox").style.display = "none";
+};
+
+window.showDateDetails = function(dateStr) {
+    const list = document.getElementById("calEventList");
+    const box = document.getElementById("calendarDetailBox");
+    const title = document.getElementById("calSelectedDate");
+    
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    title.innerText = new Date(dateStr).toLocaleDateString('id-ID', options);
+    
+    list.innerHTML = "";
+    let hasContent = false;
+    
+    // 1. Google Events
+    if(googleEventsCache) {
+        const gEvents = googleEventsCache.filter(g => {
+            const gDate = g.start.date || (g.start.dateTime ? g.start.dateTime.split('T')[0] : '');
+            return gDate === dateStr;
+        });
+        gEvents.forEach(g => {
+            let timeLabel = g.start.dateTime ? g.start.dateTime.split('T')[1].substring(0,5) : "Seharian";
+            list.innerHTML += `
+                <li style="border-left: 3px solid #34A853; padding-left: 10px; margin-bottom: 5px; color: #34A853;">
+                    <b>G-Cal (${timeLabel}):</b> ${escapeHtml(g.summary)}
+                </li>
+            `;
+            hasContent = true;
+        });
+    }
+
+    // 2. Acara Manual
+    if (cachedData.calendarEvents) {
+        cachedData.calendarEvents.filter(e => e.date === dateStr).forEach(e => {
+            list.innerHTML += `
+                <li style="border-left: 3px solid #8b5cf6; padding-left: 10px; margin-bottom: 5px; display:flex; justify-content:space-between; align-items:center;">
+                    <div style="color: #8b5cf6;">
+                        <b>${escapeHtml(e.time)}:</b> ${escapeHtml(e.title)}
+                    </div>
+                    <button onclick="deleteCalEvent(${e.id})" style="background:none; border:none; color:#ef4444; cursor:pointer;" title="Hapus">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </li>
+            `;
+            hasContent = true;
+        });
+    }
+
+    // 3. Ujian
+    if (cachedData.examCountdowns) {
+        cachedData.examCountdowns.filter(e => e.date === dateStr).forEach(e => {
+            list.innerHTML += `
+                <li style="border-left: 3px solid var(--red); padding-left: 10px; margin-bottom: 5px; color: var(--red);">
+                    <b>Deadline:</b> ${escapeHtml(e.title)}
+                </li>
+            `;
+            hasContent = true;
+        });
+    }
+    
+    // 4. Tugas
+    if (cachedData.tasks) {
+        cachedData.tasks.filter(t => t.date === dateStr && !t.completed).forEach(t => {
+            list.innerHTML += `
+                <li style="border-left: 3px solid var(--blue); padding-left: 10px; margin-bottom: 5px;">
+                    <b>Tugas:</b> ${escapeHtml(t.text)}
+                </li>
+            `;
+            hasContent = true;
+        });
+    }
+    
+    if (!hasContent) {
+        list.innerHTML = `<li style="color:var(--text-sub); font-style:italic;">Tidak ada kegiatan.</li>`;
+    }
+    
+    box.style.display = "block";
+};
+// 5. Fungsi Google Calendar Sync
+window.syncGoogleCalendar = function() {
+    if (!window.auth.currentUser) return showToast("Login dulu bos!", "error");
+
+    const provider = new window.googleProvider.constructor();
+    provider.addScope('https://www.googleapis.com/auth/calendar.events.readonly');
+    showToast("Meminta izin Google Calendar...", "info");
+
+    window.authSignInGoogle(window.auth, provider)
+    .then((result) => {
+        const credential = window.googleProvider.constructor.credentialFromResult(result);
+        const token = credential.accessToken;
+        if (token) fetchGoogleEvents(token);
+        else showToast("Gagal dapat token.", "error");
+    })
+    .catch((error) => {
+        console.error(error);
+        showToast("Sinkronisasi Dibatalkan.", "error");
+    });
+};
+
+function fetchGoogleEvents(accessToken) {
+    const now = new Date();
+    const timeMin = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString();
+    const timeMax = new Date(now.getFullYear(), now.getMonth() + 2, 0).toISOString();
+    const url = `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&orderBy=startTime`;
+
+    fetch(url, { headers: { 'Authorization': `Bearer ${accessToken}` } })
+    .then(response => response.json())
+    .then(data => {
+        if (data.items) {
+            googleEventsCache = data.items;
+            showToast(`Berhasil sync! ${data.items.length} event.`, "success");
+            playSuccessSound("coin");
+            renderCalendar();
+        } else showToast("Tidak ada event ditemukan.", "info");
+    })
+    .catch(err => showToast("Gagal ambil data.", "error"));
+}
+
+// 6. Fungsi Acara Manual (Tambah & Hapus)
+window.openCalAddModal = function() {
+    document.getElementById("calAddModal").style.display = "flex";
+}
+
+window.saveManualEvent = function() {
+    const title = document.getElementById("calEventTitle").value;
+    const date = document.getElementById("calEventDate").value;
+    const time = document.getElementById("calEventTime").value || "Seharian";
+
+    if(!title || !date) return showToast("Isi Nama & Tanggal!", "error");
+
+    if(!cachedData.calendarEvents) cachedData.calendarEvents = [];
+    
+    cachedData.calendarEvents.push({
+        id: Date.now(),
+        title, date, time
+    });
+
+    saveDB("calendarEvents", cachedData.calendarEvents);
+    document.getElementById("calAddModal").style.display = "none";
+    
+    // Reset Form
+    document.getElementById("calEventTitle").value = "";
+    document.getElementById("calEventDate").value = "";
+    
+    showToast("Acara disimpan!", "success");
+    renderCalendar();
+}
+
+window.deleteCalEvent = function(id) {
+    if(confirm("Hapus acara ini?")) {
+        cachedData.calendarEvents = cachedData.calendarEvents.filter(e => e.id !== id);
+        saveDB("calendarEvents", cachedData.calendarEvents);
+        renderCalendar();
+        // Tutup detail biar refresh
+        document.getElementById("calendarDetailBox").style.display = "none";
+        showToast("Acara dihapus.", "info");
+    }
+}
