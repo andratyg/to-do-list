@@ -4464,7 +4464,8 @@ function initChatListener() {
         return;
     }
 
-    const chatRef = window.dbQuery(window.dbRef(window.db, 'system/globalChat'), window.dbLimitToLast(50));
+    // Arahkan ke 'public_chat'
+const chatRef = window.dbRef(window.db, 'public_chat');
     const chatBox = document.getElementById("chatBox");
 
     window.dbOnValue(chatRef, (snapshot) => {
