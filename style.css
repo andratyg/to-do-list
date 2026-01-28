@@ -3365,3 +3365,81 @@ body.dark-mode #globalStickyNote {
         bottom: 10px !important;
     }
 }
+/* =========================================
+   NOTIFIKASI RAMAH HP (MOBILE TOAST)
+   ========================================= */
+
+/* 1. Container Notifikasi (Wadah Utama) */
+#toastBox {
+    position: fixed;
+    top: 20px;            /* Jarak dari atas */
+    right: 20px;          /* Default PC: di kanan */
+    z-index: 10000;       /* Paling depan, di atas modal/sidebar */
+    display: flex;
+    flex-direction: column;
+    gap: 10px;            /* Jarak antar notifikasi */
+}
+
+/* 2. Desain Kotak Notifikasi */
+.toast {
+    min-width: 250px;
+    padding: 12px 20px;
+    background: var(--card-bg);
+    color: var(--text-main);
+    border-radius: 50px;   /* Bentuk Pill/Kapsul biar modern */
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    border: 1px solid var(--border-color);
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.9rem;
+    animation: slideInRight 0.3s ease; /* Animasi masuk dari kanan */
+}
+
+/* Warna Ikon Notifikasi */
+.toast.success i { color: #10b981; } /* Hijau */
+.toast.error i   { color: #ef4444; } /* Merah */
+.toast.info i    { color: #3b82f6; } /* Biru */
+
+/* =========================================
+   KHUSUS TAMPILAN HP (RESPONSIF)
+   ========================================= */
+@media (max-width: 768px) {
+    
+    #toastBox {
+        top: 20px;       /* Tetap di atas */
+        right: 0;        /* Reset posisi kanan */
+        left: 0;         /* Reset posisi kiri */
+        width: 100%;     /* Lebar penuh */
+        align-items: center; /* Posisi di tengah layar */
+        pointer-events: none; /* Biar user tetap bisa klik tombol di belakangnya */
+    }
+
+    .toast {
+        min-width: auto;
+        width: 90%;       /* Lebar notifikasi 90% dari layar HP */
+        max-width: 350px; /* Batas maksimal biar nggak kegedean */
+        border-radius: 12px; /* Lebih kotak dikit biar muat teks panjang */
+        font-size: 0.85rem;
+        padding: 12px 15px;
+        pointer-events: auto; /* Aktifkan klik notifikasi */
+        animation: slideInDown 0.3s ease; /* Ganti animasi: Turun dari atas */
+        
+        /* Shadow lebih tebal biar kontras */
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        background: rgba(30, 41, 59, 0.95); /* Lebih gelap/solid biar tulisan jelas */
+    }
+}
+
+/* Animasi Masuk (PC) */
+@keyframes slideInRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+/* Animasi Masuk (HP - Turun dari atas) */
+@keyframes slideInDown {
+    from { transform: translateY(-50px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
