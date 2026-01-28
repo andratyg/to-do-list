@@ -4501,7 +4501,8 @@ window.sendChat = function() {
     if (!window.auth.currentUser) return showToast("Login dulu!", "error");
 
     // Kirim ke Firebase
-    const chatRef = window.dbRef(window.db, 'system/globalChat');
+    // Ganti 'system/globalChat' jadi 'public_chat'
+const chatRef = window.dbRef(window.db, 'public_chat');
     const newChatRef = window.dbPush(chatRef);
     
     window.dbSet(newChatRef, {

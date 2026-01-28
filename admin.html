@@ -1027,7 +1027,8 @@
 
       // --- CHAT MONITOR (NEW) ---
       function initChatMonitor() {
-        const chatRef = query(ref(db, "system/globalChat"), limitToLast(50));
+       // Ganti ke public_chat
+const chatRef = query(ref(db, "public_chat"), limitToLast(50));
         onValue(chatRef, (snapshot) => {
           const list = document.getElementById("adminChatList");
           list.innerHTML = "";
@@ -1058,13 +1059,15 @@
 
       window.deleteChatMsg = function (key) {
         if (confirm("Hapus pesan ini?")) {
-          set(ref(db, `system/globalChat/${key}`), null);
+         // Ganti ke public_chat
+set(ref(db, `public_chat/${key}`), null);
         }
       };
 
       window.clearAllChat = function () {
         if (confirm("HAPUS SEMUA CHAT USER?")) {
-          set(ref(db, "system/globalChat"), null);
+        // Ganti ke public_chat
+set(ref(db, "public_chat"), null);
           showToast("Chat dibersihkan.", "warning");
         }
       };
