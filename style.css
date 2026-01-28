@@ -3226,3 +3226,142 @@ body.dark-mode #globalStickyNote {
   font-size: 0.9rem;
   margin-top: 1px; /* Koreksi optik biar pas di tengah */
 }
+/* =========================================
+   RESPONSIVE DESIGN (UPDATE KHUSUS HP)
+   ========================================= */
+
+/* 1. Sembunyikan Header Mobile di Laptop */
+.mobile-header {
+    display: none;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+.sidebar-backdrop {
+    display: none; /* Sembunyi default */
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 998; /* Di bawah sidebar, di atas konten */
+    backdrop-filter: blur(3px);
+}
+
+/* 2. MEDIA QUERY (KHUSUS LAYAR KECIL / HP) */
+@media (max-width: 768px) {
+
+    /* --- LAYOUT UTAMA --- */
+    body {
+        overflow-x: hidden; /* Cegah geser samping */
+    }
+
+    .container {
+        grid-template-columns: 1fr; /* Jadi 1 Kolom */
+    }
+
+    /* --- SIDEBAR (OFF-CANVAS) --- */
+    .sidebar {
+        position: fixed;
+        left: -280px; /* Sembunyi di kiri */
+        top: 0;
+        height: 100vh;
+        z-index: 999;
+        transition: 0.3s ease;
+        box-shadow: 5px 0 15px rgba(0,0,0,0.3);
+    }
+    
+    .sidebar.active {
+        left: 0; /* Muncul pas aktif */
+    }
+    
+    .sidebar-backdrop.active {
+        display: block; /* Muncul background hitam */
+    }
+
+    /* --- HEADER MOBILE --- */
+    .mobile-header {
+        display: flex; /* Munculkan tombol menu */
+    }
+    
+    .btn-menu-mobile {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        color: var(--text-main);
+        width: 40px; height: 40px;
+        border-radius: 8px;
+        font-size: 1.2rem;
+        cursor: pointer;
+    }
+
+    /* --- KONTEN UTAMA --- */
+    .main-content {
+        padding: 15px; /* Padding lebih kecil */
+        width: 100%;
+    }
+
+    .header-content {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+    /* --- GRID & KOLOM --- */
+    .dashboard-grid {
+        grid-template-columns: 1fr; /* Stack vertikal */
+        gap: 20px;
+    }
+    
+    .left-column, .right-column {
+        width: 100%;
+    }
+
+    /* --- KARTU & WIDGET --- */
+    .stats-container {
+        grid-template-columns: 1fr 1fr; /* Stats jadi 2 kolom di HP */
+    }
+
+    .card {
+        padding: 15px; /* Padding card dikecilin dikit */
+    }
+
+    /* --- TABEL JADWAL (SCROLLABLE) --- */
+    .table-responsive {
+        display: block;
+        width: 100%;
+        overflow-x: auto; /* Biar bisa digeser samping */
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    table {
+        min-width: 500px; /* Paksa lebar tabel biar nggak gepeng */
+    }
+
+    /* --- MODAL (POP-UP) --- */
+    .modal-content {
+        width: 90%; /* Jangan fix width, pakai persen */
+        max-width: 90%;
+        padding: 20px;
+        margin: 10px;
+        max-height: 90vh; /* Biar nggak kepotong kalau panjang */
+        overflow-y: auto;
+    }
+
+    /* --- KALENDER --- */
+    .calendar-days {
+        gap: 4px;
+    }
+    .cal-date {
+        font-size: 0.8rem;
+        border-radius: 8px;
+    }
+    .calendar-controls h4 {
+        font-size: 0.9rem;
+    }
+
+    /* --- WIDGET MUSIK --- */
+    #musicWidget {
+        width: 90% !important; /* Musik lebar di HP */
+        left: 5% !important;
+        bottom: 10px !important;
+    }
+}

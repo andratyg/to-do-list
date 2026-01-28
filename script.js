@@ -4940,3 +4940,23 @@ window.deleteCalEvent = function(id) {
         showToast("Acara dihapus.", "info");
     }
 }
+// --- LOGIKA SIDEBAR MOBILE ---
+window.toggleSidebar = function() {
+    const sidebar = document.querySelector('.sidebar');
+    const backdrop = document.getElementById('sidebarBackdrop');
+    
+    if (sidebar && backdrop) {
+        sidebar.classList.toggle('active');
+        backdrop.classList.toggle('active');
+    }
+};
+
+// Tutup sidebar otomatis saat menu diklik (biar user langsung liat konten)
+document.querySelectorAll('.sidebar-menu-item').forEach(item => {
+    item.addEventListener('click', () => {
+        // Cek dulu apakah layar sedang mode HP
+        if (window.innerWidth <= 768) {
+            toggleSidebar(); // Tutup sidebar
+        }
+    });
+});
