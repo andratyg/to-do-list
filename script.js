@@ -1,3 +1,32 @@
+// ============================================================
+// 🚨 SISTEM DETEKSI ERROR OTOMATIS (GLOBAL ERROR HANDLER)
+// Pasang ini di baris PALING ATAS script.js
+// ============================================================
+
+window.onerror = function (message, source, lineno, colno, error) {
+    // 1. Tampilkan di Console (Untuk Developer)
+    console.group("🚨 TERDETEKSI ERROR!");
+    console.error("Pesan Error :", message);
+    console.error("Lokasi File :", source);
+    console.error("Baris ke    :", lineno);
+    console.error("Kolom ke    :", colno);
+    console.error("Detail Stack:", error);
+    console.groupEnd();
+
+    // Jangan gunakan popup alert yang mengganggu pengguna
+    return false;
+};
+
+// Fungsi Pembungkus Aman (Safe Executor)
+// Gunakan ini untuk membungkus fungsi penting biar gak bikin web macet
+function tryExec(funcName, func) {
+    try {
+        func();
+    } catch (err) {
+        console.error(`❌ Gagal menjalankan fungsi [${funcName}]:`, err);
+        showToast(`Error di fitur ${funcName}: ${err.message}`, "error");
+    }
+}
 // ==================== SYSTEM & CONFIG ===================
 // --- SISTEM KONFIRMASI MODERN ---
 let confirmCallback = null;
@@ -4940,16 +4969,7 @@ window.deleteCalEvent = function(id) {
         showToast("Acara dihapus.", "info");
     }
 }
-// --- LOGIKA SIDEBAR MOBILE ---
-window.toggleSidebar = function() {
-    const sidebar = document.querySelector('.sidebar');
-    const backdrop = document.getElementById('sidebarBackdrop');
-    
-    if (sidebar && backdrop) {
-        sidebar.classList.toggle('active');
-        backdrop.classList.toggle('active');
-    }
-};
+
 
 // Tutup sidebar otomatis saat menu diklik (biar user langsung liat konten)
 document.querySelectorAll('.sidebar-menu-item').forEach(item => {
@@ -4959,4 +4979,69 @@ document.querySelectorAll('.sidebar-menu-item').forEach(item => {
             toggleSidebar(); // Tutup sidebar
         }
     });
+});
+// ============================================================
+// LOGIKA UTAMA & SIDEBAR (VERSI AMAN)
+// ============================================================
+
+// 1. Event saat Website Selesai Loading
+document.addEventListener("DOMContentLoaded", function () {
+    tryExec("Inisialisasi Website", function() {
+        console.log("🚀 Website mulai dijalankan...");
+
+        // Jalankan fungsi-fungsi utama
+        tryExec("Render Kalender", () => typeof renderCalendar === 'function' && renderCalendar());
+        tryExec("Init Auth", () => typeof initAuthListener === 'function' && initAuthListener());
+        tryExec("Render All", () => typeof renderAll === 'function' && renderAll());
+
+        console.log("✅ Semua sistem berhasil dimuat!");
+    });
+});
+
+// 2. Fitur Sidebar (Versi Anti-Gagal)
+window.toggleSidebar = function() {
+    tryExec("Toggle Sidebar", function() {
+        console.log("🔄 Mencoba buka/tutup sidebar...");
+        
+        const sidebar = document.querySelector('.sidebar');
+        const backdrop = document.querySelector('.sidebar-backdrop');
+        
+        // Cek elemen ada atau tidak
+        if (!sidebar) throw new Error("Elemen '.sidebar' hilang dari HTML!");
+        
+        // Eksekusi
+        sidebar.classList.toggle('active');
+        
+        // Backdrop opsional (kalau ada dipakai, kalau gak ada ya udah)
+        if (backdrop) backdrop.classList.toggle('active');
+        
+        console.log("✅ Sidebar berhasil di-toggle.");
+    });
+};
+
+// 3. Event Klik Otomatis (Tutup Sidebar di HP)
+document.addEventListener("click", function (e) {
+    try {
+        // Hanya jalan di HP
+        if (window.innerWidth <= 768) {
+            const sidebar = document.querySelector('.sidebar');
+            
+            // Jika sidebar sedang terbuka DAN user klik menu (bukan upload file)
+            if (sidebar && sidebar.classList.contains('active')) {
+                if (e.target.closest(".sidebar-menu-item") || e.target.closest(".sidebar-backdrop")) {
+                    
+                    // Cegah tutup kalau lagi upload file
+                    if (e.target.closest('input[type="file"]') || e.target.closest('[onclick*="importFile"]')) {
+                        return;
+                    }
+
+                    console.log("👆 Menu diklik, menutup sidebar otomatis...");
+                    window.toggleSidebar();
+                }
+            }
+        }
+    } catch (err) {
+        console.error("⚠️ Error ringan di event click:", err);
+        // Error di sini biasanya tidak fatal, jadi cuma console.error aja
+    }
 });
