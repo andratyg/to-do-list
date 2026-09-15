@@ -2,6 +2,9 @@ import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 import fs from 'fs'
 import path from 'path'
+import { fileURLToPath } from 'url'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 function syncStaticAssets() {
   const sync = () => {
@@ -13,6 +16,9 @@ function syncStaticAssets() {
     }
     if (fs.existsSync('style.css')) {
       fs.copyFileSync('style.css', 'public/style.css')
+    }
+    if (fs.existsSync('admin.html')) {
+      fs.copyFileSync('admin.html', 'public/admin.html')
     }
   }
 
@@ -34,6 +40,9 @@ function syncStaticAssets() {
       if (fs.existsSync('style.css')) {
         fs.copyFileSync('style.css', 'dist/style.css')
       }
+      if (fs.existsSync('admin.html')) {
+        fs.copyFileSync('admin.html', 'dist/admin.html')
+      }
     }
   }
 }
@@ -41,5 +50,14 @@ function syncStaticAssets() {
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), syncStaticAssets()],
+  build: {
+    rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, 'index.html'),
+        admin: path.resolve(__dirname, 'admin.html'),
+      },
+    },
+  },
 })
+
 
