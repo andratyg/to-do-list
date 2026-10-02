@@ -2,16 +2,25 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useData } from "../../context/DataContext";
 import { useTheme } from "../../context/ThemeContext";
-import { getLevelTitle, getXpNeeded, getGreeting, getFormattedDate } from "../../utils/helpers";
-import { Menu, Moon, Sun, Flame, CloudSun, User } from "lucide-react";
+import { getLevelTitle, getXpNeeded, getGreeting, getFormattedDate, formatRupiah } from "../../utils/helpers";
+import { Menu, Moon, Sun, Flame, CloudSun, User, Wallet } from "lucide-react";
 
-export default function Header({ onOpenSidebar, onOpenProfileModal }) {
+export default function Header({ onOpenSidebar, onOpenProfileModal, onOpenFinance }) {
   const { currentUser } = useAuth();
-  const { gamification, streak } = useData();
+  const { gamification, streak, transactions, settings } = useData();
   const { isDarkMode, toggleTheme } = useTheme();
 
   const [timeStr, setTimeStr] = useState("00:00");
   const [weather, setWeather] = useState({ temp: "--", icon: "fas fa-cloud" });
+
+  const hideBalance = settings?.hideBalance || false;
+  const totalMasuk = (transactions || [])
+    .filter((t) => t.type === "in")
+    .reduce((acc, t) => acc + (Number(t.amount) || 0), 0);
+  const totalKeluar = (transactions || [])
+    .filter((t) => t.type === "out")
+    .reduce((acc, t) => acc + (Number(t.amount) || 0), 0);
+  const sisaSaldo = totalMasuk - totalKeluar;
 
   // Clock interval
   useEffect(() => {
@@ -114,7 +123,7 @@ export default function Header({ onOpenSidebar, onOpenProfileModal }) {
         </div>
       </div>
 
-      {/* Action Section: Clock, Weather, Theme Toggle */}
+      {/* Action Section: Clock, Weather, Finance, Theme Toggle */}
       <div className="header-action-section">
         <div className="weather-widget" title="Cuaca Saat Ini">
           <CloudSun size={18} className="weather-icon-inline" />
@@ -124,6 +133,22 @@ export default function Header({ onOpenSidebar, onOpenProfileModal }) {
         <div className="digital-clock">
           <span>{timeStr}</span>
         </div>
+
+        <button
+          className="btn-finance-header glow"
+          onClick={onOpenFinance}
+          title="Buka Dompet & Keuangan"
+        >
+          <div className="btn-finance-icon">
+            <Wallet size={16} />
+          </div>
+          <div className="btn-finance-info">
+            <span className="btn-finance-label">Dompet</span>
+            <span className="btn-finance-balance">
+              {hideBalance ? "Rp ••••••" : formatRupiah(sisaSaldo)}
+            </span>
+          </div>
+        </button>
 
         <div className="action-buttons">
           <button

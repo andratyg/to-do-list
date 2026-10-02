@@ -2626,3 +2626,189 @@ body::after {
     flex: 1;
   }
 }
+
+/* ===================================================
+   --- DEDICATED FINANCE SIDEBAR DRAWER (REACT) ---
+   =================================================== */
+
+/* Header Finance Quick Button */
+.btn-finance-header {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-glass);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  text-decoration: none;
+  color: var(--text-primary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.btn-finance-header:hover {
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.2);
+}
+
+.btn-finance-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  transition: transform 0.25s ease;
+}
+
+.btn-finance-header:hover .btn-finance-icon {
+  transform: scale(1.1) rotate(-5deg);
+}
+
+.btn-finance-info {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.btn-finance-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  letter-spacing: 0.5px;
+  line-height: 1;
+}
+
+.btn-finance-balance {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.3;
+}
+
+/* Off-canvas Finance Sidebar Drawer */
+.finance-sidebar-drawer {
+  position: fixed;
+  top: 0;
+  right: -520px;
+  width: 460px;
+  max-width: 100vw;
+  height: 100vh;
+  background: var(--bg-card);
+  box-shadow: -10px 0 35px rgba(0, 0, 0, 0.35);
+  z-index: 1001;
+  transition: right 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--border-glass);
+}
+
+.finance-sidebar-drawer.active {
+  right: 0;
+}
+
+/* Backdrop */
+.finance-sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 1000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.finance-sidebar-backdrop.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Drawer Header */
+.finance-drawer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border-glass);
+  background: var(--bg-card);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.finance-drawer-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.finance-drawer-title h3 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.finance-drawer-title small {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  display: block;
+}
+
+/* Drawer Body */
+.finance-drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px 40px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-glass) transparent;
+}
+
+.finance-drawer-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.finance-drawer-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.finance-drawer-body::-webkit-scrollbar-thumb {
+  background: var(--border-glass);
+  border-radius: 10px;
+}
+
+@media (max-width: 768px) {
+  .btn-finance-header {
+    padding: 6px 10px;
+  }
+  .btn-finance-label {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .finance-sidebar-drawer {
+    width: 100vw;
+    right: -100vw;
+  }
+  .finance-drawer-header {
+    padding: 16px 18px;
+  }
+  .finance-drawer-body {
+    padding: 16px 18px 30px;
+  }
+  .btn-finance-header {
+    display: none;
+  }
+}
+

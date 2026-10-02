@@ -1351,6 +1351,7 @@ function startFirebaseListener(uid) {
       // Di dalam startFirebaseListener, tambahkan baris ini:
       cachedData.budgets = data.budgets || {};
       cachedData.subscriptions = data.subscriptions || [];
+      cachedData.kantong = data.kantong || null;
       // [BARU] Load Sticky Note
       cachedData.stickyNote = data.stickyNote || "";
       document.getElementById("globalStickyNote").value = cachedData.stickyNote;
@@ -1455,6 +1456,7 @@ function saveDB(key, data) {
 
   if (key === "tasks") cachedData.tasks = data;
   if (key === "transactions") cachedData.transactions = data;
+  if (key === "kantong") cachedData.kantong = data;
   if (key === "gamification") cachedData.gamification = data;
   if (key === "streak") cachedData.streak = data;
   if (key === "focusLogs") cachedData.focusLogs = data;
@@ -2564,48 +2566,72 @@ function addTransaction(type) {
 function loadTransactions() {
   const list = document.getElementById("transactionList");
   const txns = cachedData.transactions || [];
-  const filter = document.getElementById("historyFilter").value;
-  let bal = { total: 0, dana: 0, ovo: 0, gopay: 0, cash: 0 };
-  list.innerHTML = "";
+  const filter = document.getElementById("historyFilter")?.value || "all";
+  let totalBal = 0;
+  let totalIncome = 0;
+  let totalExpense = 0;
+
+  if (list) list.innerHTML = "";
   txns.forEach((t) => {
+    const amt = Number(t.amount) || 0;
     if (t.type === "in") {
-      bal.total += t.amount;
-      bal[t.wallet] += t.amount;
+      totalBal += amt;
+      totalIncome += amt;
     } else {
-      bal.total -= t.amount;
-      bal[t.wallet] -= t.amount;
+      totalBal -= amt;
+      totalExpense += amt;
     }
   });
-  txns
-    .slice()
-    .reverse()
-    .forEach((t) => {
-      let show =
-        filter === "all" ||
-        (filter === "in" && t.type === "in") ||
-        (filter === "out" && t.type === "out");
-      if (show) {
-        const color = t.type === "in" ? "var(--green)" : "var(--red)";
-        const sign = t.type === "in" ? "+" : "-";
-        list.innerHTML += `<li class="txn-item"><div class="txn-left"><b>${escapeHtml(
-          t.desc,
-        )}</b><small>${t.wallet.toUpperCase()} • ${
-          t.category
-        }</small></div><div class="txn-right"><b style="color:${color}">${sign} Rp ${t.amount.toLocaleString(
-          "id-ID",
-        )}</b><button class="delete-txn-btn" onclick="delTxn(${
-          t.id
-        })"><i class="fas fa-trash"></i></button></div></li>`;
-      }
-    });
-  document.getElementById("totalBalance").innerText =
-    "Rp " + bal.total.toLocaleString("id-ID");
-  ["dana", "ovo", "gopay", "cash"].forEach(
-    (k) =>
-      (document.getElementById(`saldo-${k}`).innerText =
-        "Rp " + bal[k].toLocaleString("id-ID")),
-  );
+
+  if (list) {
+    txns
+      .slice()
+      .reverse()
+      .forEach((t) => {
+        let show =
+          filter === "all" ||
+          (filter === "in" && t.type === "in") ||
+          (filter === "out" && t.type === "out");
+        if (show) {
+          const color = t.type === "in" ? "var(--green)" : "var(--red)";
+          const sign = t.type === "in" ? "+" : "-";
+          const wName = getWalletName(t.wallet);
+          const amt = Number(t.amount) || 0;
+          list.innerHTML += `<li class="txn-item"><div class="txn-left"><b>${escapeHtml(
+            t.desc,
+          )}</b><small>${escapeHtml(wName)} • ${
+            t.category
+          }</small></div><div class="txn-right"><b style="color:${color}" class="${isBalanceHidden ? 'balance-blur' : ''}">${sign} Rp ${amt.toLocaleString(
+            "id-ID",
+          )}</b><button class="delete-txn-btn" onclick="delTxn(${
+            t.id
+          })"><i class="fas fa-trash"></i></button></div></li>`;
+        }
+      });
+  }
+
+  const totalBalEl = document.getElementById("totalBalance");
+  if (totalBalEl) {
+    totalBalEl.innerText = "Rp " + totalBal.toLocaleString("id-ID");
+  }
+  const headerPill = document.getElementById("headerBalancePill");
+  if (headerPill) {
+    headerPill.innerText = "Rp " + totalBal.toLocaleString("id-ID");
+  }
+  const incomeEl = document.getElementById("monthIncomeStat");
+  if (incomeEl) {
+    incomeEl.innerText = "+ Rp " + totalIncome.toLocaleString("id-ID");
+  }
+  const expenseEl = document.getElementById("monthExpenseStat");
+  if (expenseEl) {
+    expenseEl.innerText = "- Rp " + totalExpense.toLocaleString("id-ID");
+  }
+
+  // Render dynamic Kantong Cards!
+  renderKantongCards();
+
   renderExpenseChart(txns);
+  applyBalancePrivacy();
 }
 // --- LOGIKA SENSOR SALDO (PRIVACY) ---
 let isBalanceHidden = localStorage.getItem("hideBalance") === "true";
@@ -2624,6 +2650,10 @@ function applyBalancePrivacy() {
     "saldo-ovo",
     "saldo-gopay",
     "saldo-cash",
+    "headerBalancePill",
+    "monthIncomeStat",
+    "monthExpenseStat",
+    "activeKantongBalanceHint",
   ];
 
   // Ubah Ikon Mata
@@ -2642,7 +2672,13 @@ function applyBalancePrivacy() {
       }
     }
   });
+
+  document.querySelectorAll(".kantong-balance").forEach((el) => {
+    if (isBalanceHidden) el.classList.add("balance-blur");
+    else el.classList.remove("balance-blur");
+  });
 }
+
 window.delTxn = function (id) {
   showCustomConfirm(
     "Hapus riwayat transaksi ini? Saldo akan dikembalikan.",
@@ -2875,6 +2911,11 @@ function showSoundSettings() {
 function checkExamMode() {
   const financeCard = document.getElementById("financeCard");
   if (financeCard) financeCard.style.display = isExamMode ? "none" : "block";
+  const btnFinance = document.getElementById("btnHeaderFinance");
+  if (btnFinance) btnFinance.style.display = isExamMode ? "none" : "inline-flex";
+  if (isExamMode) {
+    if (typeof toggleFinanceSidebar === "function") toggleFinanceSidebar(false);
+  }
   timeLeft = isExamMode ? WORK_DURATION_EXAM : WORK_DURATION_DEFAULT;
   updateTimerDisplay();
 }
@@ -2959,11 +3000,14 @@ window.toggleSettings = function () {
   document.getElementById("settingsDropdown").classList.toggle("active");
 };
 window.selectWallet = function (id, el) {
-  document.getElementById("selectedWallet").value = id;
+  const hiddenInput = document.getElementById("selectedWallet");
+  if (hiddenInput) hiddenInput.value = id;
   document
     .querySelectorAll(".wallet-card")
     .forEach((c) => c.classList.remove("active"));
-  el.classList.add("active");
+  if (el) el.classList.add("active");
+  const label = document.getElementById("activeWalletLabel");
+  if (label) label.innerText = id.toUpperCase();
 };
 window.importData = function (input) {
   const f = input.files[0];
@@ -3990,79 +4034,656 @@ function renderExpenseChart(txns) {
   });
   container.innerHTML = html;
 }
-// Buka/Tutup Modal
-function toggleTransferModal() {
-  const modal = document.getElementById("transferModal");
-  modal.style.display = modal.style.display === "none" ? "flex" : "none";
+// ==========================================================================
+// KANTONG BANK DIGITAL MODULE (POCKETS SYSTEM)
+// ==========================================================================
+
+const DEFAULT_KANTONGS = [
+  { id: "cash", name: "Kantong Utama (Tunai)", type: "spending", color: "#10b981", icon: "fa-wallet", targetAmount: 0, isDefault: true },
+  { id: "dana", name: "DANA Digital", type: "spending", color: "#0288d1", icon: "fa-mobile-alt", targetAmount: 0 },
+  { id: "ovo", name: "OVO Cash", type: "spending", color: "#7c3aed", icon: "fa-bolt", targetAmount: 0 },
+  { id: "gopay", name: "GoPay Saldo", type: "spending", color: "#00aa13", icon: "fa-motorcycle", targetAmount: 0 },
+  { id: "kantong_nabung", name: "Nabung Impian", type: "saving", color: "#f59e0b", icon: "fa-bullseye", targetAmount: 1500000 },
+  { id: "kantong_darurat", name: "Dana Darurat", type: "locked", color: "#ec4899", icon: "fa-shield-alt", targetAmount: 1000000 }
+];
+
+const KANTONG_ICONS = [
+  { icon: "fa-wallet", name: "Dompet" },
+  { icon: "fa-utensils", name: "Makan" },
+  { icon: "fa-laptop", name: "Gadget" },
+  { icon: "fa-bullseye", name: "Target" },
+  { icon: "fa-bolt", name: "Listrik" },
+  { icon: "fa-shield-alt", name: "Darurat" },
+  { icon: "fa-car", name: "Bensin" },
+  { icon: "fa-plane", name: "Liburan" },
+  { icon: "fa-gamepad", name: "Game" },
+  { icon: "fa-coffee", name: "Kopi" },
+  { icon: "fa-graduation-cap", name: "Sekolah" },
+  { icon: "fa-piggy-bank", name: "Celengan" }
+];
+
+const KANTONG_COLORS = [
+  "#10b981", // Emerald
+  "#0288d1", // Dana Blue
+  "#7c3aed", // Ovo Purple
+  "#00aa13", // Gopay Green
+  "#f59e0b", // Amber
+  "#ec4899", // Rose Pink
+  "#06b6d4", // Teal
+  "#6366f1"  // Indigo
+];
+
+let currentKantongFilter = "all";
+
+function getKantongList() {
+  if (!cachedData.kantong || !Array.isArray(cachedData.kantong) || cachedData.kantong.length === 0) {
+    cachedData.kantong = JSON.parse(JSON.stringify(DEFAULT_KANTONGS));
+  }
+  return cachedData.kantong;
 }
 
-// Proses Transfer
-// GANTI FUNGSI executeTransfer DENGAN INI
-function executeTransfer() {
-  const source = document.getElementById("sourceWallet").value;
-  const target = document.getElementById("targetWallet").value;
-  const amount = parseFloat(document.getElementById("transferAmount").value);
-
-  // 1. Validasi
-  if (source === target)
-    return showToast("Dompet asal dan tujuan sama!", "error");
-  if (!amount || amount <= 0) return showToast("Jumlah tidak valid!", "error");
-
-  // 2. Cek Saldo Pengirim (Hitung dulu saldo saat ini)
+function calculateKantongBalances() {
+  const kantongs = getKantongList();
   const txns = cachedData.transactions || [];
-  let currentBalance = 0;
+  const balances = {};
+
+  kantongs.forEach((k) => {
+    balances[k.id] = 0;
+  });
+
   txns.forEach((t) => {
-    if ((t.wallet || "cash") === source) {
-      if (t.type === "in") currentBalance += t.amount;
-      else currentBalance -= t.amount;
+    let w = t.wallet || "cash";
+    if (w === "kantong_utama") w = "cash";
+    const amt = Number(t.amount) || 0;
+    if (balances[w] === undefined) balances[w] = 0;
+    if (t.type === "in") {
+      balances[w] += amt;
+    } else {
+      balances[w] -= amt;
     }
   });
 
-  if (currentBalance < amount) {
-    return showToast(
-      `Saldo ${source.toUpperCase()} tidak cukup! (Sisa: Rp ${currentBalance.toLocaleString()})`,
-      "error",
-    );
+  return balances;
+}
+
+function getWalletName(walletId) {
+  if (!walletId || walletId === "cash" || walletId === "kantong_utama") return "Kantong Utama";
+  const kantongs = getKantongList();
+  const k = kantongs.find((x) => x.id === walletId);
+  return k ? k.name : walletId.toUpperCase();
+}
+
+window.filterKantong = function (category, btnElement) {
+  currentKantongFilter = category;
+  document.querySelectorAll(".kantong-tab").forEach((t) => t.classList.remove("active"));
+  if (btnElement) btnElement.classList.add("active");
+  renderKantongCards();
+};
+
+function renderKantongCards() {
+  const container = document.getElementById("kantongGrid");
+  if (!container) return;
+
+  const kantongs = getKantongList();
+  const balances = calculateKantongBalances();
+  const activeWallet = document.getElementById("selectedWallet")?.value || "cash";
+
+  let html = "";
+  let totalAll = kantongs.length;
+  let countSpending = 0;
+  let countSaving = 0;
+  let countLocked = 0;
+
+  kantongs.forEach((k) => {
+    if (k.type === "spending") countSpending++;
+    if (k.type === "saving") countSaving++;
+    if (k.type === "locked") countLocked++;
+
+    if (currentKantongFilter !== "all" && k.type !== currentKantongFilter) {
+      return;
+    }
+
+    const bal = balances[k.id] || 0;
+    const isSelected = activeWallet === k.id || (activeWallet === "cash" && k.id === "kantong_utama");
+    const target = Number(k.targetAmount) || 0;
+    const pct = target > 0 ? Math.min(100, Math.max(0, Math.round((bal / target) * 100))) : 0;
+
+    let typeBadgeLabel = "Bayar";
+    let typeBadgeClass = "badge-spending";
+    if (k.type === "saving") {
+      typeBadgeLabel = "Nabung";
+      typeBadgeClass = "badge-saving";
+    } else if (k.type === "locked") {
+      typeBadgeLabel = "Terkunci";
+      typeBadgeClass = "badge-locked";
+    }
+
+    html += `
+      <div class="kantong-card ${isSelected ? 'active' : ''}" style="--kantong-color: ${k.color};" onclick="selectWallet('${k.id}')">
+        <div class="kantong-card-glow"></div>
+        <div class="kantong-card-head">
+          <div class="kantong-icon-wrapper" style="background: ${k.color}22; color: ${k.color}; border: 1px solid ${k.color}44;">
+            <i class="fas ${k.icon || 'fa-wallet'}"></i>
+          </div>
+          <div class="kantong-head-right">
+            <span class="kantong-type-chip ${typeBadgeClass}">${typeBadgeLabel}</span>
+            <div class="kantong-menu-dropdown" onclick="event.stopPropagation();">
+              <button class="btn-kantong-menu" onclick="toggleKantongDropdown('${k.id}', event)" title="Opsi Kantong">
+                <i class="fas fa-ellipsis-v"></i>
+              </button>
+              <div id="kmenu_${k.id}" class="kantong-dropdown-popup">
+                <div class="kmenu-item" onclick="openEditKantongModal('${k.id}')">
+                  <i class="fas fa-pen"></i> Atur Kantong
+                </div>
+                <div class="kmenu-item" onclick="quickTransferFrom('${k.id}')">
+                  <i class="fas fa-exchange-alt"></i> Pindah Dana
+                </div>
+                ${!k.isDefault ? `
+                <div class="kmenu-item danger" onclick="confirmDeleteKantong('${k.id}')">
+                  <i class="fas fa-trash"></i> Hapus
+                </div>` : ''}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="kantong-card-body">
+          <h4 class="kantong-name">${escapeHtml(k.name)}</h4>
+          <div class="kantong-balance-row">
+            <span class="kantong-balance ${isBalanceHidden ? 'balance-blur' : ''}">
+              ${isBalanceHidden ? 'Rp •••••••' : 'Rp ' + bal.toLocaleString('id-ID')}
+            </span>
+          </div>
+
+          ${(k.type === 'saving' || k.type === 'locked') && target > 0 ? `
+            <div class="kantong-progress-area">
+              <div class="kantong-progress-labels">
+                <span>Target: Rp ${target.toLocaleString('id-ID')}</span>
+                <b>${pct}%</b>
+              </div>
+              <div class="kantong-progress-bar">
+                <div class="kantong-progress-fill" style="width: ${pct}%; background: ${k.color};"></div>
+              </div>
+              ${pct >= 100 ? '<small class="target-achieved-text">🎉 Target Tercapai!</small>' : ''}
+            </div>
+          ` : ''}
+        </div>
+
+        <div class="kantong-card-foot">
+          <div class="kantong-active-indicator">
+            <span class="radio-circle ${isSelected ? 'checked' : ''}"></span>
+            <span class="active-text">${isSelected ? 'Kantong Aktif' : 'Pilih Kantong'}</span>
+          </div>
+          <button class="btn-mini-transfer" onclick="event.stopPropagation(); quickTransferFrom('${k.id}')" title="Pindah Dana">
+            <i class="fas fa-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+    `;
+  });
+
+  // Append "+ Buat Kantong Baru" Card
+  html += `
+    <div class="kantong-card-add" onclick="openAddKantongModal()">
+      <div class="add-icon-circle">
+        <i class="fas fa-plus"></i>
+      </div>
+      <b>Buat Kantong Baru</b>
+      <p>Pisahkan pos belanja atau target tabungan baru</p>
+    </div>
+  `;
+
+  container.innerHTML = html;
+
+  // Update tabs counters
+  const badgeEl = document.getElementById("kantongCountBadge");
+  if (badgeEl) badgeEl.innerText = `${totalAll} Kantong`;
+  const elAll = document.getElementById("countTabAll");
+  if (elAll) elAll.innerText = totalAll;
+  const elSpend = document.getElementById("countTabSpending");
+  if (elSpend) elSpend.innerText = countSpending;
+  const elSave = document.getElementById("countTabSaving");
+  if (elSave) elSave.innerText = countSaving;
+  const elLock = document.getElementById("countTabLocked");
+  if (elLock) elLock.innerText = countLocked;
+
+  // Also update wallet dropdown in Catat Transaksi form
+  updateWalletDropdown(kantongs, balances);
+}
+
+function updateWalletDropdown(kantongs, balances) {
+  const sel = document.getElementById("walletSelect");
+  if (!sel) return;
+
+  const currentVal = document.getElementById("selectedWallet")?.value || "cash";
+  sel.innerHTML = "";
+
+  kantongs.forEach((k) => {
+    const bal = balances[k.id] || 0;
+    const opt = document.createElement("option");
+    opt.value = k.id;
+    opt.innerText = `${k.name} (Rp ${bal.toLocaleString('id-ID')})`;
+    if (k.id === currentVal) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+window.selectWallet = function (id) {
+  const hiddenInput = document.getElementById("selectedWallet");
+  if (hiddenInput) hiddenInput.value = id;
+
+  const walletSelect = document.getElementById("walletSelect");
+  if (walletSelect && walletSelect.value !== id) {
+    walletSelect.value = id;
   }
 
-  // 3. Eksekusi Transfer (Catat 2 Transaksi: Keluar & Masuk)
+  const kantongs = getKantongList();
+  const balances = calculateKantongBalances();
+  const k = kantongs.find((x) => x.id === id) || kantongs[0];
+
+  const label = document.getElementById("activeWalletLabel");
+  if (label && k) label.innerText = k.name;
+
+  const hint = document.getElementById("activeKantongBalanceHint");
+  if (hint && k) {
+    const b = balances[k.id] || 0;
+    hint.innerText = `Saldo: Rp ${b.toLocaleString('id-ID')}`;
+  }
+
+  // Highlight active card
+  document.querySelectorAll(".kantong-card").forEach((c) => c.classList.remove("active"));
+  renderKantongCards();
+};
+
+window.toggleKantongDropdown = function (id, event) {
+  event.stopPropagation();
+  const popup = document.getElementById(`kmenu_${id}`);
+  const isShown = popup && popup.classList.contains("show");
+  document.querySelectorAll(".kantong-dropdown-popup").forEach((p) => p.classList.remove("show"));
+  if (popup && !isShown) popup.classList.add("show");
+};
+
+// Close dropdown on outside click
+document.addEventListener("click", function (e) {
+  if (!e.target.closest(".kantong-menu-dropdown")) {
+    document.querySelectorAll(".kantong-dropdown-popup").forEach((p) => p.classList.remove("show"));
+  }
+});
+
+// Modals: Create / Edit Kantong
+window.selectKantongType = function (type) {
+  document.getElementById("selectedKantongType").value = type;
+  document.querySelectorAll(".kantong-type-option").forEach((opt) => opt.classList.remove("active"));
+  const activeOpt = document.getElementById(`typeOption_${type}`);
+  if (activeOpt) activeOpt.classList.add("active");
+
+  const targetGroup = document.getElementById("kantongTargetGroup");
+  if (targetGroup) {
+    targetGroup.style.display = (type === "saving" || type === "locked") ? "block" : "none";
+  }
+};
+
+window.selectKantongIcon = function (iconClass) {
+  document.getElementById("selectedKantongIcon").value = iconClass;
+  document.querySelectorAll(".icon-pick-btn").forEach((b) => b.classList.remove("active"));
+  const btn = document.querySelector(`.icon-pick-btn[data-icon="${iconClass}"]`);
+  if (btn) btn.classList.add("active");
+};
+
+window.selectKantongColor = function (colorHex) {
+  document.getElementById("selectedKantongColor").value = colorHex;
+  document.querySelectorAll(".color-pick-circle").forEach((c) => c.classList.remove("active"));
+  const circle = document.querySelector(`.color-pick-circle[data-color="${colorHex}"]`);
+  if (circle) circle.classList.add("active");
+};
+
+function renderIconPicker() {
+  const container = document.getElementById("kantongIconPicker");
+  if (!container) return;
+  const current = document.getElementById("selectedKantongIcon")?.value || "fa-wallet";
+  container.innerHTML = KANTONG_ICONS.map(
+    (item) => `
+    <button type="button" class="icon-pick-btn ${item.icon === current ? 'active' : ''}" data-icon="${item.icon}" onclick="selectKantongIcon('${item.icon}')" title="${item.name}">
+      <i class="fas ${item.icon}"></i>
+    </button>
+  `
+  ).join("");
+}
+
+function renderColorPicker() {
+  const container = document.getElementById("kantongColorPicker");
+  if (!container) return;
+  const current = document.getElementById("selectedKantongColor")?.value || "#10b981";
+  container.innerHTML = KANTONG_COLORS.map(
+    (hex) => `
+    <div class="color-pick-circle ${hex === current ? 'active' : ''}" data-color="${hex}" style="background: ${hex};" onclick="selectKantongColor('${hex}')"></div>
+  `
+  ).join("");
+}
+
+window.openAddKantongModal = function () {
+  document.getElementById("kantongModalTitle").innerText = "✨ Buat Kantong Baru";
+  document.getElementById("editKantongId").value = "";
+  document.getElementById("kantongNameInput").value = "";
+  document.getElementById("kantongTargetInput").value = "";
+  document.getElementById("kantongInitialBalanceInput").value = "";
+  document.getElementById("kantongInitialGroup").style.display = "block";
+  document.getElementById("btnDeleteKantong").style.display = "none";
+
+  selectKantongType("spending");
+  selectKantongColor("#10b981");
+  selectKantongIcon("fa-wallet");
+
+  renderColorPicker();
+  renderIconPicker();
+
+  document.getElementById("kantongModal").style.display = "flex";
+  setTimeout(() => document.getElementById("kantongNameInput").focus(), 150);
+};
+
+window.openEditKantongModal = function (id) {
+  const kantongs = getKantongList();
+  const k = kantongs.find((x) => x.id === id);
+  if (!k) return;
+
+  document.getElementById("kantongModalTitle").innerText = "✏️ Atur Kantong";
+  document.getElementById("editKantongId").value = k.id;
+  document.getElementById("kantongNameInput").value = k.name;
+  document.getElementById("kantongTargetInput").value = k.targetAmount || "";
+  document.getElementById("kantongInitialGroup").style.display = "none";
+  document.getElementById("btnDeleteKantong").style.display = k.isDefault ? "none" : "inline-flex";
+
+  selectKantongType(k.type || "spending");
+  selectKantongColor(k.color || "#10b981");
+  selectKantongIcon(k.icon || "fa-wallet");
+
+  renderColorPicker();
+  renderIconPicker();
+
+  document.getElementById("kantongModal").style.display = "flex";
+};
+
+window.closeKantongModal = function () {
+  document.getElementById("kantongModal").style.display = "none";
+};
+
+window.saveKantongData = function () {
+  const idInput = document.getElementById("editKantongId").value;
+  const name = document.getElementById("kantongNameInput").value.trim();
+  const type = document.getElementById("selectedKantongType").value || "spending";
+  const icon = document.getElementById("selectedKantongIcon").value || "fa-wallet";
+  const color = document.getElementById("selectedKantongColor").value || "#10b981";
+  const targetAmount = parseFloat(document.getElementById("kantongTargetInput").value) || 0;
+  const initialBalance = parseFloat(document.getElementById("kantongInitialBalanceInput")?.value) || 0;
+
+  if (!name) {
+    return showToast("Nama kantong wajib diisi!", "error");
+  }
+
+  const kantongs = getKantongList();
+
+  if (idInput) {
+    const idx = kantongs.findIndex((x) => x.id === idInput);
+    if (idx !== -1) {
+      kantongs[idx].name = name;
+      kantongs[idx].type = type;
+      kantongs[idx].icon = icon;
+      kantongs[idx].color = color;
+      kantongs[idx].targetAmount = targetAmount;
+      showToast(`Kantong "${name}" berhasil diperbarui!`, "success");
+    }
+  } else {
+    const newId = "kantong_" + Date.now();
+    const newKantong = {
+      id: newId,
+      name: name,
+      type: type,
+      icon: icon,
+      color: color,
+      targetAmount: targetAmount,
+      isDefault: false
+    };
+    kantongs.push(newKantong);
+
+    if (initialBalance > 0) {
+      const txns = cachedData.transactions || [];
+      txns.push({
+        id: Date.now(),
+        desc: `Saldo awal ${name}`,
+        amount: initialBalance,
+        type: "in",
+        wallet: newId,
+        category: "Tabungan",
+        date: new Date().toISOString().split("T")[0]
+      });
+      saveDB("transactions", txns);
+    }
+
+    showToast(`Kantong "${name}" berhasil dibuat!`, "success");
+  }
+
+  cachedData.kantong = kantongs;
+  saveDB("kantong", kantongs);
+  closeKantongModal();
+  loadTransactions();
+};
+
+window.deleteCurrentKantong = function () {
+  const id = document.getElementById("editKantongId").value;
+  if (id) confirmDeleteKantong(id);
+};
+
+window.confirmDeleteKantong = function (id) {
+  const kantongs = getKantongList();
+  const k = kantongs.find((x) => x.id === id);
+  if (!k) return;
+  if (k.isDefault) {
+    return showToast("Kantong Utama tidak dapat dihapus!", "error");
+  }
+
+  const balances = calculateKantongBalances();
+  const bal = balances[id] || 0;
+
+  let msg = `Hapus kantong "${k.name}"?`;
+  if (bal > 0) {
+    msg += ` Sisa saldo Rp ${bal.toLocaleString('id-ID')} akan otomatis dipindahkan ke Kantong Utama.`;
+  }
+
+  if (confirm(msg)) {
+    if (bal > 0) {
+      const mainK = kantongs.find((x) => x.isDefault) || kantongs[0];
+      const timestamp = Date.now();
+      const dateStr = new Date().toISOString().split("T")[0];
+      const txns = cachedData.transactions || [];
+      txns.push(
+        {
+          id: timestamp,
+          desc: `Pengalihan sisa saldo dari ${k.name}`,
+          amount: bal,
+          type: "out",
+          wallet: id,
+          category: "Transfer",
+          date: dateStr,
+        },
+        {
+          id: timestamp + 1,
+          desc: `Penerimaan sisa saldo dari ${k.name}`,
+          amount: bal,
+          type: "in",
+          wallet: mainK.id,
+          category: "Transfer",
+          date: dateStr,
+        }
+      );
+      saveDB("transactions", txns);
+    }
+
+    cachedData.kantong = kantongs.filter((x) => x.id !== id);
+    saveDB("kantong", cachedData.kantong);
+
+    if (document.getElementById("selectedWallet")?.value === id) {
+      window.selectWallet("cash");
+    }
+
+    showToast(`Kantong "${k.name}" telah dihapus!`, "info");
+    closeKantongModal();
+    loadTransactions();
+  }
+};
+
+// Transfer Antar Kantong (Move Money)
+window.openTransferKantongModal = function (preselectedSourceId) {
+  const kantongs = getKantongList();
+  const balances = calculateKantongBalances();
+
+  const sourceSelect = document.getElementById("transferSourceKantong");
+  const destSelect = document.getElementById("transferDestKantong");
+
+  if (!sourceSelect || !destSelect) return;
+
+  sourceSelect.innerHTML = "";
+  destSelect.innerHTML = "";
+
+  kantongs.forEach((k, idx) => {
+    const bal = balances[k.id] || 0;
+    const opt1 = document.createElement("option");
+    opt1.value = k.id;
+    opt1.innerText = `${k.name} (Rp ${bal.toLocaleString('id-ID')})`;
+    if (preselectedSourceId ? k.id === preselectedSourceId : idx === 0) {
+      opt1.selected = true;
+    }
+    sourceSelect.appendChild(opt1);
+
+    const opt2 = document.createElement("option");
+    opt2.value = k.id;
+    opt2.innerText = `${k.name} (Rp ${bal.toLocaleString('id-ID')})`;
+    if (idx === (preselectedSourceId ? (kantongs[0].id === preselectedSourceId ? 1 : 0) : 1 % kantongs.length)) {
+      opt2.selected = true;
+    }
+    destSelect.appendChild(opt2);
+  });
+
+  document.getElementById("transferKantongAmount").value = "";
+  document.getElementById("transferKantongNote").value = "";
+
+  updateTransferBalancePreview();
+  document.getElementById("transferKantongModal").style.display = "flex";
+};
+
+window.closeTransferKantongModal = function () {
+  document.getElementById("transferKantongModal").style.display = "none";
+};
+
+window.updateTransferBalancePreview = function () {
+  const sourceId = document.getElementById("transferSourceKantong")?.value;
+  const destId = document.getElementById("transferDestKantong")?.value;
+  const balances = calculateKantongBalances();
+
+  const sourceBalText = document.getElementById("transferSourceBalText");
+  if (sourceBalText && sourceId) {
+    const b = balances[sourceId] || 0;
+    sourceBalText.innerText = `Sisa Saldo: Rp ${b.toLocaleString('id-ID')}`;
+  }
+
+  const destBalText = document.getElementById("transferDestBalText");
+  if (destBalText && destId) {
+    const b = balances[destId] || 0;
+    destBalText.innerText = `Saldo Saat Ini: Rp ${b.toLocaleString('id-ID')}`;
+  }
+};
+
+window.swapTransferKantongs = function () {
+  const sourceSelect = document.getElementById("transferSourceKantong");
+  const destSelect = document.getElementById("transferDestKantong");
+  if (!sourceSelect || !destSelect) return;
+  const temp = sourceSelect.value;
+  sourceSelect.value = destSelect.value;
+  destSelect.value = temp;
+  updateTransferBalancePreview();
+};
+
+window.setQuickTransfer = function (val) {
+  const input = document.getElementById("transferKantongAmount");
+  if (!input) return;
+  if (val === "all") {
+    const sourceId = document.getElementById("transferSourceKantong")?.value;
+    const balances = calculateKantongBalances();
+    input.value = Math.max(0, balances[sourceId] || 0);
+  } else {
+    const current = parseFloat(input.value) || 0;
+    input.value = current + val;
+  }
+};
+
+window.quickTransferFrom = function (id) {
+  document.querySelectorAll(".kantong-dropdown-popup").forEach((p) => p.classList.remove("show"));
+  window.openTransferKantongModal(id);
+};
+
+window.executeKantongTransfer = function () {
+  const sourceId = document.getElementById("transferSourceKantong").value;
+  const destId = document.getElementById("transferDestKantong").value;
+  const amount = parseFloat(document.getElementById("transferKantongAmount").value);
+  const note = document.getElementById("transferKantongNote")?.value.trim() || "";
+
+  if (sourceId === destId) {
+    return showToast("Kantong asal dan tujuan tidak boleh sama!", "error");
+  }
+  if (!amount || amount <= 0) {
+    return showToast("Nominal transfer harus lebih dari 0!", "error");
+  }
+
+  const balances = calculateKantongBalances();
+  const sourceBal = balances[sourceId] || 0;
+
+  if (sourceBal < amount) {
+    return showToast(`Saldo tidak cukup! Sisa saldo: Rp ${sourceBal.toLocaleString('id-ID')}`, "error");
+  }
+
+  const kantongs = getKantongList();
+  const sourceK = kantongs.find((x) => x.id === sourceId);
+  const destK = kantongs.find((x) => x.id === destId);
+  const sourceName = sourceK ? sourceK.name : sourceId;
+  const destName = destK ? destK.name : destId;
+
   const timestamp = Date.now();
   const dateStr = new Date().toISOString().split("T")[0];
 
-  // Transaksi A: Uang Keluar dari Sumber
   const txnOut = {
     id: timestamp,
-    desc: `Transfer ke ${target.toUpperCase()}`,
+    desc: `Pindah ke ${destName}${note ? ' (' + note + ')' : ''}`,
     amount: amount,
     type: "out",
-    wallet: source,
+    wallet: sourceId,
     category: "Transfer",
     date: dateStr,
   };
 
-  // Transaksi B: Uang Masuk ke Tujuan
   const txnIn = {
-    id: timestamp + 1, // ID beda sedikit biar unik
-    desc: `Transfer dari ${source.toUpperCase()}`,
+    id: timestamp + 1,
+    desc: `Pindah dari ${sourceName}${note ? ' (' + note + ')' : ''}`,
     amount: amount,
     type: "in",
-    wallet: target,
+    wallet: destId,
     category: "Transfer",
     date: dateStr,
   };
 
-  // 4. Simpan ke Array & Database
-  cachedData.transactions.push(txnOut);
-  cachedData.transactions.push(txnIn);
+  const txns = cachedData.transactions || [];
+  txns.push(txnOut, txnIn);
+  saveDB("transactions", txns);
 
-  saveDB("transactions", cachedData.transactions);
+  closeTransferKantongModal();
+  showToast(`Berhasil memindahkan Rp ${amount.toLocaleString('id-ID')} ke ${destName}!`, "success");
+  loadTransactions();
+};
 
-  // 5. Reset & Update UI
-  document.getElementById("transferAmount").value = "";
-  toggleTransferModal();
-  loadTransactions(); // Refresh tampilan saldo
-  playSuccessSound("coin");
-  showToast("Transfer Berhasil!", "success");
+window.toggleTransferModal = function () {
+  window.openTransferKantongModal();
+};
+
+function executeTransfer() {
+  window.executeKantongTransfer();
 }
 // ==================== SUBSCRIPTION MANAGER ====================
 
@@ -4448,29 +5069,140 @@ window.toggleSidebar = function () {
   }
 };
 
+// --- DEDICATED SPA PAGE VIEW SWITCHER ---
+window.switchView = function (viewName) {
+  const dashboardPage = document.getElementById("page-dashboard");
+  const financePage = document.getElementById("page-finance");
+  const btnHeaderFinance = document.getElementById("btnHeaderFinance");
+  const mobileTitle = document.getElementById("mobileHeaderTitle");
+
+  if (!dashboardPage || !financePage) return;
+
+  if (viewName === "finance") {
+    dashboardPage.style.display = "none";
+    dashboardPage.classList.remove("active");
+    financePage.style.display = "block";
+    financePage.classList.add("active");
+
+    if (btnHeaderFinance) btnHeaderFinance.classList.add("active");
+    if (mobileTitle) mobileTitle.innerText = "Dompet & Keuangan";
+
+    // Tutup menu sidebar navigasi jika sedang terbuka
+    const mainSidebar = document.getElementById("mainSidebar");
+    if (mainSidebar) mainSidebar.classList.remove("active");
+    document.querySelectorAll(".sidebar-backdrop").forEach((b) => b.classList.remove("active"));
+
+    if (window.location.hash !== "#finance") {
+      window.location.hash = "#finance";
+    }
+    window.scrollTo({ top: 0, behavior: "smooth" });
+
+    // Muat data & render chart terbaru
+    if (typeof loadTransactions === "function") loadTransactions();
+    if (typeof loadTarget === "function") loadTarget();
+  } else {
+    financePage.style.display = "none";
+    financePage.classList.remove("active");
+    dashboardPage.style.display = "block";
+    dashboardPage.classList.add("active");
+
+    const mainSidebar = document.getElementById("mainSidebar");
+    if (mainSidebar) mainSidebar.classList.remove("active");
+    document.querySelectorAll(".sidebar-backdrop").forEach((b) => b.classList.remove("active"));
+
+    if (btnHeaderFinance) btnHeaderFinance.classList.remove("active");
+    if (mobileTitle) mobileTitle.innerText = "Dashboard";
+
+    if (window.location.hash === "#finance") {
+      history.pushState("", document.title, window.location.pathname + window.location.search);
+    }
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+};
+
+// Aliases for compatibility
+window.toggleFinanceSidebar = function (forceState) {
+  if (forceState === false) {
+    window.switchView("dashboard");
+  } else {
+    window.switchView("finance");
+  }
+};
+
+window.openGoldModal = function () {
+  const m = document.getElementById("goldModal");
+  if (m) m.style.display = "flex";
+};
+
+window.editTarget = function () {
+  const uid = window.auth?.currentUser ? window.auth.currentUser.uid : null;
+  const current = uid ? (localStorage.getItem(`${uid}_target`) || "0") : "0";
+  const input = prompt("Masukkan target tabungan baru (Rp):", current);
+  if (input !== null) {
+    const val = parseInt(input.replace(/[^0-9]/g, "")) || 0;
+    if (uid) {
+      localStorage.setItem(`${uid}_target`, val);
+      if (typeof saveSetting === "function") saveSetting("target", val);
+      if (typeof loadTarget === "function") loadTarget();
+      showToast("Target tabungan berhasil diperbarui!", "success");
+    } else {
+      showToast("Silakan login terlebih dahulu!", "error");
+    }
+  }
+};
+
+// Listen to Hash Changes for Browser Back/Forward buttons
+window.addEventListener("hashchange", function () {
+  if (window.location.hash === "#finance") {
+    window.switchView("finance");
+  } else {
+    window.switchView("dashboard");
+  }
+});
+
+// Check hash on load
+window.addEventListener("DOMContentLoaded", function () {
+  if (window.location.hash === "#finance") {
+    setTimeout(() => window.switchView("finance"), 300);
+  }
+});
+
 // Tutup sidebar otomatis saat salah satu menu diklik (agar rapi)
 document.addEventListener("click", function (e) {
   if (e.target.closest(".sidebar-menu-item")) {
-    // Cek apakah itu bukan trigger file upload (Restore)
     if (!e.target.closest('[onclick*="importFile"]')) {
+      if (!e.target.closest('[onclick*="switchView"]')) {
+        window.toggleSidebar();
+      }
+    }
+  }
+});
+
+// Tutup sidebar jika tombol ESC ditekan
+document.addEventListener("keydown", function (e) {
+  if (e.key === "Escape") {
+    const mainSidebar = document.getElementById("mainSidebar");
+    if (mainSidebar && mainSidebar.classList.contains("active")) {
       window.toggleSidebar();
     }
   }
 });
+
 // ==================== SIDEBAR FUNCTIONS ====================
 
 // 1. Fungsi Scroll Halus
 function scrollToId(id) {
+  if (id === "financeCard" || id === "financeSidebar" || id === "page-finance") {
+    window.switchView("finance");
+    return;
+  }
+
   const element = document.getElementById(id);
   if (element) {
-    // Scroll ke elemen
     element.scrollIntoView({ behavior: "smooth", block: "center" });
-
-    // Beri efek kedip (highlight) biar user tau yang mana kartunya
     element.classList.add("highlight-card");
     setTimeout(() => element.classList.remove("highlight-card"), 1000);
 
-    // Tutup sidebar otomatis di HP
     if (window.innerWidth <= 768) {
       toggleSidebar();
     }
@@ -4481,15 +5213,17 @@ function scrollToId(id) {
 
 // 2. Fungsi Aksi Cepat (Focus Input)
 function quickAction(type) {
-  // Tutup sidebar dulu
   if (window.innerWidth <= 768) toggleSidebar();
 
   if (type === "task") {
     scrollToId("todo-card");
     setTimeout(() => document.getElementById("taskInput").focus(), 600);
   } else if (type === "finance") {
-    scrollToId("financeCard"); // Sesuaikan ID kartu keuanganmu
-    setTimeout(() => document.getElementById("moneyDesc").focus(), 600);
+    window.switchView("finance");
+    setTimeout(() => {
+      const input = document.getElementById("moneyDesc");
+      if (input) input.focus();
+    }, 450);
   }
 }
 

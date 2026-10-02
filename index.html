@@ -119,10 +119,14 @@
     <div class="main-container" id="mainContent" style="display: none">
       <div class="main-content">
   <div class="mobile-header">
-      <button onclick="toggleSidebar()" class="btn-menu-mobile">
+      <button onclick="toggleSidebar()" class="btn-menu-mobile" title="Buka Menu">
           <i class="fas fa-bars"></i>
       </button>
-      <h3>Dashboard</h3> </div>
+      <h3 id="mobileHeaderTitle">Dashboard</h3>
+      <button onclick="switchView('finance')" class="btn-menu-mobile btn-finance-mobile" title="Dompet & Keuangan">
+          <i class="fas fa-wallet"></i>
+      </button>
+  </div>
       <header class="header-modern fade-in">
         <div class="header-profile-section">
           <button
@@ -182,6 +186,18 @@
             ><span id="weatherTemp">--°C</span>
           </div>
           <div class="digital-clock"><span id="clockTime">00:00</span></div>
+          <button
+            class="btn-finance-header glow"
+            onclick="switchView('finance')"
+            title="Buka Halaman Dompet & Keuangan"
+            id="btnHeaderFinance"
+          >
+            <div class="btn-finance-icon"><i class="fas fa-wallet"></i></div>
+            <div class="btn-finance-info">
+              <span class="btn-finance-label">Dompet</span>
+              <span class="btn-finance-balance" id="headerBalancePill">Rp 0</span>
+            </div>
+          </button>
           <div class="action-buttons">
             <button
               class="icon-btn-glass"
@@ -194,6 +210,8 @@
         </div>
       </header>
 
+      <!-- VIEW 1: DASHBOARD PAGE -->
+      <div id="page-dashboard" class="page-view active">
       <div class="quote-modern fade-in-up">
         <div class="quote-icon"><i class="fas fa-quote-left"></i></div>
         <div class="quote-text-wrapper">
@@ -771,207 +789,322 @@
             </small>
             <ul id="taskList" class="task-list"></ul>
           </div>
+        </div>
+      </div>
+      </div> <!-- /#page-dashboard -->
 
-          <div class="card finance-card" id="financeCard">
-            <div class="card-header">
-              <div class="title-with-icon">
-                <div class="icon-box green"><i class="fas fa-wallet"></i></div>
-                <h2>Keuangan</h2>
+      <!-- VIEW 2: DEDICATED FINANCE PAGE -->
+      <div id="page-finance" class="page-view" style="display: none;">
+        <!-- Finance Topbar Navigation -->
+        <div class="finance-page-header fade-in">
+          <div class="finance-page-title-row">
+            <button onclick="switchView('dashboard')" class="btn-back-dashboard" id="btnBackDashboard" title="Kembali ke Dashboard Utama">
+              <i class="fas fa-arrow-left"></i>
+              <span>Kembali ke Dashboard</span>
+            </button>
+            <div class="finance-breadcrumbs">
+              <span class="crumb-link" onclick="switchView('dashboard')"><i class="fas fa-home"></i> Beranda</span>
+              <span class="crumb-separator"><i class="fas fa-chevron-right"></i></span>
+              <span class="crumb-current">Dompet & Keuangan</span>
+            </div>
+          </div>
+          <div class="finance-header-quick-actions">
+            <button onclick="openTransferKantongModal()" class="finance-action-chip" title="Pindah Dana Antar Kantong">
+              <i class="fas fa-exchange-alt"></i> Pindah Dana
+            </button>
+            <button onclick="openSubModal()" class="finance-action-chip" title="Kelola Langganan Rutin">
+              <i class="fas fa-calendar-check"></i> Langganan
+            </button>
+            <button onclick="document.getElementById('goldModal').style.display = 'flex'" class="finance-action-chip" title="Tabungan Emas">
+              <i class="fas fa-coins"></i> Emas
+            </button>
+            <button onclick="exportFinanceReport()" class="finance-action-chip" title="Download Excel">
+              <i class="fas fa-file-excel"></i> Unduh Laporan
+            </button>
+          </div>
+        </div>
+
+        <!-- Finance Hero / KPI Summary Banner -->
+        <div class="finance-hero-banner fade-in-up">
+          <div class="finance-hero-main">
+            <div class="finance-hero-left">
+              <div class="balance-badge">
+                <i class="fas fa-shield-alt"></i> Akumulasi Saldo Aktif
               </div>
-              <div class="balance-display">
-                <div
-                  style="
-                    display: flex;
-                    align-items: center;
-                    justify-content: flex-end;
-                    gap: 5px;
-                  "
-                >
-                  <small>Total Aset</small>
-                  <button
-                    onclick="toggleBalanceVisibility()"
-                    class="btn-eye-toggle"
-                    title="Sembunyikan/Lihat Saldo"
-                  >
-                    <i id="eyeIcon" class="fas fa-eye"></i>
+              <div class="balance-title-row">
+                <span class="balance-label">Total Aset Kas</span>
+                <button onclick="toggleBalanceVisibility()" class="btn-eye-toggle" title="Sembunyikan/Lihat Saldo">
+                  <i id="eyeIcon" class="fas fa-eye"></i>
+                </button>
+              </div>
+              <h1 id="totalBalance" class="finance-main-balance">Rp 0</h1>
+              <p class="balance-subtext">Terkonsolidasi dari dompet DANA, OVO, GOPAY, dan Tunai</p>
+            </div>
+            
+            <div class="finance-hero-stats">
+              <div class="finance-stat-card target-card-hero" onclick="editTarget()" title="Klik untuk ubah target tabungan">
+                <div class="stat-card-header">
+                  <div class="stat-icon-wrap icon-purple"><i class="fas fa-bullseye"></i></div>
+                  <div class="stat-title-wrap">
+                    <span id="targetName" class="stat-title">🎯 Target Tabungan</span>
+                    <b id="targetAmount" class="stat-val">Rp 0</b>
+                  </div>
+                </div>
+                <div class="progress-bar-bg">
+                  <div id="targetProgressBar" class="progress-bar-fill"></div>
+                </div>
+                <div class="stat-card-footer">
+                  <small id="targetPercentage">0% tercapai</small>
+                  <span class="edit-link"><i class="fas fa-pen"></i> Ubah</span>
+                </div>
+              </div>
+
+              <div class="finance-stat-card">
+                <div class="stat-card-header">
+                  <div class="stat-icon-wrap icon-green"><i class="fas fa-arrow-down"></i></div>
+                  <div class="stat-title-wrap">
+                    <span class="stat-title">Pemasukan Bulan Ini</span>
+                    <b id="monthIncomeStat" class="stat-val text-green">Rp 0</b>
+                  </div>
+                </div>
+                <small class="stat-footer-text">Total uang masuk tercatat</small>
+              </div>
+
+              <div class="finance-stat-card">
+                <div class="stat-card-header">
+                  <div class="stat-icon-wrap icon-red"><i class="fas fa-arrow-up"></i></div>
+                  <div class="stat-title-wrap">
+                    <span class="stat-title">Pengeluaran Bulan Ini</span>
+                    <b id="monthExpenseStat" class="stat-val text-red">Rp 0</b>
+                  </div>
+                </div>
+                <small class="stat-footer-text">Total belanja & tagihan</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Kantong Keuangan ala Bank Digital -->
+        <div class="kantong-header-section fade-in-up">
+          <div class="kantong-title-area">
+            <div class="title-with-icon">
+              <div class="icon-box green"><i class="fas fa-layer-group"></i></div>
+              <div>
+                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                  <h3 style="margin: 0; font-size: 1.25rem;">Kantong Keuangan</h3>
+                  <span id="kantongCountBadge" class="kantong-badge-count">6 Kantong</span>
+                </div>
+                <p class="kantong-subtext">Pisahkan uang jajan, pos belanja, dan target tabungan ala kantong bank digital</p>
+              </div>
+            </div>
+            
+            <div class="kantong-top-actions">
+              <button onclick="openTransferKantongModal()" class="btn-kantong-action secondary" title="Pindah dana antar kantong">
+                <i class="fas fa-exchange-alt"></i> Pindah Dana
+              </button>
+              <button onclick="openAddKantongModal()" class="btn-kantong-action primary" title="Tambah kantong baru">
+                <i class="fas fa-plus-circle"></i> Buat Kantong
+              </button>
+            </div>
+          </div>
+
+          <!-- Category Filter Tabs -->
+          <div class="kantong-filter-tabs">
+            <button class="kantong-tab active" onclick="filterKantong('all', this)">
+              <i class="fas fa-th-large"></i> Semua (<span id="countTabAll">0</span>)
+            </button>
+            <button class="kantong-tab" onclick="filterKantong('spending', this)">
+              <i class="fas fa-shopping-bag"></i> Bayar & Jajan (<span id="countTabSpending">0</span>)
+            </button>
+            <button class="kantong-tab" onclick="filterKantong('saving', this)">
+              <i class="fas fa-bullseye"></i> Nabung & Impian (<span id="countTabSaving">0</span>)
+            </button>
+            <button class="kantong-tab" onclick="filterKantong('locked', this)">
+              <i class="fas fa-lock"></i> Terkunci / Darurat (<span id="countTabLocked">0</span>)
+            </button>
+          </div>
+        </div>
+
+        <!-- Dynamic Kantong Grid (Populated by script.js) -->
+        <div id="kantongGrid" class="kantong-grid fade-in-up"></div>
+        <input type="hidden" id="selectedWallet" value="cash" />
+
+        <!-- 2-Column Content Grid: Left Form & Quick Advice, Right Chart & History -->
+        <div class="finance-page-grid fade-in-up">
+          <!-- Left Column -->
+          <div class="finance-col-form">
+            <!-- Form Catat Transaksi -->
+            <div class="card finance-card-modern">
+              <div class="card-header">
+                <div class="title-with-icon">
+                  <div class="icon-box green"><i class="fas fa-pen-alt"></i></div>
+                  <h2>Catat Transaksi</h2>
+                </div>
+                <div class="wallet-active-badge">
+                  <span>Dompet:</span> <b id="activeWalletLabel">TUNAI</b>
+                </div>
+              </div>
+
+              <div class="transaction-box">
+                <div class="form-group" style="margin-bottom: 12px;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                    <label style="font-size: 0.8rem; color: var(--text-sub);">Pilih Kantong Sumber</label>
+                    <span id="activeKantongBalanceHint" style="font-size: 0.75rem; color: var(--green); font-weight: 600;">Saldo: Rp 0</span>
+                  </div>
+                  <select id="walletSelect" onchange="selectWallet(this.value)" aria-label="Pilih Kantong">
+                  </select>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 12px;">
+                  <label style="font-size: 0.8rem; color: var(--text-sub); margin-bottom: 5px; display: block;">Keterangan / Keperluan</label>
+                  <input
+                    type="text"
+                    id="moneyDesc"
+                    placeholder="Contoh: Makan Siang, Beli Buku, Gaji..."
+                    aria-label="Keterangan Transaksi"
+                  />
+                </div>
+
+                <div class="form-row" style="margin-bottom: 16px;">
+                  <div style="flex: 1;">
+                    <label style="font-size: 0.8rem; color: var(--text-sub); margin-bottom: 5px; display: block;">Nominal (Rp)</label>
+                    <input
+                      type="number"
+                      id="moneyAmount"
+                      placeholder="0"
+                      aria-label="Jumlah Uang"
+                    />
+                  </div>
+                  <div style="flex: 1;">
+                    <label style="font-size: 0.8rem; color: var(--text-sub); margin-bottom: 5px; display: block;">Kategori</label>
+                    <select id="txnCategory" aria-label="Kategori Transaksi">
+                      <option value="Jajan">🍔 Jajan / Makan</option>
+                      <option value="Transport">🚗 Transport / Bensin</option>
+                      <option value="Belanja">🛍️ Belanja Bulanan</option>
+                      <option value="Sedekah">🤝 Sedekah / Donasi</option>
+                      <option value="Tagihan">⚡ Pulsa / Token Listrik</option>
+                      <option value="Laundry">🧺 Laundry</option>
+                      <option value="Skincare">💅 Skincare / Grooming</option>
+                      <option value="Nongkrong">☕ Nongkrong / Kopi</option>
+                      <option value="Kondangan">💌 Kondangan / Kado</option>
+                      <option value="Parkir">🅿️ Parkir / Pak Ogah</option>
+                      <option value="Hiburan">🎮 Game / Hiburan</option>
+                      <option value="Cicilan">💸 Cicilan / Paylater</option>
+                      <option value="Tabungan">💰 Tabungan</option>
+                      <option value="Lainnya">✨ Lainnya</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="btn-group">
+                  <button class="btn-in" onclick="addTransaction('in')">
+                    <i class="fas fa-arrow-down"></i> Uang Masuk
+                  </button>
+                  <button class="btn-out" onclick="addTransaction('out')">
+                    <i class="fas fa-arrow-up"></i> Uang Keluar
                   </button>
                 </div>
-                <h3 id="totalBalance">Rp 0</h3>
+
+                <div class="finance-form-subactions">
+                  <button
+                    class="action-btn transfer-btn"
+                    onclick="toggleTransferModal()"
+                  >
+                    <i class="fas fa-exchange-alt"></i> Transfer Antar Dompet
+                  </button>
+                  <button
+                    class="action-btn sub-btn"
+                    onclick="openSubModal()"
+                  >
+                    <i class="fas fa-calendar-check"></i> Kelola Langganan Rutin
+                  </button>
+                </div>
               </div>
             </div>
 
-            <div class="target-widget" onclick="editTarget()">
-              <div class="target-header">
-                <span id="targetName">🎯 Set Target</span>
-                <span id="targetAmount">Rp 0</span>
+            <!-- Smart Financial Tips Card -->
+            <div class="card finance-card-modern" style="margin-top: 20px;">
+              <div class="card-header">
+                <div class="title-with-icon">
+                  <div class="icon-box purple"><i class="fas fa-lightbulb"></i></div>
+                  <h2>Tips Finansial Pintar</h2>
+                </div>
               </div>
-              <div class="progress-bar-bg">
-                <div id="targetProgressBar" class="progress-bar-fill"></div>
+              <div class="finance-tips-content">
+                <div class="tip-item">
+                  <span class="tip-number">1</span>
+                  <div>
+                    <b>Aturan 50/30/20</b>
+                    <p>Alokasikan 50% untuk kebutuhan pokok, 30% untuk keinginan, dan 20% langsung ke tabungan.</p>
+                  </div>
+                </div>
+                <div class="tip-item">
+                  <span class="tip-number">2</span>
+                  <div>
+                    <b>Catat Sekecil Apapun Pengeluaran</b>
+                    <p>Parkir, kopi, dan jajan receh sering menjadi kebocoran halus yang menghabiskan saldo.</p>
+                  </div>
+                </div>
+                <div class="tip-item">
+                  <span class="tip-number">3</span>
+                  <div>
+                    <b>Review Langganan Bulanan</b>
+                    <p>Cek fitur Langganan Rutin dan hentikan layanan streaming atau apps yang jarang dipakai.</p>
+                  </div>
+                </div>
               </div>
-              <small id="targetPercentage">0% tercapai</small>
             </div>
+          </div>
 
-            <div class="chart-section">
-              <h4>Distribusi Pengeluaran</h4>
+          <!-- Right Column -->
+          <div class="finance-col-analytics">
+            <!-- Distribusi Pengeluaran Chart -->
+            <div class="card finance-card-modern chart-section" style="margin-bottom: 20px;">
+              <div class="card-header">
+                <div class="title-with-icon">
+                  <div class="icon-box orange"><i class="fas fa-chart-pie"></i></div>
+                  <h2>Distribusi Pengeluaran</h2>
+                </div>
+              </div>
               <div
                 id="expenseChartContainer"
                 class="expense-chart-container"
               ></div>
             </div>
 
-            <div class="wallet-label">Pilih Sumber Dana:</div>
-            <div class="wallet-grid">
-              <div
-                class="wallet-card dana"
-                onclick="selectWallet('dana', this)"
-              >
-                <div class="card-top">
-                  <span>DANA</span>
-                  <i class="fas fa-check-circle check-icon"></i>
-                </div>
-                <div class="card-bottom">
-                  <b id="saldo-dana">Rp 0</b>
-                </div>
-                <i class="bg-icon fas fa-wallet"></i>
-              </div>
-
-              <div class="wallet-card ovo" onclick="selectWallet('ovo', this)">
-                <div class="card-top">
-                  <span>OVO</span>
-                  <i class="fas fa-check-circle check-icon"></i>
-                </div>
-                <div class="card-bottom">
-                  <b id="saldo-ovo">Rp 0</b>
-                </div>
-                <i class="bg-icon fas fa-mobile-alt"></i>
-              </div>
-
-              <div
-                class="wallet-card gopay"
-                onclick="selectWallet('gopay', this)"
-              >
-                <div class="card-top">
-                  <span>GOPAY</span>
-                  <i class="fas fa-check-circle check-icon"></i>
-                </div>
-                <div class="card-bottom">
-                  <b id="saldo-gopay">Rp 0</b>
-                </div>
-                <i class="bg-icon fas fa-motorcycle"></i>
-              </div>
-
-              <div
-                class="wallet-card cash active"
-                onclick="selectWallet('cash', this)"
-              >
-                <div class="card-top">
-                  <span>TUNAI</span>
-                  <i class="fas fa-check-circle check-icon"></i>
-                </div>
-                <div class="card-bottom">
-                  <b id="saldo-cash">Rp 0</b>
-                </div>
-                <i class="bg-icon fas fa-money-bill-wave"></i>
-              </div>
-            </div>
-            <input type="hidden" id="selectedWallet" value="cash" />
-
-            <div class="transaction-box">
-              <input
-                type="text"
-                id="moneyDesc"
-                placeholder="Keterangan (Cth: Jajan)"
-                aria-label="Keterangan Transaksi"
-              />
-              <div class="form-row">
-                <input
-                  type="number"
-                  id="moneyAmount"
-                  placeholder="Rp..."
-                  aria-label="Jumlah Uang"
-                />
-                <select id="txnCategory" aria-label="Kategori Transaksi">
-                  <option value="Jajan">🍔 Jajan / Makan</option>
-                  <option value="Transport">🚗 Transport / Bensin</option>
-                  <option value="Belanja">🛍️ Belanja Bulanan</option>
-                  <option value="Sedekah">🤝 Sedekah / Donasi</option>
-                  <option value="Tagihan">⚡ Pulsa / Token Listrik</option>
-                  <option value="Laundry">🧺 Laundry</option>
-                  <option value="Skincare">💅 Skincare / Grooming</option>
-                  <option value="Nongkrong">☕ Nongkrong / Kopi</option>
-                  <option value="Kondangan">💌 Kondangan / Kado</option>
-                  <option value="Parkir">🅿️ Parkir / Pak Ogah</option>
-                  <option value="Hiburan">🎮 Game / Hiburan</option>
-                  <option value="Cicilan">💸 Cicilan / Paylater</option>
-                  <option value="Tabungan">💰 Tabungan</option>
-                  <option value="Lainnya">✨ Lainnya</option>
-                </select>
-              </div>
-              <div class="btn-group">
-                <button class="btn-in" onclick="addTransaction('in')">
-                  <i class="fas fa-arrow-down"></i> Masuk
-                </button>
-                <button class="btn-out" onclick="addTransaction('out')">
-                  <i class="fas fa-arrow-up"></i> Keluar
-                </button>
-              </div>
-
-              <button
-                class="action-btn transfer-btn"
-                onclick="toggleTransferModal()"
-                style="
-                  width: 100%;
-                  margin-top: 10px;
-                  background: var(--orange);
-                  color: white;
-                  padding: 10px;
-                  border-radius: 10px;
-                "
-              >
-                <i class="fas fa-exchange-alt"></i> Transfer Antar Dompet
-              </button>
-              <button
-                class="action-btn sub-btn"
-                onclick="openSubModal()"
-                style="
-                  width: 100%;
-                  margin-top: 10px;
-                  background: var(--purple);
-                  color: white;
-                  padding: 10px;
-                  border-radius: 10px;
-                "
-              >
-                <i class="fas fa-calendar-check"></i> Kelola Langganan Rutin
-              </button>
-            </div>
-
-            <div class="history-section">
+            <!-- Riwayat Transaksi -->
+            <div class="card finance-card-modern history-section">
               <div class="history-header">
-                <h4>Riwayat</h4>
-                <select
-                  id="historyFilter"
-                  onchange="loadTransactions()"
-                  aria-label="Filter Riwayat Transaksi"
-                >
-                  <option value="all">Semua</option>
-                  <option value="in">Masuk</option>
-                  <option value="out">Keluar</option>
-                </select>
-                <button
-                  class="btn-mini"
-                  onclick="exportFinanceReport()"
-                  title="Download"
-                >
-                  <i class="fas fa-download"></i>
-                </button>
+                <div class="title-with-icon">
+                  <div class="icon-box blue"><i class="fas fa-history"></i></div>
+                  <h2>Riwayat Transaksi</h2>
+                </div>
+                <div class="history-controls">
+                  <select
+                    id="historyFilter"
+                    onchange="loadTransactions()"
+                    aria-label="Filter Riwayat Transaksi"
+                  >
+                    <option value="all">Semua</option>
+                    <option value="in">Masuk (+)</option>
+                    <option value="out">Keluar (-)</option>
+                  </select>
+                  <button
+                    class="btn-mini btn-export-history"
+                    onclick="exportFinanceReport()"
+                    title="Download Excel Laporan"
+                  >
+                    <i class="fas fa-download"></i> Ekspor
+                  </button>
+                </div>
               </div>
               <ul id="transactionList" class="history-list"></ul>
             </div>
           </div>
         </div>
-      </div>
-    </div>
+      </div> <!-- /#page-finance -->
+    </div> <!-- /.main-content -->
+    </div> <!-- /.main-container -->
 
     <div id="toastBox"></div>
     <div id="soundModal" class="modal-backdrop" style="display: none">
@@ -1573,7 +1706,7 @@
             </div>
             <span>Tugas & PR</span>
           </div>
-          <div class="sidebar-menu-item" onclick="scrollToId('financeCard')">
+          <div class="sidebar-menu-item" onclick="toggleSidebar(); switchView('finance');">
             <div
               class="menu-icon"
               style="background: rgba(16, 185, 129, 0.1); color: #10b981"
@@ -1762,12 +1895,6 @@
     </div>
   </div>
 </div>
-
-
-      
-        </div>
-      </div>
-    </div>
     <div id="calAddModal" class="modal-backdrop" style="display: none">
       <div class="modal-content fade-in-up" style="max-width: 350px">
         <div class="modal-head">
@@ -1840,7 +1967,138 @@
         </div>
       </div>
     </div>
-    <div id="sidebarBackdrop" onclick="toggleSidebar()" class="sidebar-backdrop"></div>
+
+    <!-- Modal Buat / Edit Kantong Bank -->
+    <div id="kantongModal" class="modal-backdrop" style="display: none">
+      <div class="modal-content fade-in-up" style="max-width: 480px">
+        <div class="modal-head">
+          <h3 id="kantongModalTitle">✨ Buat Kantong Baru</h3>
+          <button class="close-icon" onclick="closeKantongModal()">×</button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="editKantongId" value="" />
+          
+          <div class="form-group" style="margin-bottom: 15px;">
+            <label for="kantongNameInput">Nama Kantong</label>
+            <input type="text" id="kantongNameInput" placeholder="Contoh: Nabung Laptop, Jajan Kopi..." maxlength="30" />
+          </div>
+
+          <div class="form-group" style="margin-bottom: 15px;">
+            <label>Tipe Kantong</label>
+            <div class="kantong-type-selector">
+              <div class="kantong-type-option active" id="typeOption_spending" onclick="selectKantongType('spending')">
+                <i class="fas fa-shopping-bag"></i>
+                <div class="type-text">
+                  <b>Bayar & Jajan</b>
+                  <small>Pos pengeluaran harian</small>
+                </div>
+              </div>
+              <div class="kantong-type-option" id="typeOption_saving" onclick="selectKantongType('saving')">
+                <i class="fas fa-bullseye"></i>
+                <div class="type-text">
+                  <b>Nabung & Target</b>
+                  <small>Ada target nominal</small>
+                </div>
+              </div>
+              <div class="kantong-type-option" id="typeOption_locked" onclick="selectKantongType('locked')">
+                <i class="fas fa-lock"></i>
+                <div class="type-text">
+                  <b>Dana Darurat</b>
+                  <small>Tersimpan aman</small>
+                </div>
+              </div>
+            </div>
+            <input type="hidden" id="selectedKantongType" value="spending" />
+          </div>
+
+          <div id="kantongTargetGroup" class="form-group" style="margin-bottom: 15px; display: none;">
+            <label for="kantongTargetInput">Target Tabungan (Rp)</label>
+            <input type="number" id="kantongTargetInput" placeholder="Contoh: 2000000" />
+          </div>
+
+          <div id="kantongInitialGroup" class="form-group" style="margin-bottom: 15px;">
+            <label for="kantongInitialBalanceInput">Saldo Awal (Rp) <span style="font-weight: normal; color: var(--text-sub);">(Opsional)</span></label>
+            <input type="number" id="kantongInitialBalanceInput" placeholder="0" />
+          </div>
+
+          <div class="form-group" style="margin-bottom: 15px;">
+            <label>Pilih Ikon</label>
+            <div id="kantongIconPicker" class="kantong-icon-picker"></div>
+            <input type="hidden" id="selectedKantongIcon" value="fa-wallet" />
+          </div>
+
+          <div class="form-group" style="margin-bottom: 15px;">
+            <label>Pilih Warna Tema</label>
+            <div id="kantongColorPicker" class="kantong-color-picker"></div>
+            <input type="hidden" id="selectedKantongColor" value="#10b981" />
+          </div>
+        </div>
+        <div class="modal-foot" style="display: flex; justify-content: space-between; gap: 10px;">
+          <button id="btnDeleteKantong" onclick="deleteCurrentKantong()" class="btn-text-danger" style="display: none;">
+            <i class="fas fa-trash"></i> Hapus Kantong
+          </button>
+          <div style="display: flex; gap: 10px; margin-left: auto;">
+            <button onclick="closeKantongModal()" class="btn-secondary-glass">Batal</button>
+            <button onclick="saveKantongData()" class="btn-primary">
+              <i class="fas fa-save"></i> Simpan
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Pindah Dana Antar Kantong (Move Money) -->
+    <div id="transferKantongModal" class="modal-backdrop" style="display: none">
+      <div class="modal-content fade-in-up" style="max-width: 440px">
+        <div class="modal-head">
+          <h3>💸 Pindah Dana Antar Kantong</h3>
+          <button class="close-icon" onclick="closeTransferKantongModal()">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="transfer-kantong-box">
+            <div class="form-group" style="margin-bottom: 12px;">
+              <label for="transferSourceKantong">Dari Kantong Asal</label>
+              <select id="transferSourceKantong" onchange="updateTransferBalancePreview()">
+              </select>
+              <small id="transferSourceBalText" style="color: var(--text-sub); display: block; margin-top: 4px;">Saldo: Rp 0</small>
+            </div>
+
+            <div class="transfer-arrow-divider" onclick="swapTransferKantongs()" title="Tukar Asal dan Tujuan">
+              <i class="fas fa-arrow-down"></i>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 16px;">
+              <label for="transferDestKantong">Ke Kantong Tujuan</label>
+              <select id="transferDestKantong" onchange="updateTransferBalancePreview()">
+              </select>
+              <small id="transferDestBalText" style="color: var(--text-sub); display: block; margin-top: 4px;">Saldo: Rp 0</small>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 14px;">
+              <label for="transferKantongAmount">Nominal Pindah (Rp)</label>
+              <input type="number" id="transferKantongAmount" placeholder="0" />
+            </div>
+
+            <div class="quick-amount-pills">
+              <button type="button" class="amount-pill" onclick="setQuickTransfer(10000)">+10rb</button>
+              <button type="button" class="amount-pill" onclick="setQuickTransfer(50000)">+50rb</button>
+              <button type="button" class="amount-pill" onclick="setQuickTransfer(100000)">+100rb</button>
+              <button type="button" class="amount-pill" onclick="setQuickTransfer('all')">Semua Saldo</button>
+            </div>
+
+            <div class="form-group" style="margin-top: 14px;">
+              <label for="transferKantongNote">Catatan / Keterangan <span style="font-weight: normal; color: var(--text-sub);">(Opsional)</span></label>
+              <input type="text" id="transferKantongNote" placeholder="Contoh: Alokasi tabungan mingguan" />
+            </div>
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button onclick="executeKantongTransfer()" class="btn-primary btn-block">
+            <i class="fas fa-paper-plane"></i> Konfirmasi Pindah Dana
+          </button>
+        </div>
+      </div>
+    </div>
     <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
      import { 

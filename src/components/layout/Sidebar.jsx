@@ -25,6 +25,7 @@ import {
 export default function Sidebar({
   isOpen,
   onClose,
+  onOpenFinance,
   onOpenTaskModal,
   onOpenFinanceModal,
   onOpenScheduleModal,
@@ -78,7 +79,7 @@ export default function Sidebar({
               <div className="menu-icon blue"><CheckCircle size={16} /></div>
               <span>Tugas & PR</span>
             </div>
-            <div className="sidebar-menu-item" onClick={() => handleNavClick("finance-section")}>
+            <div className="sidebar-menu-item" onClick={() => { onClose(); if (onOpenFinance) onOpenFinance(); }}>
               <div className="menu-icon green"><Wallet size={16} /></div>
               <span>Dompet & Keuangan</span>
             </div>

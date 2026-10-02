@@ -7,7 +7,7 @@ import BroadcastBanner from "./components/layout/BroadcastBanner";
 import QuoteBanner from "./components/layout/QuoteBanner";
 import TaskBoard from "./components/tasks/TaskBoard";
 import TaskModal from "./components/tasks/TaskModal";
-import FinanceCard from "./components/finance/FinanceCard";
+import FinancePage from "./components/finance/FinancePage";
 import FinanceModal from "./components/finance/FinanceModal";
 import GoldModal from "./components/finance/GoldModal";
 import SubscriptionsModal from "./components/finance/SubscriptionsModal";
@@ -49,7 +49,8 @@ export default function App() {
     jadwal
   } = useData();
 
-  // Sidebar state
+  // Navigation & Page State
+  const [currentPage, setCurrentPage] = useState("dashboard"); // 'dashboard' | 'finance'
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Music Widget
@@ -66,6 +67,7 @@ export default function App() {
     setFinanceDefaultType(type);
     setFinanceModalOpen(true);
   };
+  const [goldModalOpen, setGoldModalOpen] = useState(false);
   const [subModalOpen, setSubModalOpen] = useState(false);
 
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
@@ -161,10 +163,11 @@ export default function App() {
 
   return (
     <div className="app-container">
-      {/* Off-canvas Sidebar */}
+      {/* Off-canvas Main Navigation Sidebar */}
       <Sidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
+        onOpenFinance={() => setCurrentPage("finance")}
         onOpenTaskModal={handleOpenAddTask}
         onOpenFinanceModal={() => handleOpenFinanceModal("out")}
         onOpenScheduleModal={() => setScheduleModalOpen(true)}
@@ -183,37 +186,44 @@ export default function App() {
         <Header
           onOpenSidebar={() => setSidebarOpen(true)}
           onOpenProfileModal={() => setUsernameModalOpen(true)}
+          onOpenFinance={() => setCurrentPage("finance")}
         />
 
-        <BroadcastBanner />
-        <QuoteBanner />
+        {currentPage === "dashboard" ? (
+          <>
+            <BroadcastBanner />
+            <QuoteBanner />
 
-        {/* Dashboard 2-Column Responsive Grid */}
-        <div className="dashboard-grid">
-          {/* Left Column: Schedule & Tasks */}
-          <div className="dashboard-col left-col">
-            <ScheduleCard
-              onOpenAddModal={() => setScheduleModalOpen(true)}
-              onOpenSubjectNote={handleOpenSubjectNote}
-            />
-            <TaskBoard
-              onOpenTaskModal={handleOpenAddTask}
-              onEditTask={handleOpenEditTask}
-            />
-          </div>
+            {/* Dashboard 2-Column Responsive Grid */}
+            <div className="dashboard-grid">
+              {/* Left Column: Schedule & Tasks */}
+              <div className="dashboard-col left-col">
+                <ScheduleCard
+                  onOpenAddModal={() => setScheduleModalOpen(true)}
+                  onOpenSubjectNote={handleOpenSubjectNote}
+                />
+                <TaskBoard
+                  onOpenTaskModal={handleOpenAddTask}
+                  onEditTask={handleOpenEditTask}
+                />
+              </div>
 
-          {/* Right Column: Finance, Focus Pomodoro, Sticky Note */}
-          <div className="dashboard-col right-col">
-            <FinanceCard
-              onOpenFinanceModal={handleOpenFinanceModal}
-              onOpenGoldModal={() => setGoldModalOpen(true)}
-              onOpenSubModal={() => setSubModalOpen(true)}
-              onExportExcel={handleExportExcel}
-            />
-            <PomodoroCard />
-            <StickyNotes />
-          </div>
-        </div>
+              {/* Right Column: Focus Pomodoro, Sticky Note */}
+              <div className="dashboard-col right-col">
+                <PomodoroCard />
+                <StickyNotes />
+              </div>
+            </div>
+          </>
+        ) : (
+          <FinancePage
+            onBack={() => setCurrentPage("dashboard")}
+            onOpenFinanceModal={handleOpenFinanceModal}
+            onOpenGoldModal={() => setGoldModalOpen(true)}
+            onOpenSubModal={() => setSubModalOpen(true)}
+            onExportExcel={handleExportExcel}
+          />
+        )}
       </main>
 
       {/* Floating Lo-Fi Radio */}
