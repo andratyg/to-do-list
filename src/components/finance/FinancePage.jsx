@@ -99,6 +99,11 @@ export default function FinancePage({
   const [transferAmount, setTransferAmount] = useState("");
   const [transferNote, setTransferNote] = useState("");
 
+  // Reset Finance Modal State (Multi-Validation)
+  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
+  const [resetAgreeChecked, setResetAgreeChecked] = useState(false);
+  const [resetConfirmPhrase, setResetConfirmPhrase] = useState("");
+
   const hideBalance = settings?.hideBalance || false;
 
   const toggleHideBalance = () => {
@@ -312,6 +317,29 @@ export default function FinancePage({
     setTransferNote("");
   };
 
+  // Reset Finance Data Handlers (Multi-Validation)
+  const handleExecuteResetFinance = () => {
+    if (!resetAgreeChecked || resetConfirmPhrase.trim().toUpperCase() !== "HAPUS KEUANGAN") {
+      alert("Validasi keamanan belum terpenuhi!");
+      return;
+    }
+
+    if (saveDB) {
+      saveDB("transactions", []);
+      saveDB("kantong", DEFAULT_KANTONGS);
+    }
+    setKantongs(DEFAULT_KANTONGS);
+    setSelectedWallet("cash");
+    try {
+      localStorage.removeItem("kantong_list_v1");
+    } catch (e) {}
+
+    setIsResetModalOpen(false);
+    setResetAgreeChecked(false);
+    setResetConfirmPhrase("");
+    alert("Seluruh data keuangan berhasil direset ke Rp 0!");
+  };
+
   // Helper icon render
   const renderPocketIcon = (iconName, color) => {
     switch (iconName) {
@@ -363,6 +391,9 @@ export default function FinancePage({
           </button>
           <button onClick={onExportExcel} className="finance-action-chip">
             <FileSpreadsheet size={14} /> Ekspor Excel
+          </button>
+          <button onClick={() => setIsResetModalOpen(true)} className="finance-action-chip danger" title="Reset Semua Data Keuangan">
+            <Trash2 size={14} /> Reset Keuangan
           </button>
         </div>
       </div>
@@ -1130,6 +1161,92 @@ export default function FinancePage({
                 onClick={handleExecuteTransfer}
               >
                 Konfirmasi Pindah Dana
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Reset Data Keuangan (Multi-Validation Safety) */}
+      {isResetModalOpen && (
+        <div className="modal-backdrop">
+          <div className="modal-content fade-in-up" style={{ maxWidth: "480px" }}>
+            <div className="modal-head" style={{ borderBottom: "2px solid rgba(239, 68, 68, 0.2)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <div className="danger-icon-badge">
+                  <AlertCircle size={20} color="var(--red)" />
+                </div>
+                <h3 style={{ color: "var(--red)", margin: 0, fontSize: "1.15rem" }}>
+                  Reset Semua Data Keuangan
+                </h3>
+              </div>
+              <button className="close-icon" onClick={() => setIsResetModalOpen(false)}>
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="modal-body">
+              <div className="reset-warning-banner">
+                <b>⚠️ Perhatian: Tindakan Ini Tidak Dapat Dibatalkan!</b>
+                <p>Seluruh data riwayat transaksi dan saldo Anda akan dihapus secara permanen.</p>
+              </div>
+
+              <div className="reset-impact-list">
+                <div className="impact-item">
+                  <Trash2 size={18} color="var(--red)" style={{ marginTop: "2px" }} />
+                  <div>
+                    <b>Hapus Seluruh Riwayat Transaksi</b>
+                    <p>Semua catatan uang masuk, uang keluar, dan mutasi perpindahan saldo akan dihapus.</p>
+                  </div>
+                </div>
+                <div className="impact-item">
+                  <Wallet size={18} color="var(--red)" style={{ marginTop: "2px" }} />
+                  <div>
+                    <b>Reset Saldo & Kantong ke Rp 0</b>
+                    <p>Saldo seluruh kantong akan dinolkan kembali ke kondisi awal.</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Validasi 1: Persetujuan Checkbox */}
+              <div className="reset-validation-box">
+                <label className="custom-check-container">
+                  <input
+                    type="checkbox"
+                    checked={resetAgreeChecked}
+                    onChange={(e) => setResetAgreeChecked(e.target.checked)}
+                  />
+                  <span className="check-text">
+                    Saya mengerti bahwa seluruh data keuangan akan <b>dihapus permanen</b> dan tidak dapat dikembalikan.
+                  </span>
+                </label>
+              </div>
+
+              {/* Validasi 2: Ketik Frasa Konfirmasi */}
+              <div style={{ marginTop: "14px" }}>
+                <label style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-main)", display: "block", marginBottom: "6px" }}>
+                  Ketik kata <span className="badge-phrase">HAPUS KEUANGAN</span> di bawah ini:
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ketik HAPUS KEUANGAN"
+                  value={resetConfirmPhrase}
+                  onChange={(e) => setResetConfirmPhrase(e.target.value)}
+                  style={{ borderColor: "rgba(239, 68, 68, 0.4)", fontWeight: 700, textTransform: "uppercase" }}
+                />
+              </div>
+            </div>
+
+            <div className="modal-foot" style={{ display: "flex", justifyContent: "space-between", gap: "10px" }}>
+              <button className="btn-secondary-glass" onClick={() => setIsResetModalOpen(false)}>
+                Batal
+              </button>
+              <button
+                className="btn-danger-confirm"
+                disabled={!resetAgreeChecked || resetConfirmPhrase.trim().toUpperCase() !== "HAPUS KEUANGAN"}
+                onClick={handleExecuteResetFinance}
+              >
+                <Trash2 size={15} /> Hapus Permanen Sekarang
               </button>
             </div>
           </div>

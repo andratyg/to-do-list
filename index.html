@@ -809,9 +809,6 @@
             </div>
           </div>
           <div class="finance-header-quick-actions">
-            <button onclick="openTransferKantongModal()" class="finance-action-chip" title="Pindah Dana Antar Kantong">
-              <i class="fas fa-exchange-alt"></i> Pindah Dana
-            </button>
             <button onclick="openSubModal()" class="finance-action-chip" title="Kelola Langganan Rutin">
               <i class="fas fa-calendar-check"></i> Langganan
             </button>
@@ -819,7 +816,10 @@
               <i class="fas fa-coins"></i> Emas
             </button>
             <button onclick="exportFinanceReport()" class="finance-action-chip" title="Download Excel">
-              <i class="fas fa-file-excel"></i> Unduh Laporan
+              <i class="fas fa-file-excel"></i> Ekspor Laporan
+            </button>
+            <button onclick="openResetFinanceModal()" class="finance-action-chip danger" title="Hapus & Reset Semua Data Keuangan">
+              <i class="fas fa-trash-alt"></i> Reset Keuangan
             </button>
           </div>
         </div>
@@ -965,7 +965,7 @@
                   />
                 </div>
 
-                <div class="form-row" style="margin-bottom: 16px;">
+                <div class="form-row" style="margin-bottom: 14px;">
                   <div style="flex: 1;">
                     <label style="font-size: 0.8rem; color: var(--text-sub); margin-bottom: 5px; display: block;">Nominal (Rp)</label>
                     <input
@@ -974,6 +974,12 @@
                       placeholder="0"
                       aria-label="Jumlah Uang"
                     />
+                    <div class="quick-amount-chips">
+                      <button type="button" class="amount-chip-btn" onclick="quickFillAmount(10000)">+10k</button>
+                      <button type="button" class="amount-chip-btn" onclick="quickFillAmount(20000)">+20k</button>
+                      <button type="button" class="amount-chip-btn" onclick="quickFillAmount(50000)">+50k</button>
+                      <button type="button" class="amount-chip-btn" onclick="quickFillAmount(100000)">+100k</button>
+                    </div>
                   </div>
                   <div style="flex: 1;">
                     <label style="font-size: 0.8rem; color: var(--text-sub); margin-bottom: 5px; display: block;">Kategori</label>
@@ -1008,9 +1014,9 @@
                 <div class="finance-form-subactions">
                   <button
                     class="action-btn transfer-btn"
-                    onclick="toggleTransferModal()"
+                    onclick="openTransferKantongModal()"
                   >
-                    <i class="fas fa-exchange-alt"></i> Transfer Antar Dompet
+                    <i class="fas fa-exchange-alt"></i> Pindah Dana Antar Kantong
                   </button>
                   <button
                     class="action-btn sub-btn"
@@ -1095,6 +1101,13 @@
                     title="Download Excel Laporan"
                   >
                     <i class="fas fa-download"></i> Ekspor
+                  </button>
+                  <button
+                    class="btn-mini btn-reset-finance-trigger"
+                    onclick="openResetFinanceModal()"
+                    title="Reset Semua Riwayat & Saldo Keuangan"
+                  >
+                    <i class="fas fa-trash-alt"></i> Reset
                   </button>
                 </div>
               </div>
@@ -2095,6 +2108,94 @@
         <div class="modal-foot">
           <button onclick="executeKantongTransfer()" class="btn-primary btn-block">
             <i class="fas fa-paper-plane"></i> Konfirmasi Pindah Dana
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Reset Data Keuangan (Multi-Validation Safety) -->
+    <div id="resetFinanceModal" class="modal-backdrop" style="display: none">
+      <div class="modal-content fade-in-up" style="max-width: 480px">
+        <div class="modal-head" style="border-bottom: 2px solid rgba(239, 68, 68, 0.2);">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div class="danger-icon-badge">
+              <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h3 style="color: var(--red); margin: 0; font-size: 1.15rem;">Reset Semua Data Keuangan</h3>
+          </div>
+          <button class="close-icon" onclick="closeResetFinanceModal()">×</button>
+        </div>
+
+        <div class="modal-body">
+          <div class="reset-warning-banner">
+            <b>⚠️ Perhatian: Tindakan Ini Tidak Dapat Dibatalkan!</b>
+            <p>Seluruh data keuangan Anda akan dibersihkan secara permanen.</p>
+          </div>
+
+          <div class="reset-impact-list">
+            <div class="impact-item">
+              <i class="fas fa-receipt" style="color: var(--red);"></i>
+              <div>
+                <b>Hapus Seluruh Riwayat Transaksi</b>
+                <p>Semua catatan uang masuk, uang keluar, mutasi transfer, dan tagihan akan dihapus.</p>
+              </div>
+            </div>
+            <div class="impact-item">
+              <i class="fas fa-wallet" style="color: var(--red);"></i>
+              <div>
+                <b>Reset Saldo & Kantong ke Rp 0</b>
+                <p>Saldo Tunai, DANA, OVO, GoPay menjadi Rp 0, dan kantong kustom akan direset.</p>
+              </div>
+            </div>
+            <div class="impact-item">
+              <i class="fas fa-bullseye" style="color: var(--red);"></i>
+              <div>
+                <b>Reset Target Tabungan</b>
+                <p>Progres capaian target tabungan Anda akan dikosongkan kembali ke 0%.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Validasi 1: Persetujuan Checkbox -->
+          <div class="reset-validation-box">
+            <label class="custom-check-container">
+              <input type="checkbox" id="checkAgreeResetFinance" onchange="validateResetFinanceInput()" />
+              <span class="check-text">
+                Saya mengerti bahwa seluruh data transaksi dan saldo akan <b>dihapus permanen</b> dan tidak dapat dikembalikan lagi.
+              </span>
+            </label>
+          </div>
+
+          <!-- Validasi 2: Ketik Frasa Konfirmasi -->
+          <div class="form-group" style="margin-top: 14px;">
+            <label for="confirmResetFinanceInput" style="font-size: 0.85rem; font-weight: 600; color: var(--text-main); display: block; margin-bottom: 6px;">
+              Ketik kata <span class="badge-phrase">HAPUS KEUANGAN</span> di bawah ini:
+            </label>
+            <input
+              type="text"
+              id="confirmResetFinanceInput"
+              placeholder="Ketik HAPUS KEUANGAN"
+              autocomplete="off"
+              oninput="validateResetFinanceInput()"
+              style="border-color: rgba(239, 68, 68, 0.4); font-weight: 700; text-transform: uppercase;"
+            />
+            <small id="resetInputFeedback" style="display: block; margin-top: 6px; font-size: 0.75rem; color: var(--text-sub);">
+              Masukkan teks sesuai persis untuk mengaktifkan tombol hapus.
+            </small>
+          </div>
+        </div>
+
+        <div class="modal-foot" style="display: flex; justify-content: space-between; gap: 10px;">
+          <button onclick="closeResetFinanceModal()" class="btn-secondary-glass">
+            Batal
+          </button>
+          <button
+            id="btnExecuteResetFinance"
+            onclick="executeResetFinanceData()"
+            class="btn-danger-confirm"
+            disabled
+          >
+            <i class="fas fa-trash-alt"></i> Hapus Permanen Sekarang
           </button>
         </div>
       </div>

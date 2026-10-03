@@ -4295,6 +4295,15 @@ window.selectWallet = function (id) {
   renderKantongCards();
 };
 
+window.quickFillAmount = function (amt) {
+  const input = document.getElementById("moneyAmount");
+  if (!input) return;
+  const current = parseInt(input.value, 10) || 0;
+  input.value = current + amt;
+  input.focus();
+  playSuccessSound("coin");
+};
+
 window.toggleKantongDropdown = function (id, event) {
   event.stopPropagation();
   const popup = document.getElementById(`kmenu_${id}`);
@@ -4685,6 +4694,131 @@ window.toggleTransferModal = function () {
 function executeTransfer() {
   window.executeKantongTransfer();
 }
+
+// ==================== RESET FINANCE DATA (MULTI-VALIDATION) ====================
+window.openResetFinanceModal = function () {
+  const modal = document.getElementById("resetFinanceModal");
+  if (!modal) return;
+
+  const check = document.getElementById("checkAgreeResetFinance");
+  if (check) check.checked = false;
+
+  const input = document.getElementById("confirmResetFinanceInput");
+  if (input) input.value = "";
+
+  const btn = document.getElementById("btnExecuteResetFinance");
+  if (btn) {
+    btn.disabled = true;
+    btn.classList.remove("active");
+    btn.innerHTML = `<i class="fas fa-trash-alt"></i> Hapus Permanen Sekarang`;
+  }
+
+  const feedback = document.getElementById("resetInputFeedback");
+  if (feedback) {
+    feedback.innerText = "Masukkan teks sesuai persis untuk mengaktifkan tombol hapus.";
+    feedback.style.color = "var(--text-sub)";
+  }
+
+  modal.style.display = "flex";
+  if (input) setTimeout(() => input.focus(), 200);
+};
+
+window.closeResetFinanceModal = function () {
+  const modal = document.getElementById("resetFinanceModal");
+  if (modal) modal.style.display = "none";
+};
+
+window.validateResetFinanceInput = function () {
+  const check = document.getElementById("checkAgreeResetFinance");
+  const input = document.getElementById("confirmResetFinanceInput");
+  const btn = document.getElementById("btnExecuteResetFinance");
+  const feedback = document.getElementById("resetInputFeedback");
+
+  const isChecked = check && check.checked;
+  const typedText = (input?.value || "").trim().toUpperCase();
+  const targetPhrase = "HAPUS KEUANGAN";
+  const isMatched = typedText === targetPhrase;
+
+  if (isMatched && isChecked) {
+    if (btn) {
+      btn.disabled = false;
+      btn.classList.add("active");
+    }
+    if (feedback) {
+      feedback.innerText = "✓ Validasi lolos. Anda dapat mengeksekusi penghapusan sekarang.";
+      feedback.style.color = "var(--green)";
+    }
+  } else {
+    if (btn) {
+      btn.disabled = true;
+      btn.classList.remove("active");
+    }
+    if (feedback) {
+      if (!isChecked && isMatched) {
+        feedback.innerText = "Silakan centang kotak persetujuan terlebih dahulu.";
+        feedback.style.color = "var(--orange)";
+      } else if (typedText.length > 0 && !isMatched) {
+        feedback.innerText = `Teks belum sesuai (${typedText.length}/${targetPhrase.length} karakter). Ketik: HAPUS KEUANGAN`;
+        feedback.style.color = "var(--red)";
+      } else {
+        feedback.innerText = "Masukkan teks sesuai persis untuk mengaktifkan tombol hapus.";
+        feedback.style.color = "var(--text-sub)";
+      }
+    }
+  }
+};
+
+window.executeResetFinanceData = function () {
+  const check = document.getElementById("checkAgreeResetFinance");
+  const input = document.getElementById("confirmResetFinanceInput");
+  const typedText = (input?.value || "").trim().toUpperCase();
+
+  if (!check?.checked || typedText !== "HAPUS KEUANGAN") {
+    return showToast("Validasi keamanan belum terpenuhi!", "error");
+  }
+
+  const btn = document.getElementById("btnExecuteResetFinance");
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Menghapus Seluruh Data...`;
+  }
+
+  // 1. Reset array transaksi
+  cachedData.transactions = [];
+  saveDB("transactions", []);
+
+  // 2. Reset kantong ke default dengan saldo 0
+  const resetKantongs = DEFAULT_KANTONGS.map((k) => ({
+    ...k,
+    balance: 0,
+    initialBalance: 0
+  }));
+  cachedData.kantong = resetKantongs;
+  saveDB("kantong", resetKantongs);
+  try {
+    localStorage.removeItem("kantong_list_v1");
+  } catch (e) {}
+
+  // 3. Reset target tabungan jika ada
+  cachedData.targetAmount = 0;
+  saveDB("targetAmount", 0);
+
+  // 4. Update UI
+  setTimeout(() => {
+    closeResetFinanceModal();
+    loadTransactions();
+    renderKantongCards();
+    if (typeof loadTarget === "function") loadTarget();
+
+    playSuccessSound("coin");
+    showToast("Seluruh data keuangan berhasil direset ke Rp 0!", "success");
+
+    if (btn) {
+      btn.innerHTML = `<i class="fas fa-trash-alt"></i> Hapus Permanen Sekarang`;
+    }
+  }, 400);
+};
+
 // ==================== SUBSCRIPTION MANAGER ====================
 
 // 1. Buka Modal & Render
@@ -5084,6 +5218,10 @@ window.switchView = function (viewName) {
     financePage.style.display = "block";
     financePage.classList.add("active");
 
+    // Sembunyikan widget melayang lo-fi agar tidak menutupi tampilan keuangan
+    const musicWidget = document.getElementById("musicWidget");
+    if (musicWidget) musicWidget.style.display = "none";
+
     if (btnHeaderFinance) btnHeaderFinance.classList.add("active");
     if (mobileTitle) mobileTitle.innerText = "Dompet & Keuangan";
 
@@ -5105,6 +5243,9 @@ window.switchView = function (viewName) {
     financePage.classList.remove("active");
     dashboardPage.style.display = "block";
     dashboardPage.classList.add("active");
+
+    const musicWidget = document.getElementById("musicWidget");
+    if (musicWidget) musicWidget.style.display = "block";
 
     const mainSidebar = document.getElementById("mainSidebar");
     if (mainSidebar) mainSidebar.classList.remove("active");
