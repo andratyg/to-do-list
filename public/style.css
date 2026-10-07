@@ -3,20 +3,29 @@
   /* Color Palette - Modern & Clean */
   --primary: #6366f1;
   --primary-dark: #4f46e5;
+  --primary-light: #818cf8;
+  --primary-glow: rgba(99, 102, 241, 0.25);
   --secondary: #a5b4fc;
+  --accent: #8b5cf6;
+  --accent-glow: rgba(139, 92, 246, 0.25);
 
-  --bg-body: #f3f4f6;
-  --card-bg: #ffffff;
+  --bg-body: #f8fafc;
+  --card-bg: rgba(255, 255, 255, 0.9);
+  --card-border: rgba(226, 232, 240, 0.8);
+  --glass-bg: rgba(255, 255, 255, 0.75);
 
-  --text-main: #1f2937;
-  --text-sub: #6b7280;
-  --border-color: #e5e7eb;
+  --text-main: #0f172a;
+  --text-sub: #64748b;
+  --text-muted: #94a3b8;
+  --border-color: #e2e8f0;
 
   /* Status Colors */
   --green: #10b981;
+  --green-glow: rgba(16, 185, 129, 0.2);
   --red: #ef4444;
+  --red-glow: rgba(239, 68, 68, 0.2);
   --blue: #3b82f6;
-  --orange: #f97316;
+  --orange: #f59e0b;
   --purple: #8b5cf6;
 
   /* Mode Colors */
@@ -27,24 +36,31 @@
   --dana: #118ee9;
   --ovo: #4c3494;
   --gopay: #00aa13;
-  --cash: #4b5563;
+  --cash: #475569;
 
   /* Effects */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md:
-    0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --shadow-lg:
-    0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  --radius: 16px;
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 14px -2px rgba(15, 23, 42, 0.08), 0 2px 6px -1px rgba(15, 23, 42, 0.04);
+  --shadow-lg: 0 14px 30px -4px rgba(15, 23, 42, 0.1), 0 6px 12px -2px rgba(15, 23, 42, 0.05);
+  --shadow-glow: 0 0 24px rgba(99, 102, 241, 0.25);
+  --radius: 18px;
+  --radius-sm: 10px;
+  --radius-lg: 24px;
 }
 
 body.dark-mode {
-  --bg-body: #111827;
-  --card-bg: #1f2937;
-  --text-main: #f3f4f6;
-  --text-sub: #9ca3af;
-  --border-color: #374151;
-  --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+  --bg-body: #0b0f19;
+  --card-bg: rgba(17, 24, 39, 0.82);
+  --card-border: rgba(255, 255, 255, 0.08);
+  --glass-bg: rgba(17, 24, 39, 0.7);
+  --text-main: #f8fafc;
+  --text-sub: #94a3b8;
+  --text-muted: #64748b;
+  --border-color: rgba(255, 255, 255, 0.08);
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 8px 24px -4px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 18px 38px -6px rgba(0, 0, 0, 0.65);
+  --shadow-glow: 0 0 28px rgba(99, 102, 241, 0.35);
   color-scheme: dark;
 }
 
@@ -58,7 +74,8 @@ body.dark-mode select {
   padding: 0;
   box-sizing: border-box;
   font-family: "Poppins", sans-serif;
-  transition: all 0.2s ease;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 body {
   background-color: var(--bg-body);
@@ -68,6 +85,7 @@ body {
   -webkit-user-select: none; /* Safari */
   -ms-user-select: none; /* IE 10 and IE 11 */
   user-select: none; /* Standard syntax */
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 .main-container {
   max-width: 1280px;
@@ -80,6 +98,10 @@ button {
   cursor: pointer;
   border: none;
   font-family: inherit;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+button:active {
+  transform: scale(0.97) !important;
 }
 input,
 select,
@@ -87,14 +109,16 @@ textarea {
   background: var(--bg-body);
   color: var(--text-main);
   border: 1px solid var(--border-color);
-  padding: 10px 15px;
-  border-radius: 10px;
+  padding: 11px 16px;
+  border-radius: 12px;
   width: 100%;
   outline: none;
-  font-size: 0.9rem;
+  font-size: 0.92rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
 }
 input:focus,
-select:focus {
+select:focus,
+textarea:focus {
   border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
   background: var(--card-bg);
@@ -592,9 +616,17 @@ body.dark-mode .xp-track {
 .card {
   background: var(--card-bg);
   border-radius: var(--radius);
-  padding: 25px;
+  padding: 24px;
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--border-color);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.25s ease;
+  position: relative;
+}
+.card:hover {
+  box-shadow: var(--shadow-md);
+  border-color: rgba(99, 102, 241, 0.22);
 }
 .card-header {
   display: flex;
@@ -609,28 +641,37 @@ body.dark-mode .xp-track {
   gap: 12px;
 }
 .icon-box {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
   display: flex;
   justify-content: center;
   align-items: center;
   color: white;
-  font-size: 1.1rem;
+  font-size: 1.15rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease;
+}
+.card:hover .icon-box {
+  transform: scale(1.06);
 }
 .icon-box.purple {
-  background: var(--primary);
+  background: linear-gradient(135deg, var(--primary), var(--purple));
 }
 .icon-box.blue {
-  background: var(--blue);
+  background: linear-gradient(135deg, var(--blue), #0284c7);
 }
 .icon-box.green {
-  background: var(--green);
+  background: linear-gradient(135deg, var(--green), #059669);
+}
+.icon-box.red {
+  background: linear-gradient(135deg, var(--red), #dc2626);
 }
 .card h2 {
-  font-size: 1.2rem;
+  font-size: 1.15rem;
   font-weight: 700;
   color: var(--text-main);
+  letter-spacing: -0.2px;
 }
 
 /* --- 6. JADWAL (LIVE STATUS BARU) --- */
@@ -1321,40 +1362,55 @@ tr.active-row td:first-child {
   margin-bottom: 25px;
 }
 .wallet-card {
-  padding: 15px 20px;
-  border-radius: 15px;
+  padding: 16px 20px;
+  border-radius: 18px;
   color: white;
   position: relative;
   overflow: hidden;
-  height: 100px;
+  height: 108px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   cursor: pointer;
-  opacity: 0.8;
+  opacity: 0.88;
   transform: scale(0.98);
-  border: 2px solid transparent;
-  box-shadow: var(--shadow-md);
-  transition: all 0.2s ease;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 6px 18px -4px rgba(0, 0, 0, 0.2);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.wallet-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -50%;
+  width: 200%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, transparent 60%);
+  pointer-events: none;
+}
+.wallet-card:hover {
+  opacity: 1;
+  transform: translateY(-3px) scale(1);
+  box-shadow: 0 12px 28px -4px rgba(0, 0, 0, 0.35);
 }
 .wallet-card.active {
   opacity: 1;
-  transform: scale(1);
-  border-color: white;
+  transform: translateY(-2px) scale(1);
+  border-color: rgba(255, 255, 255, 0.9);
   z-index: 2;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35), 0 0 0 2px rgba(255, 255, 255, 0.35);
 }
 .wallet-card.dana {
-  background: var(--dana);
+  background: linear-gradient(135deg, #118ee9, #0a6bb3);
 }
 .wallet-card.ovo {
-  background: var(--ovo);
+  background: linear-gradient(135deg, #583ba8, #3b2575);
 }
 .wallet-card.gopay {
-  background: var(--gopay);
+  background: linear-gradient(135deg, #00b14f, #00873d);
 }
 .wallet-card.cash {
-  background: var(--cash);
+  background: linear-gradient(135deg, #475569, #334155);
 }
 .card-top {
   display: flex;
@@ -1716,23 +1772,18 @@ tr.active-row td:first-child {
   z-index: 0;
   overflow: hidden;
   background:
-    radial-gradient(
-      circle at 10% 20%,
-      rgba(99, 102, 241, 0.1) 0%,
-      transparent 20%
-    ),
-    radial-gradient(
-      circle at 90% 80%,
-      rgba(16, 185, 129, 0.1) 0%,
-      transparent 20%
-    );
+    radial-gradient(circle at 15% 25%, rgba(99, 102, 241, 0.22) 0%, transparent 40%),
+    radial-gradient(circle at 85% 75%, rgba(139, 92, 246, 0.18) 0%, transparent 40%),
+    radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.1) 0%, transparent 50%);
+  filter: blur(50px);
 }
 .glow {
-  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
-  transition: all 0.3s ease;
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.35);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .glow:hover {
-  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.6);
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.55);
+  transform: translateY(-2px);
 }
 .empty-message {
   text-align: center;
@@ -1767,27 +1818,31 @@ tr.active-row td:first-child {
   padding: 0 10px;
 }
 .btn-google {
-  background: white;
-  color: #333;
-  border: 1px solid #ddd;
+  background: var(--card-bg);
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  font-weight: 500;
-  transition: 0.3s;
-  padding: 10px;
-  border-radius: 10px;
+  gap: 12px;
+  font-weight: 600;
+  font-size: 0.92rem;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 12px;
+  border-radius: 12px;
   width: 100%;
   cursor: pointer;
+  box-shadow: var(--shadow-sm);
 }
 .btn-google:hover {
-  background: #f8f9fa;
-  border-color: #ccc;
+  background: var(--bg-body);
+  border-color: rgba(99, 102, 241, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
 }
 .btn-google img {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
 }
 .auth-switch {
   text-align: center;
@@ -2332,12 +2387,14 @@ body.dark-mode .ach-item.locked {
 
 /* 2. Sticky Note Card */
 .sticky-card {
-  background: #fefce8; /* Warna kuning muda khas sticky note */
-  border: 1px solid #fde047;
+  background: linear-gradient(135deg, rgba(254, 252, 232, 0.95), rgba(254, 240, 138, 0.45));
+  border: 1px solid rgba(234, 179, 8, 0.35);
+  box-shadow: 0 4px 16px -2px rgba(234, 179, 8, 0.15);
 }
 body.dark-mode .sticky-card {
-  background: #422006; /* Coklat gelap untuk dark mode */
-  border-color: #713f12;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(30, 41, 59, 0.75));
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(245, 158, 11, 0.15);
 }
 
 #globalStickyNote {
@@ -2346,17 +2403,17 @@ body.dark-mode .sticky-card {
   background: transparent;
   border: none;
   resize: none;
-  font-family: "Poppins", sans-serif; /* Atau font tulisan tangan jika ada */
-  font-size: 0.9rem;
+  font-family: "Poppins", sans-serif;
+  font-size: 0.92rem;
   color: var(--text-main);
   outline: none;
-  line-height: 1.5;
+  line-height: 1.6;
 }
 #globalStickyNote::placeholder {
-  color: rgba(0, 0, 0, 0.3);
+  color: rgba(100, 116, 139, 0.5);
 }
 body.dark-mode #globalStickyNote::placeholder {
-  color: rgba(255, 255, 255, 0.3);
+  color: rgba(148, 163, 184, 0.4);
 }
 /* --- WIDGET CATATAN MELAYANG (FLOATING) --- */
 .floating-widget {
@@ -2441,120 +2498,151 @@ body.dark-mode #globalStickyNote {
   font-size: 1.6rem;
   background: var(--bg-body);
   border: 1px solid var(--border-color);
-  border-radius: 15px;
-  width: 55px;
-  height: 55px; /* Sedikit lebih besar */
-  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  border-radius: 16px;
+  width: 54px;
+  height: 54px;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.mood-btn:hover {
-  transform: translateY(-5px) scale(1.1);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+.mood-btn:hover,
+.mood-btn.active {
+  transform: translateY(-4px) scale(1.1);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
 }
 
 /* WARNA-WARNI TOMBOL MOOD */
-.mood-btn.happy:hover {
+.mood-btn.happy:hover, .mood-btn.happy.active {
   background: #d1fae5;
   border-color: #10b981;
-} /* Hijau */
-.mood-btn.excited:hover {
+}
+.mood-btn.excited:hover, .mood-btn.excited.active {
   background: #ffedd5;
   border-color: #f97316;
-} /* Oranye */
-.mood-btn.confident:hover {
+}
+.mood-btn.confident:hover, .mood-btn.confident.active {
   background: #e0f2fe;
   border-color: #0ea5e9;
-} /* Biru Langit */
-.mood-btn.grateful:hover {
+}
+.mood-btn.grateful:hover, .mood-btn.grateful.active {
   background: #fce7f3;
   border-color: #db2777;
-} /* Pink */
-.mood-btn.relaxed:hover {
+}
+.mood-btn.relaxed:hover, .mood-btn.relaxed.active {
   background: #ccfbf1;
   border-color: #14b8a6;
-} /* Tosca */
-
-.mood-btn.bored:hover {
-  background: #f3f4f6;
-  border-color: #9ca3af;
-} /* Abu */
-.mood-btn.confused:hover {
+}
+.mood-btn.bored:hover, .mood-btn.bored.active {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+}
+.mood-btn.confused:hover, .mood-btn.confused.active {
   background: #ede9fe;
   border-color: #8b5cf6;
-} /* Ungu */
-
-.mood-btn.tired:hover {
+}
+.mood-btn.tired:hover, .mood-btn.tired.active {
   background: #fee2e2;
   border-color: #ef4444;
-} /* Merah Muda */
-.mood-btn.sad:hover {
+}
+.mood-btn.sad:hover, .mood-btn.sad.active {
   background: #dbeafe;
   border-color: #2563eb;
-} /* Biru Tua */
-.mood-btn.anxious:hover {
+}
+.mood-btn.anxious:hover, .mood-btn.anxious.active {
   background: #fff7ed;
-  border-color: #c2410c;
-} /* Oranye Gelap */
-.mood-btn.sick:hover {
+  border-color: #ea580c;
+}
+.mood-btn.sick:hover, .mood-btn.sick.active {
   background: #fef9c3;
   border-color: #eab308;
-} /* Kuning */
-.mood-btn.angry:hover {
-  background: #7f1d1d;
-  border-color: #991b1b;
-  color: white;
-} /* Merah Gelap */
+}
+.mood-btn.angry:hover, .mood-btn.angry.active {
+  background: #fee2e2;
+  border-color: #dc2626;
+}
+
+body.dark-mode .mood-btn {
+  background: rgba(30, 41, 59, 0.65);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+body.dark-mode .mood-btn.happy:hover, body.dark-mode .mood-btn.happy.active { background: rgba(16, 185, 129, 0.22); border-color: #10b981; }
+body.dark-mode .mood-btn.excited:hover, body.dark-mode .mood-btn.excited.active { background: rgba(249, 115, 22, 0.22); border-color: #f97316; }
+body.dark-mode .mood-btn.confident:hover, body.dark-mode .mood-btn.confident.active { background: rgba(14, 165, 233, 0.22); border-color: #0ea5e9; }
+body.dark-mode .mood-btn.grateful:hover, body.dark-mode .mood-btn.grateful.active { background: rgba(219, 39, 119, 0.22); border-color: #db2777; }
+body.dark-mode .mood-btn.relaxed:hover, body.dark-mode .mood-btn.relaxed.active { background: rgba(20, 184, 166, 0.22); border-color: #14b8a6; }
+body.dark-mode .mood-btn.bored:hover, body.dark-mode .mood-btn.bored.active { background: rgba(148, 163, 184, 0.2); border-color: #94a3b8; }
+body.dark-mode .mood-btn.confused:hover, body.dark-mode .mood-btn.confused.active { background: rgba(139, 92, 246, 0.22); border-color: #8b5cf6; }
+body.dark-mode .mood-btn.tired:hover, body.dark-mode .mood-btn.tired.active { background: rgba(239, 68, 68, 0.22); border-color: #ef4444; }
+body.dark-mode .mood-btn.sad:hover, body.dark-mode .mood-btn.sad.active { background: rgba(37, 99, 235, 0.22); border-color: #2563eb; }
+body.dark-mode .mood-btn.anxious:hover, body.dark-mode .mood-btn.anxious.active { background: rgba(234, 88, 12, 0.22); border-color: #ea580c; }
+body.dark-mode .mood-btn.sick:hover, body.dark-mode .mood-btn.sick.active { background: rgba(234, 179, 8, 0.22); border-color: #eab308; }
+body.dark-mode .mood-btn.angry:hover, body.dark-mode .mood-btn.angry.active { background: rgba(220, 38, 38, 0.25); border-color: #dc2626; }
 /* --- FITUR BARU: COUNTDOWN WIDGET --- */
 .countdown-item {
   background: var(--bg-body);
-  padding: 12px;
-  border-radius: 12px;
-  margin-bottom: 10px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  margin-bottom: 12px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   border-left: 4px solid var(--primary);
+  border-top: 1px solid var(--border-color);
+  border-right: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.countdown-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 .cd-info h4 {
-  font-size: 0.9rem;
-  margin-bottom: 2px;
+  font-size: 0.92rem;
+  font-weight: 700;
+  margin-bottom: 3px;
+  color: var(--text-main);
 }
 .cd-info small {
-  font-size: 0.75rem;
+  font-size: 0.78rem;
   color: var(--text-sub);
 }
 .cd-days {
   text-align: center;
   background: var(--card-bg);
-  padding: 5px 10px;
-  border-radius: 8px;
+  padding: 6px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
   box-shadow: var(--shadow-sm);
-  min-width: 60px;
+  min-width: 65px;
 }
 .cd-days b {
   display: block;
-  font-size: 1.2rem;
+  font-size: 1.25rem;
+  font-weight: 800;
   color: var(--primary);
   line-height: 1;
 }
 .cd-days span {
-  font-size: 0.6rem;
+  font-size: 0.65rem;
+  font-weight: 600;
   color: var(--text-sub);
   text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 .btn-del-cd {
   background: none;
   color: var(--text-sub);
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   margin-left: 10px;
   cursor: pointer;
+  transition: color 0.2s ease, transform 0.2s ease;
 }
 .btn-del-cd:hover {
   color: var(--red);
+  transform: scale(1.15);
 }
 /* Tambahan untuk Custom Confirm Modal */
 #customConfirmModal .modal-body {
@@ -2583,20 +2671,20 @@ body.dark-mode #globalStickyNote {
 
 /* 1. Kotak Wadahnya (DIAM, TIDAK BOLEH GERAK) */
 .broadcast-container {
-  background: rgba(99, 102, 241, 0.15);
-  border: 1px solid var(--primary);
-  border-radius: 12px;
+  background: linear-gradient(90deg, rgba(99, 102, 241, 0.14), rgba(139, 92, 246, 0.08));
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  border-radius: 14px;
   margin-top: 15px;
   margin-bottom: 15px;
-  padding: 10px 15px;
+  padding: 10px 18px;
   display: flex;
   align-items: center;
   gap: 15px;
-  overflow: hidden; /* Masking biar teks hilang pas lewat batas */
+  overflow: hidden;
   position: relative;
-  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.1);
-
-  /* ❌ JANGAN ADA animation ATAU padding-left DI SINI! */
+  box-shadow: 0 4px 18px rgba(99, 102, 241, 0.12);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .broadcast-icon {
@@ -2604,9 +2692,10 @@ body.dark-mode #globalStickyNote {
   color: var(--primary);
   white-space: nowrap;
   z-index: 2;
-  background: var(--bg-body); /* Supaya teks gak nembus ikon */
-  padding-right: 10px;
-  box-shadow: 10px 0 10px -5px var(--bg-body); /* Efek fading */
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-right: 12px;
 }
 
 .broadcast-wrapper {
@@ -2614,6 +2703,8 @@ body.dark-mode #globalStickyNote {
   overflow: hidden;
   white-space: nowrap;
   position: relative;
+  mask-image: linear-gradient(90deg, transparent 0%, black 3%, black 97%, transparent 100%);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, black 3%, black 97%, transparent 100%);
 }
 
 /* 2. Teksnya (INI YANG BOLEH GERAK) */
@@ -2882,66 +2973,81 @@ body.dark-mode #globalStickyNote {
 }
 
 /* --- GLOBAL CHAT STYLES --- */
-.chat-card { min-height: 300px; }
+.chat-card { min-height: 320px; }
 .chat-box {
     flex: 1;
     overflow-y: auto;
-    padding: 10px;
+    padding: 14px;
     background: var(--bg-body);
-    border-radius: 10px;
-    margin-bottom: 10px;
-    min-height: 200px;
-    max-height: 300px;
+    border-radius: 14px;
+    margin-bottom: 12px;
+    min-height: 220px;
+    max-height: 320px;
     border: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 .chat-bubble {
-    padding: 8px 12px;
-    border-radius: 12px;
-    margin-bottom: 8px;
-    max-width: 85%;
-    font-size: 0.85rem;
+    padding: 10px 14px;
+    border-radius: 16px;
+    max-width: 82%;
+    font-size: 0.86rem;
     position: relative;
     word-wrap: break-word;
+    line-height: 1.45;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.15s ease;
+}
+.chat-bubble:hover {
+    transform: translateY(-1px);
 }
 .chat-left {
     background: var(--card-bg);
     border: 1px solid var(--border-color);
     align-self: flex-start;
-    border-bottom-left-radius: 2px;
-    margin-right: auto;
-    float: left;
-    clear: both;
+    border-bottom-left-radius: 4px;
+    color: var(--text-main);
 }
 .chat-right {
-    background: rgba(99, 102, 241, 0.2);
-    color: var(--text-main);
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: white;
     align-self: flex-end;
-    border-bottom-right-radius: 2px;
-    margin-left: auto;
-    float: right;
-    clear: both;
-    text-align: right;
+    border-bottom-right-radius: 4px;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
 }
-.chat-user {
-    font-size: 0.7rem;
+.chat-left .chat-user {
+    font-size: 0.72rem;
     font-weight: 700;
     color: var(--primary);
-    margin-bottom: 2px;
+    margin-bottom: 3px;
     display: block;
 }
+.chat-right .chat-user {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.85);
+    margin-bottom: 3px;
+    display: block;
+    text-align: right;
+}
 .chat-input-area { display: flex; gap: 10px; }
-.chat-input-area input { flex: 1; }
+.chat-input-area input { flex: 1; border-radius: 12px; }
 .btn-send {
-    background: var(--primary);
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
     color: white;
     border: none;
-    width: 40px; height: 42px;
-    border-radius: 10px;
+    width: 44px; height: 44px;
+    border-radius: 12px;
     cursor: pointer;
-    transition: 0.2s;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
 }
-.btn-send:hover { background: var(--primary-dark); }
+.btn-send:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(99, 102, 241, 0.45);
+}
 /* ==================== MODERN CALENDAR UI ==================== */
 
 /* 1. Modal Wrapper */
@@ -3292,14 +3398,22 @@ body.dark-mode #globalStickyNote {
         display: flex; /* Munculkan tombol menu */
     }
     
+    .header-profile-section .icon-btn-glass {
+        display: none !important; /* Hilangkan tombol dobel di mobile */
+    }
+    
     .btn-menu-mobile {
         background: var(--card-bg);
         border: 1px solid var(--border-color);
         color: var(--text-main);
         width: 40px; height: 40px;
-        border-radius: 8px;
-        font-size: 1.2rem;
+        border-radius: 10px;
+        font-size: 1.1rem;
         cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: var(--shadow-sm);
     }
 
     /* --- KONTEN UTAMA --- */
@@ -3330,7 +3444,7 @@ body.dark-mode #globalStickyNote {
     }
 
     .card {
-        padding: 15px; /* Padding card dikecilin dikit */
+        padding: 18px; /* Padding card proporsional di HP */
     }
 
     /* --- TABEL JADWAL (SCROLLABLE) --- */
@@ -3347,8 +3461,8 @@ body.dark-mode #globalStickyNote {
 
     /* --- MODAL (POP-UP) --- */
     .modal-content {
-        width: 90%; /* Jangan fix width, pakai persen */
-        max-width: 90%;
+        width: 92%; /* Jangan fix width, pakai persen */
+        max-width: 92%;
         padding: 20px;
         margin: 10px;
         max-height: 90vh; /* Biar nggak kepotong kalau panjang */
@@ -3367,11 +3481,16 @@ body.dark-mode #globalStickyNote {
         font-size: 0.9rem;
     }
 
-    /* --- WIDGET MUSIK --- */
+    /* --- WIDGET MUSIK (COMPACT DI HP) --- */
     #musicWidget {
-        width: 90% !important; /* Musik lebar di HP */
-        left: 5% !important;
-        bottom: 10px !important;
+        width: auto !important;
+        max-width: 250px !important;
+        left: auto !important;
+        right: 15px !important;
+        bottom: 15px !important;
+        padding: 8px 12px !important;
+        border-radius: 14px !important;
+        z-index: 99 !important;
     }
 }
 /* =========================================

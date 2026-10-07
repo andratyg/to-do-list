@@ -726,7 +726,7 @@
               <div>
                 <h4 style="margin-bottom: 5px">Mode Ujian Serentak</h4>
                 <p style="font-size: 0.85rem; color: var(--text-sub)">
-                  Memaksa tampilan "Mode Ujian" di semua perangkat user.
+                  Memaksa tampilan "Mode Ujian" di semua perangkat user & mengaktifkan sistem anti-tamper.
                 </p>
               </div>
               <label class="switch">
@@ -737,6 +737,82 @@
                 />
                 <span class="slider"></span>
               </label>
+            </div>
+
+            <!-- REAL-TIME ANTI-TAMPER EXAM MONITOR -->
+            <div
+              id="examSecurityMonitorContainer"
+              style="
+                margin-bottom: 20px;
+                padding: 15px;
+                background: rgba(15, 23, 42, 0.6);
+                border: 1px solid rgba(239, 68, 68, 0.25);
+                border-radius: 12px;
+              "
+            >
+              <div
+                style="
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: center;
+                  margin-bottom: 12px;
+                "
+              >
+                <div style="display: flex; align-items: center; gap: 8px">
+                  <span
+                    style="
+                      display: inline-block;
+                      width: 10px;
+                      height: 10px;
+                      border-radius: 50%;
+                      background: #10b981;
+                      box-shadow: 0 0 10px #10b981;
+                    "
+                    id="examSecurityMonitorDot"
+                  ></span>
+                  <strong style="color: white; font-size: 0.95rem">
+                    🛡️ Live Anti-Tamper & Cheating Monitor
+                  </strong>
+                  <span
+                    class="badge badge-success"
+                    id="examSecurityBadge"
+                    style="font-size: 0.75rem; padding: 2px 8px; border-radius: 20px"
+                  >
+                    0 Pelanggaran
+                  </span>
+                </div>
+                <button
+                  class="btn-secondary"
+                  onclick="clearExamViolations()"
+                  style="font-size: 0.75rem; padding: 4px 10px; border-radius: 6px"
+                >
+                  <i class="fas fa-trash-alt"></i> Bersihkan Log
+                </button>
+              </div>
+
+              <div
+                id="examViolationList"
+                style="
+                  max-height: 220px;
+                  overflow-y: auto;
+                  display: flex;
+                  flex-direction: column;
+                  gap: 8px;
+                "
+              >
+                <div
+                  style="
+                    text-align: center;
+                    padding: 15px;
+                    color: var(--text-sub);
+                    font-size: 0.85rem;
+                  "
+                  id="emptyViolationNotice"
+                >
+                  <i class="fas fa-shield-alt" style="font-size: 1.5rem; color: #10b981; margin-bottom: 6px; display: block;"></i>
+                  Belum ada indikasi tampering atau kecurangan terdeteksi. Semua klien aman.
+                </div>
+              </div>
             </div>
 
             <div
@@ -896,6 +972,9 @@
 
         // 3. Init Chat Monitor
         initChatMonitor();
+
+        // 4. Init Anti-Tamper Exam Monitor
+        initExamSecurityMonitor();
       }
 
       // --- STATS & CHARTS ---
@@ -1091,6 +1170,79 @@ set(ref(db, `public_chat/${key}`), null);
 set(ref(db, "public_chat"), null);
           showToast("Chat dibersihkan.", "warning");
         }
+      };
+
+      // --- EXAM SECURITY & ANTI-TAMPER MONITOR ---
+      function initExamSecurityMonitor() {
+        const violRef = query(ref(db, "system/exam_security_violations"), limitToLast(100));
+        onValue(violRef, (snapshot) => {
+          const list = document.getElementById("examViolationList");
+          const badge = document.getElementById("examSecurityBadge");
+          const dot = document.getElementById("examSecurityMonitorDot");
+          if (!list) return;
+
+          const data = snapshot.val();
+          if (data) {
+            const entries = Object.entries(data).reverse(); // terbaru di atas
+            const count = entries.length;
+            if (badge) {
+              badge.innerText = `${count} Terdeteksi`;
+              badge.className = "badge badge-danger";
+            }
+            if (dot) {
+              dot.style.background = "#ef4444";
+              dot.style.boxShadow = "0 0 10px #ef4444";
+            }
+
+            list.innerHTML = "";
+            entries.forEach(([key, viol]) => {
+              const time = new Date(viol.timestamp || Date.now()).toLocaleTimeString();
+              const typeColor = (viol.violationType || "").includes("TAMPER") || (viol.violationType || "").includes("HONEYTOKEN") ? "#ef4444" : "#f59e0b";
+              list.innerHTML += `
+                <div style="background: rgba(255,255,255,0.03); border-left: 3px solid ${typeColor}; padding: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                  <div style="flex: 1;">
+                    <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 3px;">
+                      <strong style="color: white; font-size: 0.85rem;">${viol.userName || "Siswa"}</strong>
+                      <span style="font-size: 0.72rem; color: var(--text-sub);">${viol.userEmail || ""}</span>
+                      <span style="font-size: 0.7rem; color: ${typeColor}; background: rgba(239, 68, 68, 0.15); padding: 1px 6px; border-radius: 4px; font-weight: 600;">${viol.violationType || "VIOLATION"}</span>
+                    </div>
+                    <div style="font-size: 0.78rem; color: var(--text-sub);">${viol.details || "-"}</div>
+                    <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 2px;">Waktu: ${time} • Status: <b style="color: #ef4444;">TAINTED</b></div>
+                  </div>
+                  <button onclick="resolveViolation('${key}')" class="btn-secondary" style="font-size: 0.7rem; padding: 4px 8px;" title="Tandai Selesai / Hapus">
+                    <i class="fas fa-check"></i>
+                  </button>
+                </div>
+              `;
+            });
+          } else {
+            if (badge) {
+              badge.innerText = "0 Pelanggaran";
+              badge.className = "badge badge-success";
+            }
+            if (dot) {
+              dot.style.background = "#10b981";
+              dot.style.boxShadow = "0 0 10px #10b981";
+            }
+            list.innerHTML = `
+              <div style="text-align:center; padding:15px; color:var(--text-sub); font-size:0.85rem;">
+                <i class="fas fa-shield-alt" style="font-size:1.5rem; color:#10b981; margin-bottom:6px; display:block;"></i>
+                Belum ada indikasi tampering atau kecurangan terdeteksi. Semua klien aman.
+              </div>
+            `;
+          }
+        });
+      }
+
+      window.clearExamViolations = function () {
+        if (confirm("Bersihkan semua riwayat pelanggaran keamanan ujian?")) {
+          set(ref(db, "system/exam_security_violations"), null);
+          showToast("Riwayat pelanggaran ujian berhasil dibersihkan", "info");
+        }
+      };
+
+      window.resolveViolation = function (key) {
+        set(ref(db, `system/exam_security_violations/${key}`), null);
       };
 
       // --- BROADCAST & SYSTEM ---

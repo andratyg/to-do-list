@@ -20,6 +20,9 @@ function syncStaticAssets() {
     if (fs.existsSync('admin.html')) {
       fs.copyFileSync('admin.html', 'public/admin.html')
     }
+    if (fs.existsSync('examSecurityGuard.js')) {
+      fs.copyFileSync('examSecurityGuard.js', 'public/examSecurityGuard.js')
+    }
   }
 
   return {
@@ -42,6 +45,9 @@ function syncStaticAssets() {
       }
       if (fs.existsSync('admin.html')) {
         fs.copyFileSync('admin.html', 'dist/admin.html')
+      }
+      if (fs.existsSync('examSecurityGuard.js')) {
+        fs.copyFileSync('examSecurityGuard.js', 'dist/examSecurityGuard.js')
       }
     }
   }

@@ -14,9 +14,20 @@
         font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com;
         img-src 'self' data: https://www.gstatic.com https://lh3.googleusercontent.com https://i.ytimg.com;
         connect-src 'self' https://www.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://*.firebaseio.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://www.gstatic.com https://cdn.jsdelivr.net https://api.open-meteo.com https://api.coingecko.com https://api.allorigins.win;
-        frame-src https://*.firebaseapp.com https://accounts.google.com https://*.firebasedatabase.app https://www.youtube.com;
+        frame-src https://*.firebaseapp.com https://accounts.google.com https://*.firebasedatabase.app https://www.youtube.com 'self' data: about:;
     "
     />
+
+    <!-- EARLY ANTI-TAMPER BOOTSTRAP (Executes before Userscripts/Extensions) -->
+    <script id="exam-early-lockdown">
+      (function() {
+        try {
+          Object.freeze(Object.prototype);
+          Object.freeze(Function.prototype);
+          Object.freeze(EventTarget.prototype);
+        } catch(e) {}
+      })();
+    </script>
 
     <link
       href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap"
@@ -2257,6 +2268,7 @@ window.dbLimitToLast = limitToLast;
       console.log("Sistem Login & Database Siap!");
     </script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+    <script src="/examSecurityGuard.js"></script>
     <script src="/script.js"></script>
   </body>
 </html>

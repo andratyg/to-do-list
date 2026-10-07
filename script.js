@@ -1798,14 +1798,26 @@ function setFocusLock(lock) {
 function handleTabBlur() {
   // --- LOGIKA BARU: DETEKSI KECURANGAN UJIAN ---
   if (isExamMode) {
-    // Munculkan notifikasi merah (error)
     showToast("⚠️ PERINGATAN: Dilarang pindah tab saat Ujian!", "error");
-
-    // Bunyikan suara peringatan (opsional, pakai sound yang ada)
     playSuccessSound("coin");
-
-    // (Opsional) Di sini Anda bisa menambahkan logika penalti, misal: kurangi XP
-    // addXP(-50);
+    
+    // Log pelanggaran ke Firebase Realtime Database
+    try {
+      if (window.db && window.dbRef && window.dbSet && window.auth && window.auth.currentUser) {
+        const uid = window.auth.currentUser.uid;
+        const violRef = window.dbRef(window.db, `system/exam_security_violations/${uid}_${Date.now()}`);
+        window.dbSet(violRef, {
+          uid: uid,
+          userName: currentUser || "Siswa",
+          userEmail: window.auth.currentUser.email || "",
+          violationType: "TAB_BLUR_SWITCH_WINDOW",
+          details: "Pengguna meninggalkan jendela aplikasi atau berpindah tab browser",
+          timestamp: Date.now(),
+          status: "TAINTED",
+          resolved: false
+        });
+      }
+    } catch(e) {}
   }
 
   // --- LOGIKA LAMA: MODE FOKUS STRICT ---
@@ -2915,6 +2927,15 @@ function checkExamMode() {
   if (btnFinance) btnFinance.style.display = isExamMode ? "none" : "inline-flex";
   if (isExamMode) {
     if (typeof toggleFinanceSidebar === "function") toggleFinanceSidebar(false);
+    // AKTIFKAN SISTEM PERTAHANAN ANTI-TAMPERING & INTEGRITAS UJIAN SERENTAK
+    if (window.__ExamSecurityGuard && typeof window.__ExamSecurityGuard.startExamGuard === "function") {
+      window.__ExamSecurityGuard.startExamGuard({ currentUser });
+    }
+  } else {
+    // NONAKTIFKAN GUARD JIKA UJIAN SELESAI
+    if (window.__ExamSecurityGuard && typeof window.__ExamSecurityGuard.stopExamGuard === "function") {
+      window.__ExamSecurityGuard.stopExamGuard();
+    }
   }
   timeLeft = isExamMode ? WORK_DURATION_EXAM : WORK_DURATION_DEFAULT;
   updateTimerDisplay();
@@ -5474,12 +5495,11 @@ function listenGlobalConfig() {
                     playSuccessSound("bell");
                 }
             } else {
-                // Jika admin mematikan, kembalikan ke settingan user
-                // (Opsional: atau biarkan user mematikan sendiri)
+                // Jika admin mematikan mode ujian serentak
                 if (isExamMode && config.examMode === false) {
-                     // Kita tidak otomatis mematikan biar user yang kontrol, 
-                     // atau bisa dipaksa mati dengan baris di bawah:
-                     // isExamMode = false; checkExamMode();
+                     isExamMode = false;
+                     checkExamMode();
+                     showToast("ℹ️ Mode Ujian Serentak selesai.", "info");
                 }
             }
 
